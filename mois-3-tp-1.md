@@ -1,32 +1,33 @@
-# TP Jour 1 : Migration vers Either
+# TP Jour 1 : La Chasse aux Effets de Bord
 
-**Durée :** ~4h | **Fil Rouge :** Un moteur de clearing qui explique ses échecs
-
----
-
-> 💡 **Lien avec ta rétro S9** : Tu trouvais lourd de trimballer `(List[Transaction], List[ClearingError])` à chaque étape du pipeline. Aujourd'hui, on va faire en sorte que chaque transaction "porte" son statut (succès ou erreur) individuellement grâce à `Either`.
-
-## Exercice 1 : Parsing Typé (1h30)
-
-1. Reprends ta méthode `Transaction.fromCsv`.
-2. Modifie-la pour qu'elle retourne `Either[ParsingError, Transaction]`.
-3. `ParsingError` doit être un nouveau type de ton ADT `ClearingError`.
-4. Gère les différents cas d'échec (Nombre de colonnes incorrect, Montant non numérique) avec des messages spécifiques dans le `Left`.
+**Durée :** ~4h | **Fil Rouge :** Assainir le moteur v1.3
 
 ---
 
-## Exercice 2 : Validation avec Raison (1h30)
+## Exercice 1 : Audit de Pureté (1h)
 
-1. Modifie ton `Validator.check`.
-2. Au lieu de retourner un `Boolean` ou une `Option`, retourne `Either[ValidationError, Transaction]`.
-3. Si la transaction est valide, renvoie-la dans un `Right`. sinon renvoie l'erreur détaillée dans un `Left`.
+1. Relis l'intégralité du code de ton projet (version 1.3).
+2. Liste tous les endroits où tu utilises :
+   - `println`.
+   - `throw new Exception`.
+   - `java.time.LocalDateTime.now()`.
+   - Des appels `HttpClient`.
+3. Pour chaque point, note pourquoi il viole la Transparence Référentielle.
 
 ---
 
-## Exercice 3 : Consommation exhaustive (1h)
+## Exercice 2 : Isolation des I/O (1h30)
 
-1. Écris une boucle (ou un `map`) qui traite une liste de lignes CSV.
-2. Pour chaque ligne, utilise le pattern matching pour afficher soit le succès, soit le détail de l'erreur rencontrée.
-3. Vérifie que tu n'as plus aucun `get` ou `isDefined` dans ton code.
+1. Crée un objet `ClearingReporter` dédié uniquement à l'affichage.
+2. Déplace TOUS les `println` de ton moteur vers cet objet.
+3. Les autres fonctions doivent maintenant retourner des `String` ou des types de données, mais ne plus jamais imprimer elles-mêmes.
 
-**Livrable** : Code source utilisant `Either` pour le parsing et la validation, avec reporting détaillé des erreurs.
+---
+
+## Exercice 3 : Découplage du Temps (1h30)
+
+1. Identifie les fonctions qui utilisent `LocalDateTime.now()`.
+2. Modifie-les pour qu'elles acceptent le temps comme un argument : `def process(tx: Transaction, now: LocalDateTime)`.
+3. Vérifie que tu peux maintenant tester ces fonctions avec une date fixe (Test déterminisme).
+
+**Livrable** : Rapport d'audit + Code refactorisé où la logique de calcul ne contient plus d'I/O ni de dépendance au temps système direct.
