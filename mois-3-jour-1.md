@@ -2,116 +2,97 @@
 marp: true
 theme: default
 paginate: true
-header: "Stage ATH — Mois 3, Semaine 10"
-footer: "Jour 1 — Le Type Either[L, R]"
+header: "Stage ATH — Mois 3, Semaine 9"
+footer: "Jour 1 — Transparence Référentielle"
 ---
 
-# Résilience Typée : Either
-## Ne plus jamais cacher ses erreurs
+# Transparence Référentielle
+## La base de la prédictibilité en informatique
 
-**Durée :** ~2h | **Fil Rouge :** Gestion robuste des échecs de validation
+**Durée :** ~2h | **Fil Rouge :** Isoler les effets de bord du Clearing Engine
 
 ---
 
 # 📋 Objectifs du Jour
 
-- Comprendre le concept de type disjoint : **Either**.
-- En finir avec les exceptions (`throw`) qui cassent le flux.
-- Apprendre à coder pour le cas de succès **ET** le cas d'erreur.
-- Découvrir la convention Left (Erreur) / Right (Succès).
+- Comprendre le concept de **Transparence Référentielle** (RT).
+- Identifier les **Effets de Bord** (Side Effects) cachés.
+- Apprendre à séparer la logique pure de l'exécution impure.
+- Rendre le code du moteur mathématiquement prouvable.
 
 ---
 
-# 1. Pourquoi Either ?
+# 1. Qu'est-ce que la RT ?
 
-Jusqu'à présent, nous utilisions `Option[Transaction]`.
-- Si c'est `None`, on ne sait pas **pourquoi** ça a échoué (Montant nul ? Iban invalide ?).
+Une expression est dite "Transparent Référentiellement" si on peut la remplacer par son résultat sans changer le comportement du programme.
 
-### Either[L, R] apporte la réponse
-- `Left` : Contient l'objet d'erreur (généralement à Gauche).
-- `Right` : Contient la valeur de succès (Right is "right" ✅).
-
+### Exemple Pur
 ```scala
-def parse(line: String): Either[ClearingError, Transaction] = ...
+val x = 2 + 2
+val y = x + x // On peut remplacer x par 4 -> y = 4 + 4
+```
+
+### Exemple Impur (Effet de bord)
+```scala
+def inc(a: Int): Int = { println("Log"); a + 1 }
+val x = inc(2)
+val y = x + x // Si on remplace x par 3, on ne voit plus le "Log" !
 ```
 
 ---
 
-# 2. Syntaxe & Création
+# 2. Les Effets de Bord Cachés
 
-```scala
-val success: Either[String, Int] = Right(42)
-val failure: Either[String, Int] = Left("Une erreur est survenue")
+En banque, les effets de bord sont partout :
+- `println` (I/O).
+- Lire un fichier CSV.
+- Appeler une API de taux de change.
+- Lever une exception (`throw`).
+- Modifier une variable globale (`var`).
 
-// Utilisation typique
-def divide(a: Int, b: Int): Either[String, Int] =
-  if b == 0 then Left("Division par zéro")
-  else Right(a / b)
-```
+> [!WARNING]
+> Les effets de bord rendent le code difficile à tester et imprévisible en cas de parallélisation.
 
 ---
 
-# 3. Pattern Matching sur Either
+# 3. Séparation : "Push the Side Effects to the Edges"
 
-C'est la manière naturelle de consommer le résultat.
+La stratégie gagnante :
+1. **Cœur du moteur** : 100% Pur (RT). Reçoit des données, renvoie des données.
+2. **Couche d'entrée/sortie** : Gère les effets (Lecture CSV, Logs).
 
 ```scala
-divide(10, 0) match
-  case Right(res) => println(s"Résultat : $res")
-  case Left(err)  => println(s"Erreur : $err")
-```
+// PUR ✅
+def calculateNet(txs: List[Transaction]): BigDecimal = ...
 
-### Pourquoi c'est mieux que try/catch ?
-- C'est **explicite** dans la signature de la fonction.
-- Le compilateur nous oblige à gérer l'erreur (Exhaustivité).
-- C'est de la donnée, pas une interruption brutale du CPU.
+// IMPUR ❌
+def calculateAndLog(txs: List[Transaction]): Unit = { 
+  val res = calculateNet(txs)
+  println(s"Result: $res")
+}
+```
 
 ---
 
 # 🏗️ Application au Clearing
 
-Toutes nos fonctions qui pouvaient renvoyer `None` vont maintenant renvoyer un `Either[ClearingError, T]`.
-
-```scala
-// Moteur v1.3 : (String) => Option[Transaction]
-// Moteur v2.1 : (String) => Either[ParsingError, Transaction]
-```
-
----
-
-# 🔄 Avant / Après : Ton Code v2.0 → v2.1
-
-### Avant (v2.0 — Tuple Pattern) ❌
-```scala
-val (parsedTxs, parseErrors) = parse(lines) // Tuple (bon sac, sac poubelle)
-val (validTxs, rejectedTxs) = filter(parsedTxs) // Encore un tuple...
-// Problème : on trimballe 2 listes séparées à chaque étape
-```
-
-### Après (v2.1 — Either Pattern) ✅
-```scala
-val results: List[Either[ClearingError, Transaction]] = lines.map(parseLine)
-// Chaque élément SAIT s'il est un succès ou une erreur
-val (errors, transactions) = results.partitionMap(identity) // Un seul split à la fin
-```
-
-> 💡 C'est **exactement** la réponse à ta frustration de la rétro S9 !
+Nous allons extraire tous les `println` et appels API de notre logique de netting. Le netting doit devenir une fonction mathématique pure : `(Liste de Transactions) => Map des Positions`.
 
 ---
 
 # 🧠 Quiz Rapide
 
-1. Que signifie le jeu de mot "Right is Right" ?
-2. Quelle information de plus que `Option` apporte `Either` ? (La raison de l'échec).
-3. Une fonction qui renvoie un `Either` peut-elle quand même lancer une exception ? (En théorie oui, mais en FP pure on évite absolument !).
+1. Puis-je remplacer `System.currentTimeMillis()` par sa valeur dans le code ? (Non, RT violée).
+2. Un programme peut-il être utile s'il n'a AUCUN effet de bord ? (Non, car il ne pourrait rien afficher ni écrire).
+3. Pourquoi la RT facilite-t-elle le debugging ? (Parce que le résultat d'une fonction ne dépend que de ses arguments).
 
 ---
 
 # 📝 Résumé du Jour
 
-- `Either` est le standard de l'industrie pour la gestion d'erreurs fonctionnelle.
-- `Left` pour l'erreur, `Right` pour le succès.
-- Les erreurs deviennent des citoyens de première classe de ton code.
-- Plus aucune exception cachée ne viendra planter ton batch de nuit.
+- La RT permet de raisonner sur le code comme sur des équations.
+- Les effets de bord sont nécessaires mais doivent être isolés aux "bords" de l'application.
+- Un code pur est plus facile à paralléliser, à tester et à maintenir.
+- Tu commences aujourd'hui la "Révolution Fonctionnelle" de ton moteur.
 
-**Prochaine étape** : Migrer tes validateurs vers Either dans le TP 46 !
+**Prochaine étape** : Débusquer les effets de bord dans le TP 41 !
