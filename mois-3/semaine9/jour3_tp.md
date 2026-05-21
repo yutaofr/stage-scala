@@ -10,7 +10,7 @@
 2. Définis trois fonctions pures :
    - `cleanIban: String => String` (supprime les espaces et met en majuscules).
    - `formatAmount: BigDecimal => BigDecimal` (arrondit à 2 décimales).
-   - `validateStatus: Transaction => Transaction` (met le statut à `Rejected` si le montant est <= 0).
+   - `validateStatus: Transaction => Either[Error, Transaction]` (met le statut à `Rejected` si le montant est <= 0).
 3. Teste chaque fonction de manière isolée.
 
 ---
