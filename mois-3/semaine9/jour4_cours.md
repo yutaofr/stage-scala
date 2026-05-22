@@ -15,7 +15,7 @@ footer: "Jour 4 — Currying Avancé & Application Partielle"
 
 # 📋 Objectifs du Jour
 
-- Comprendre le concept de **Currying** (transformer $f(x, y)$ en $f(x)(y)$).
+- Comprendre le concept de **Currying** (transformer $f(x, y)$ en $f(x)(y)$  ).
 - Maîtriser l'**Application Partielle** pour créer des fonctions spécialisées.
 - Utiliser le currying pour injecter de la configuration (Seuils, Devises).
 - Rendre le code du moteur plus générique et réutilisable.
