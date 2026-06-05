@@ -64,23 +64,6 @@ val optId = opt.map(_.id) // Option restée Option ✅
 
 ---
 
-# 4. Instances `given` et Inférence de Type
-
-### Piège classique : `Some` vs `Option`
-Quand tu crées un `Some(42)` dans un test, le compilateur infère le type `Some[Int]`, qui n'est **pas** `Option[Int]`. Si ton instance `Functor[Option]` attend un `Option`, le compilateur ne la trouve pas.
-
-```scala
-// ❌ Ne compile pas : il cherche Functor[Some], pas Functor[Option]
-// FIXME  it compils
-val result = Some(42).map(_ + 1)
-
-// ✅ Force le type parent
-val result = (Option(42)).map(_ + 1)
-```
-
-> 🎯 Règle d'or : dans tes tests, utilise **`Option(...)`** au lieu de `Some(...)` pour que l'inférence de type résout correctement l'instance `given`.
-
----
 
 # 🏗️ La Type Class Functor
 
