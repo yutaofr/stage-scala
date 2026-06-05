@@ -71,6 +71,7 @@ Quand tu crées un `Some(42)` dans un test, le compilateur infère le type `Some
 
 ```scala
 // ❌ Ne compile pas : il cherche Functor[Some], pas Functor[Option]
+// FIXME  it compils
 val result = Some(42).map(_ + 1)
 
 // ✅ Force le type parent
