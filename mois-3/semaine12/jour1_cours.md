@@ -76,8 +76,6 @@ Nous allons implémenter notre propre Type Class Functor pour des types personna
 1. Une fonction `Int => String` est-elle un Functor ? (Non, c'est une fonction).
 2. Si je map une liste vide, qu'est-ce que j'obtiens ? (Une liste vide du nouveau type).
 3. Pourquoi est-il important de respecter les "Lois" ? (Pour rendre le code prédictible et optimisable par le compilateur).
-4. **Nouveau** : Pourquoi `Some(42).map(...)` peut échouer avec un Functor custom ? (Parce que le type inféré est `Some`, pas `Option`).
-
 ---
 
 # 📝 Résumé du Jour
