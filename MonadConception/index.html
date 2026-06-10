@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>单子：自函子范畴上的幺半群 · 动画讲解</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@600;700;900&family=Noto+Sans+SC:wght@400;500;700&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet" />
+<style>
+  html, body { margin: 0; padding: 0; height: 100%; background: #0a0a0a; overflow: hidden; }
+  #root { position: absolute; inset: 0; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+<script type="text/babel" src="animations.jsx"></script>
+<script type="text/babel" src="scenes/shared.jsx"></script>
+<script type="text/babel" src="scenes/scene12.jsx"></script>
+<script type="text/babel" src="scenes/scene34.jsx"></script>
+<script type="text/babel" src="scenes/scene56.jsx"></script>
+<script type="text/babel" src="scenes/scene78.jsx"></script>
+
+<script type="text/babel">
+  const SCENES = [
+    { t: 0,   name: '第1幕 · 开场名言' },
+    { t: 38,  name: '第2幕 · 范畴' },
+    { t: 104, name: '第3幕 · 函子' },
+    { t: 170, name: '第4幕 · 自函子' },
+    { t: 218, name: '第5幕 · 幺半群' },
+    { t: 290, name: '第6幕 · 自函子范畴上的幺半群' },
+    { t: 388, name: '第7幕 · 回到 Scala' },
+    { t: 452, name: '第8幕 · 终幕' },
+  ];
+
+  function App() {
+    return (
+      <Stage width={1920} height={1080} duration={484} background={MV.bg} persistKey="monad-video" autoplay={false} loop={false}>
+        <Labeler scenes={SCENES}>
+          <Scene1 />
+          <Scene2 />
+          <Scene3 />
+          <Scene4 />
+          <Scene5 />
+          <Scene6 />
+          <Scene7 />
+          <Scene8 />
+        </Labeler>
+      </Stage>
+    );
+  }
+
+  ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>
