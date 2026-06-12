@@ -39,7 +39,6 @@
 | ScalaCheck (Gen, forAll)|                 |                                       |
 | Opaque Types            |                 |                                       |
 | Type Classes (given)    |                 |                                       |
-| Import *.given vs .*    |                 |                                       |
 
 **Bilan Mois 3** : Objectifs dépassés. Le stagiaire possède un socle théorique et pratique de haut niveau. Prêt pour la phase de mise à l'échelle (Mois 4).
 
