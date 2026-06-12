@@ -18,6 +18,20 @@ const MV = {
   mono: "'JetBrains Mono', ui-monospace, monospace",
 };
 
+const LOCALE = new URLSearchParams(window.location.search).get('lang') === 'fr' ? 'fr' : 'zh';
+document.documentElement.lang = LOCALE === 'fr' ? 'fr' : 'zh-CN';
+document.title = LOCALE === 'fr'
+  ? 'Monade : un monoïde dans la catégorie des endofoncteurs · Présentation animée'
+  : '单子：自函子范畴上的幺半群 · 动画讲解';
+
+function isFr() { return LOCALE === 'fr'; }
+function tr(zh, fr) { return isFr() && fr != null ? fr : zh; }
+function localeHref(locale) {
+  const url = new URL(window.location.href);
+  url.searchParams.set('lang', locale);
+  return url.href;
+}
+
 function useT() { return useTime(); }
 
 // 0→1 进度：从绝对时刻 start 起，历时 dur
@@ -47,20 +61,22 @@ function FadeGroup({ from, to, enter = 0.6, exit = 0.6, drift = 14, style, child
 }
 
 // ── 底部解说字幕 ──────────────────────────────────────────────
-function Cap({ from, to, children }) {
+function Cap({ from, to, children, fr }) {
   const t = useT();
   if (t < from || t > to) return null;
   const o = fadeIO(t, from, to, 0.4, 0.35);
   const y = (1 - Easing.easeOutCubic(clamp((t - from) / 0.4, 0, 1))) * 10;
+  const content = tr(children, fr);
   return (
     <div style={{
       position: 'absolute', left: '50%', bottom: 46, transform: `translate(-50%, ${y}px)`,
-      width: 1560, textAlign: 'center', opacity: o,
-      fontFamily: MV.sans, fontSize: 31, fontWeight: 400, lineHeight: 1.55,
-      color: '#d9e1ec', letterSpacing: '0.02em',
+      width: isFr() ? 1660 : 1560, textAlign: 'center', opacity: o,
+      fontFamily: MV.sans, fontSize: isFr() ? 29 : 31, fontWeight: 400,
+      lineHeight: isFr() ? 1.35 : 1.55,
+      color: '#d9e1ec', letterSpacing: isFr() ? 0 : '0.02em',
       textShadow: '0 2px 18px rgba(0,0,0,0.8)',
       textWrap: 'pretty',
-    }}>{children}</div>
+    }}>{content}</div>
   );
 }
 // 字幕内强调色
@@ -69,16 +85,24 @@ function Em({ c = MV.mon, children }) {
 }
 
 // ── 章节牌（顶部）──────────────────────────────────────────────
-function Chapter({ from, to, num, zh, en, color }) {
+function Chapter({ from, to, num, zh, en, fr, color }) {
   const t = useT();
   if (t < from || t > to) return null;
   const o = fadeIO(t, from, to, 0.8, 0.6);
   const w = ev(t, from, 1.0) * 56;
+  const title = tr(zh, fr);
   return (
     <div style={{ position: 'absolute', top: 54, left: 0, right: 0, opacity: o, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10 }}>
       <div style={{ fontFamily: MV.mono, fontSize: 19, letterSpacing: '0.32em', color: MV.faint, textTransform: 'uppercase', whiteSpace: 'nowrap' }}>{num}</div>
-      <div style={{ fontFamily: MV.serif, fontSize: 44, fontWeight: 700, color: MV.ink, letterSpacing: '0.06em', whiteSpace: 'nowrap' }}>
-        {zh} <span style={{ color: color, fontWeight: 600, fontFamily: MV.mono, fontSize: 30, letterSpacing: '0.02em', marginLeft: 10 }}>{en}</span>
+      <div style={{
+        fontFamily: isFr() ? MV.sans : MV.serif,
+        fontSize: isFr() ? 40 : 44,
+        fontWeight: 700,
+        color: MV.ink,
+        letterSpacing: isFr() ? '0.01em' : '0.06em',
+        whiteSpace: 'nowrap',
+      }}>
+        {title} {en ? <span style={{ color: color, fontWeight: 600, fontFamily: MV.mono, fontSize: 30, letterSpacing: '0.02em', marginLeft: 10 }}>{en}</span> : null}
       </div>
       <div style={{ width: w, height: 3, background: color, borderRadius: 2 }}></div>
     </div>
@@ -274,13 +298,44 @@ function Badge({ x, y, label, color = MV.fun, from = 0, fontSize = 26, opacity =
 }
 
 // 时间戳标签：每秒更新 data-screen-label，便于按时刻评论
+function LocaleSwitch() {
+  const choices = [
+    { locale: 'zh', label: '中文' },
+    { locale: 'fr', label: 'FR' },
+  ];
+  return (
+    <div style={{
+      position: 'absolute', top: 22, right: 26, zIndex: 20,
+      display: 'flex', gap: 6, padding: 5,
+      border: `1px solid ${MV.line}`, borderRadius: 999,
+      background: 'rgba(13,17,23,0.72)', backdropFilter: 'blur(8px)',
+      fontFamily: MV.mono, fontSize: 15,
+    }}>
+      {choices.map((choice) => {
+        const active = LOCALE === choice.locale;
+        return (
+          <a key={choice.locale} href={localeHref(choice.locale)} title={choice.locale === 'fr' ? 'lang=fr' : 'lang=zh'} style={{
+            color: active ? MV.bg : MV.dim,
+            background: active ? MV.ink : 'transparent',
+            textDecoration: 'none',
+            borderRadius: 999,
+            padding: '7px 12px',
+            lineHeight: 1,
+            fontWeight: 700,
+          }}>{choice.label}</a>
+        );
+      })}
+    </div>
+  );
+}
+
 function Labeler({ scenes, children }) {
   const t = useT();
   const sec = Math.floor(t);
   const mm = String(Math.floor(sec / 60)).padStart(2, '0');
   const ss = String(sec % 60).padStart(2, '0');
   let name = '';
-  for (const s of scenes) { if (t >= s.t) name = s.name; }
+  for (const s of scenes) { if (t >= s.t) name = tr(s.name, s.fr); }
   return (
     <div data-screen-label={`${name} · ${mm}:${ss}`} style={{ position: 'absolute', inset: 0 }}>
       {children}
@@ -289,6 +344,6 @@ function Labeler({ scenes, children }) {
 }
 
 Object.assign(window, {
-  MV, useT, ev, fadeIO, FadeGroup, Cap, Em, Chapter, SvgLayer, Arrow, IdLoop,
-  NodeDot, BoxC, ValDot, CodeBlock, CODE_COLORS, Badge, Labeler,
+  MV, LOCALE, isFr, tr, useT, ev, fadeIO, FadeGroup, Cap, Em, Chapter, SvgLayer, Arrow, IdLoop,
+  NodeDot, BoxC, ValDot, CodeBlock, CODE_COLORS, Badge, LocaleSwitch, Labeler,
 });

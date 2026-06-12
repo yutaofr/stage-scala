@@ -28,13 +28,13 @@ function Scene3() {
   const showB = 134; // Boolean 列出现
   return (
     <Sprite start={104} end={170}>
-      <Chapter from={104.5} to={169} num="Chapter 02" zh="函子" en="Functor" color={MV.fun} />
+      <Chapter from={104.5} to={169} num="Chapter 02" zh="函子" fr="Foncteur" en="Functor" color={MV.fun} />
 
       <FadeGroup from={105} to={169.2} exit={0.8}>
         {/* 下层：普通世界 */}
-        <WorldPanel x={280} y={620} w={1360} h={260} color={MV.cat} label="普通的类型世界" from={105.5} />
+        <WorldPanel x={280} y={620} w={1360} h={260} color={MV.cat} label={tr('普通的类型世界', 'Monde des types ordinaires')} from={105.5} />
         {/* 上层：Option 世界 */}
-        <WorldPanel x={280} y={205} w={1360} h={260} color={MV.fun} label="Option 的世界" from={113} />
+        <WorldPanel x={280} y={205} w={1360} h={260} color={MV.fun} label={tr('Option 的世界', "Monde d'Option")} from={113} />
 
         <SvgLayer>
           {/* 下层箭头 f */}
@@ -80,7 +80,7 @@ function Scene3() {
             display: 'flex', alignItems: 'center', gap: 14, whiteSpace: 'nowrap',
           }}>
             <span style={{ fontSize: 40 }}>F</span>
-            <span style={{ color: MV.dim, fontSize: 22, fontFamily: MV.sans }}>↑ 搬运</span>
+            <span style={{ color: MV.dim, fontSize: 22, fontFamily: MV.sans }}>↑ {tr('搬运', 'transport')}</span>
           </div>
         </FadeGroup>
       </FadeGroup>
@@ -113,19 +113,19 @@ function Scene3() {
           position: 'absolute', left: 0, right: 0, top: 505, textAlign: 'center',
           fontFamily: MV.serif, fontSize: 38, fontWeight: 700, color: MV.ink, letterSpacing: '0.04em',
         }}>
-          函子 <span style={{ color: MV.faint }}>=</span> <span style={{ color: MV.fun }}>搬对象</span>
-          <span style={{ color: MV.faint }}> + </span><span style={{ color: MV.fun }}>搬箭头</span>
-          <span style={{ color: MV.faint }}> + </span><span style={{ color: MV.mon }}>不搬坏结构</span>
+          {tr('函子', 'Foncteur')} <span style={{ color: MV.faint }}>=</span> <span style={{ color: MV.fun }}>{tr('搬对象', 'transporter les objets')}</span>
+          <span style={{ color: MV.faint }}> + </span><span style={{ color: MV.fun }}>{tr('搬箭头', 'transporter les flèches')}</span>
+          <span style={{ color: MV.faint }}> + </span><span style={{ color: MV.mon }}>{tr('不搬坏结构', 'préserver la structure')}</span>
         </div>
       </FadeGroup>
 
-      <Cap from={105.5} to={113.2}>范畴内部的故事讲完了。下一个问题：范畴与范畴<Em c={MV.fun}>之间</Em>，能不能也连一条“箭头”？</Cap>
-      <Cap from={113.2} to={122.8}><Em c={MV.fun}>函子</Em>就是这样一台“世界搬运机”：它把每个类型 A，搬成 Option[A]。</Cap>
-      <Cap from={122.8} to={133.6}>更重要的是，它连箭头也一起搬：f 被抬升成 <Em c={MV.fun}>map(f)</Em>。没错——这就是你熟悉的 <Em>.map</Em>。</Cap>
-      <Cap from={133.6} to={144.8}>但搬运有军规：<Em c={MV.mon}>不能搬坏结构</Em>。先复合再搬，必须等于先搬再复合。</Cap>
-      <Cap from={144.8} to={152.6}>两条路殊途同归——这正是函子定律的第一条。</Cap>
-      <Cap from={152.6} to={161.5}>第二条：恒等箭头搬过去，还得是恒等。什么都不做的，搬完也得什么都不做。</Cap>
-      <Cap from={161.5} to={169.4}>一句话总结：函子是范畴之间<Em c={MV.fun}>保持结构的映射</Em>。</Cap>
+      <Cap from={105.5} to={113.2} fr={<>Nous avons terminé l'histoire à l'intérieur d'une catégorie. Question suivante : peut-on tracer une « flèche » <Em c={MV.fun}>entre</Em> deux catégories ?</>}>范畴内部的故事讲完了。下一个问题：范畴与范畴<Em c={MV.fun}>之间</Em>，能不能也连一条“箭头”？</Cap>
+      <Cap from={113.2} to={122.8} fr={<><Em c={MV.fun}>Un foncteur</Em> est cette machine de transport de mondes : il transforme chaque type A en Option[A].</>}><Em c={MV.fun}>函子</Em>就是这样一台“世界搬运机”：它把每个类型 A，搬成 Option[A]。</Cap>
+      <Cap from={122.8} to={133.6} fr={<>Plus important : il transporte aussi les flèches. f devient <Em c={MV.fun}>map(f)</Em>. Oui, c'est votre <Em>.map</Em> familier.</>}>更重要的是，它连箭头也一起搬：f 被抬升成 <Em c={MV.fun}>map(f)</Em>。没错——这就是你熟悉的 <Em>.map</Em>。</Cap>
+      <Cap from={133.6} to={144.8} fr={<>Mais le transport a une règle stricte : <Em c={MV.mon}>ne pas casser la structure</Em>. Composer puis transporter doit égaler transporter puis composer.</>}>但搬运有军规：<Em c={MV.mon}>不能搬坏结构</Em>。先复合再搬，必须等于先搬再复合。</Cap>
+      <Cap from={144.8} to={152.6} fr="Les deux chemins arrivent au même résultat : c'est la première loi du foncteur.">两条路殊途同归——这正是函子定律的第一条。</Cap>
+      <Cap from={152.6} to={161.5} fr="Deuxième loi : l'identité transportée doit rester une identité. Ce qui ne fait rien doit encore ne rien faire.">第二条：恒等箭头搬过去，还得是恒等。什么都不做的，搬完也得什么都不做。</Cap>
+      <Cap from={161.5} to={169.4} fr={<>En une phrase : un foncteur est une application entre catégories qui <Em c={MV.fun}>préserve la structure</Em>.</>}>一句话总结：函子是范畴之间<Em c={MV.fun}>保持结构的映射</Em>。</Cap>
     </Sprite>
   );
 }
@@ -147,7 +147,7 @@ function Scene4() {
   const loopP = ev(t, 173, 1.4);
   return (
     <Sprite start={170} end={218}>
-      <Chapter from={170.5} to={217} num="Chapter 03" zh="自函子" en="Endofunctor" color={MV.fun} />
+      <Chapter from={170.5} to={217} num="Chapter 03" zh="自函子" fr="Endofoncteur" en="Endofunctor" color={MV.fun} />
 
       <FadeGroup from={171} to={217.2} exit={0.8}>
         {/* 大范畴圆 */}
@@ -161,7 +161,7 @@ function Scene4() {
           position: 'absolute', left: C.x, top: C.y + C.r + 36, transform: 'translateX(-50%)',
           fontFamily: MV.sans, fontSize: 26, color: MV.cat, letterSpacing: '0.1em',
           opacity: ev(t, 171.8, 0.8), whiteSpace: 'nowrap',
-        }}>Scala 的类型范畴</div>
+        }}>{tr('Scala 的类型范畴', 'Catégorie des types Scala')}</div>
         {inner.map((n, i) => (
           <NodeDot key={i} x={C.x + n[0]} y={C.y + n[1]} label={n[2]} color={MV.cat}
             from={172 + i * 0.12} size={11} fontSize={19} dimLabel opacity={0.7} />
@@ -182,7 +182,7 @@ function Scene4() {
           position: 'absolute', left: C.x, top: C.y - C.r - 110, transform: 'translateX(-50%)',
           fontFamily: MV.sans, fontSize: 23, color: MV.dim,
           opacity: ev(t, 175, 0.8), whiteSpace: 'nowrap',
-        }}>出发点 = 目的地 ⇒ 自函子</div>
+        }}>{tr('出发点 = 目的地 ⇒ 自函子', 'départ = arrivée ⇒ endofoncteur')}</div>
 
         {/* 熟面孔徽章 */}
         {badges.map((b, i) => (
@@ -220,10 +220,10 @@ function Scene4() {
         </FadeGroup>
       </FadeGroup>
 
-      <Cap from={171.5} to={180.4}>如果一台搬运机的出发点和目的地是<Em c={MV.cat}>同一个范畴</Em>——它就叫<Em c={MV.fun}>自函子</Em>。</Cap>
-      <Cap from={180.4} to={192.4}>在 Scala 里你认识一大把：每一个 <Em c={MV.fun}>F[_]</Em>，都是从类型世界搬回类型世界的自函子。</Cap>
-      <Cap from={192.4} to={205.8}>自函子有个微妙的本事：终点还在原地，所以它可以<Em c={MV.mon}>再作用一次</Em>——于是出现了嵌套。</Cap>
-      <Cap from={205.8} to={217.4}>Option[Option[Int]]、Future[Future[T]]……记住这种嵌套的<Em c={MV.mnd}>不适感</Em>。单子的整个故事，就是为了化解它。</Cap>
+      <Cap from={171.5} to={180.4} fr={<>Si une machine de transport part et arrive dans <Em c={MV.cat}>la même catégorie</Em>, elle s'appelle un <Em c={MV.fun}>endofoncteur</Em>.</>}>如果一台搬运机的出发点和目的地是<Em c={MV.cat}>同一个范畴</Em>——它就叫<Em c={MV.fun}>自函子</Em>。</Cap>
+      <Cap from={180.4} to={192.4} fr={<>En Scala, vous en connaissez beaucoup : chaque <Em c={MV.fun}>F[_]</Em> transporte le monde des types vers lui-même.</>}>在 Scala 里你认识一大把：每一个 <Em c={MV.fun}>F[_]</Em>，都是从类型世界搬回类型世界的自函子。</Cap>
+      <Cap from={192.4} to={205.8} fr={<>Un endofoncteur a un pouvoir subtil : comme l'arrivée reste au même endroit, il peut <Em c={MV.mon}>s'appliquer encore une fois</Em>. L'imbrication apparaît.</>}>自函子有个微妙的本事：终点还在原地，所以它可以<Em c={MV.mon}>再作用一次</Em>——于是出现了嵌套。</Cap>
+      <Cap from={205.8} to={217.4} fr={<><Em>Option[Option[Int]]</Em>, <Em>Future[Future[T]]</Em>... gardez en tête ce <Em c={MV.mnd}>malaise de l'imbrication</Em>. Toute l'histoire de la monade sert à le dissoudre.</>}>Option[Option[Int]]、Future[Future[T]]……记住这种嵌套的<Em c={MV.mnd}>不适感</Em>。单子的整个故事，就是为了化解它。</Cap>
     </Sprite>
   );
 }

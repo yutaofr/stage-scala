@@ -1,0 +1,65 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="720" viewBox="0 0 1280 720">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#080c12"/>
+      <stop offset="0.62" stop-color="#0d1117"/>
+      <stop offset="1" stop-color="#15191f"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="78%" cy="40%" r="44%">
+      <stop offset="0" stop-color="#ec8a6a" stop-opacity="0.32"/>
+      <stop offset="0.55" stop-color="#ec8a6a" stop-opacity="0.09"/>
+      <stop offset="1" stop-color="#ec8a6a" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="shadow" x="-30%" y="-30%" width="160%" height="160%">
+      <feDropShadow dx="0" dy="16" stdDeviation="18" flood-color="#000000" flood-opacity="0.5"/>
+    </filter>
+    <filter id="text-shadow" x="-15%" y="-20%" width="130%" height="145%">
+      <feDropShadow dx="0" dy="8" stdDeviation="9" flood-color="#000000" flood-opacity="0.68"/>
+    </filter>
+    <style>
+      .serif { font-family: "Noto Serif SC", "Songti SC", "STSong", serif; }
+      .sans { font-family: "Noto Sans SC", "PingFang SC", "Hiragino Sans GB", sans-serif; }
+      .mono { font-family: "JetBrains Mono", "SFMono-Regular", "Menlo", monospace; }
+    </style>
+  </defs>
+
+  <rect width="1280" height="720" fill="url(#bg)"/>
+  <rect width="1280" height="720" fill="url(#glow)"/>
+
+  <g opacity="0.16">
+    <path d="M66 626 H1214" stroke="#e9eef5" stroke-width="2"/>
+    <path d="M1048 78 C1178 146 1192 278 1122 394" fill="none" stroke="#ec8a6a" stroke-width="2"/>
+    <path d="M1000 118 C1120 206 1096 342 986 424" fill="none" stroke="#58c4dd" stroke-width="2"/>
+  </g>
+
+  <g transform="translate(72 70)">
+    <rect x="0" y="0" width="150" height="44" rx="22" fill="#ffffff" fill-opacity="0.06" stroke="#e9eef5" stroke-opacity="0.14"/>
+    <text x="28" y="30" class="sans" font-size="22" font-weight="800" fill="#93a0b4">直觉版</text>
+  </g>
+
+  <g filter="url(#text-shadow)">
+    <text x="72" y="225" class="serif" font-size="104" font-weight="900" fill="#e9eef5">别背定义</text>
+    <text x="76" y="318" class="serif" font-size="82" font-weight="900" fill="#ec8a6a">看懂 flatMap</text>
+    <text x="80" y="382" class="sans" font-size="36" font-weight="700" fill="#d9e1ec">map + flatten，一步压平嵌套</text>
+  </g>
+
+  <g transform="translate(740 160)" filter="url(#shadow)">
+    <circle cx="210" cy="210" r="176" fill="#151b23" stroke="#ec8a6a" stroke-width="6"/>
+    <circle cx="210" cy="210" r="126" fill="#10161d" stroke="#f0c674" stroke-width="3" stroke-opacity="0.85"/>
+    <text x="210" y="184" class="mono" text-anchor="middle" font-size="48" font-weight="900" fill="#e9eef5">F[F[A]]</text>
+    <text x="210" y="234" class="mono" text-anchor="middle" font-size="42" font-weight="900" fill="#93a0b4">→</text>
+    <text x="210" y="286" class="mono" text-anchor="middle" font-size="48" font-weight="900" fill="#ec8a6a">F[A]</text>
+    <text x="210" y="342" class="sans" text-anchor="middle" font-size="27" font-weight="700" fill="#d9e1ec">压平嵌套</text>
+  </g>
+
+  <g transform="translate(82 522)">
+    <rect x="0" y="0" width="526" height="74" rx="14" fill="#ffffff" fill-opacity="0.055" stroke="#e9eef5" stroke-opacity="0.12"/>
+    <text x="34" y="48" class="mono" font-size="30" font-weight="800" fill="#58c4dd">map</text>
+    <text x="122" y="48" class="mono" font-size="30" font-weight="700" fill="#93a0b4">→</text>
+    <text x="172" y="48" class="mono" font-size="30" font-weight="800" fill="#f0c674">flatten</text>
+    <text x="330" y="48" class="mono" font-size="30" font-weight="700" fill="#93a0b4">→</text>
+    <text x="380" y="48" class="mono" font-size="30" font-weight="800" fill="#ec8a6a">flatMap</text>
+  </g>
+
+  <text x="76" y="660" class="sans" font-size="28" font-weight="700" fill="#93a0b4">从代码走到结构</text>
+</svg>

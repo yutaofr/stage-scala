@@ -25,18 +25,18 @@ function Scene7() {
     [['}', 'pl']],
   ];
   const instances = [
-    { l: 'Option', pure: 'Some(_)', flat: '压平「可能为空」', c: MV.fun },
-    { l: 'Either[E, _]', pure: 'Right(_)', flat: '压平「可能失败」', c: MV.cat },
-    { l: 'Future', pure: 'successful(_)', flat: '压平「尚未完成」', c: MV.pur },
-    { l: 'IO', pure: 'IO.pure(_)', flat: '压平「副作用的计划」', c: MV.mnd },
+    { l: 'Option', pure: 'Some(_)', flat: tr('压平「可能为空」', 'aplatit « peut être vide »'), c: MV.fun },
+    { l: 'Either[E, _]', pure: 'Right(_)', flat: tr('压平「可能失败」', 'aplatit « peut échouer »'), c: MV.cat },
+    { l: 'Future', pure: 'successful(_)', flat: tr('压平「尚未完成」', 'aplatit « pas encore terminé »'), c: MV.pur },
+    { l: 'IO', pure: 'IO.pure(_)', flat: tr('压平「副作用的计划」', "aplatit « plan d'effets »"), c: MV.mnd },
   ];
   return (
     <Sprite start={388} end={452}>
-      <Chapter from={388.5} to={451} num="Chapter 06" zh="回到 Scala" en="" color={MV.mnd} />
+      <Chapter from={388.5} to={451} num="Chapter 06" zh="回到 Scala" fr="Retour à Scala" en="" color={MV.mnd} />
 
       {/* C1+C2：trait + flatMap = map + flatten */}
       <FadeGroup from={389} to={c3 - 0.5} exit={0.6}>
-        <CodeBlock x={170} y={310} from={389.5} lines={traitLines} size={29} title="你每天都在用的接口" />
+        <CodeBlock x={170} y={310} from={389.5} lines={traitLines} size={29} title={tr('你每天都在用的接口', 'interface utilisée tous les jours')} />
         <div style={{
           position: 'absolute', left: 170, top: 640, fontFamily: MV.mono, fontSize: 30,
           opacity: ev(t, c2, 0.7), whiteSpace: 'nowrap',
@@ -60,14 +60,14 @@ function Scene7() {
             fontFamily: MV.mono, fontSize: 31, fontWeight: 700, color: d.c,
             border: `2px solid ${d.c}55`, borderRadius: 12, padding: '8px 24px', background: '#131820',
             opacity: ev(t, d.at, 0.5),
-          }}>{d.l}{d.warn ? <span style={{ color: MV.dim, fontSize: 23, fontWeight: 400 }}>　← 嵌套又来了</span> : null}</div>
+          }}>{d.l}{d.warn ? <span style={{ color: MV.dim, fontSize: 23, fontWeight: 400 }}>　← {tr('嵌套又来了', "l'imbrication revient")}</span> : null}</div>
         ))}
       </FadeGroup>
 
       {/* C3：四大常客 */}
       <FadeGroup from={c3} to={c4 - 0.5} exit={0.6}>
         <div style={{ position: 'absolute', left: 0, right: 0, top: 230, textAlign: 'center', fontFamily: MV.serif, fontSize: 32, fontWeight: 700, color: MV.ink, opacity: ev(t, c3 + 0.3, 0.6) }}>
-          同一个幺半群，四副面孔
+          {tr('同一个幺半群，四副面孔', 'Le même monoïde, quatre visages')}
         </div>
         {instances.map((d, i) => {
           const at = c3 + 1 + i * 1.6;
@@ -93,22 +93,22 @@ function Scene7() {
 
       {/* C4：for 推导式 */}
       <FadeGroup from={c4} to={c5 - 0.5} exit={0.6}>
-        <CodeBlock x={180} y={350} from={c4 + 0.5} lines={forLines} size={29} title="你写的" />
+        <CodeBlock x={180} y={350} from={c4 + 0.5} lines={forLines} size={29} title={tr('你写的', 'vous écrivez')} />
         <SvgLayer>
-          <Arrow x1={830} y1={530} x2={1000} y2={530} color={MV.mon} width={4.5} from={c4 + 4} dur={0.8} label="脱糖" labelDy={-18} labelSize={24} shrink={10} />
+          <Arrow x1={830} y1={530} x2={1000} y2={530} color={MV.mon} width={4.5} from={c4 + 4} dur={0.8} label={tr('脱糖', 'désucrage')} labelDy={-18} labelSize={24} shrink={10} />
         </SvgLayer>
-        <CodeBlock x={1030} y={335} from={c4 + 5} lines={desugarLines} size={27} title="编译器看到的" />
+        <CodeBlock x={1030} y={335} from={c4 + 5} lines={desugarLines} size={27} title={tr('编译器看到的', 'ce que voit le compilateur')} />
       </FadeGroup>
 
       {/* C5：三定律 */}
       <FadeGroup from={c5} to={451.4} exit={0.7}>
         <div style={{ position: 'absolute', left: 0, right: 0, top: 280, textAlign: 'center', fontFamily: MV.serif, fontSize: 32, fontWeight: 700, color: MV.ink, opacity: ev(t, c5 + 0.3, 0.6) }}>
-          三条定律，还是那个幺半群
+          {tr('三条定律，还是那个幺半群', 'Trois lois, toujours le même monoïde')}
         </div>
         {[
-          { f: 'pure(a).flatMap(f)', e: 'f(a)', n: '左单位', at: c5 + 1.2 },
-          { f: 'fa.flatMap(pure)', e: 'fa', n: '右单位', at: c5 + 2.6 },
-          { f: 'fa.flatMap(f).flatMap(g)', e: 'fa.flatMap(a => f(a).flatMap(g))', n: '结合律', at: c5 + 4.0 },
+          { f: 'pure(a).flatMap(f)', e: 'f(a)', n: tr('左单位', 'unité gauche'), at: c5 + 1.2 },
+          { f: 'fa.flatMap(pure)', e: 'fa', n: tr('右单位', 'unité droite'), at: c5 + 2.6 },
+          { f: 'fa.flatMap(f).flatMap(g)', e: 'fa.flatMap(a => f(a).flatMap(g))', n: tr('结合律', 'associativité'), at: c5 + 4.0 },
         ].map((d, i) => (
           <div key={i} style={{
             position: 'absolute', left: 0, right: 0, top: 400 + i * 120, textAlign: 'center',
@@ -122,11 +122,11 @@ function Scene7() {
         ))}
       </FadeGroup>
 
-      <Cap from={389.5} to={398.2}>回到 Scala。范畴论给的是 flatten，但工程上我们把 <Em c={MV.fun}>map</Em> 和 <Em c={MV.mon}>flatten</Em> 合成了一步——</Cap>
-      <Cap from={398.2} to={408.6}>这就是 <Em c={MV.mnd}>flatMap</Em>。名字早就把真相写在脸上了：map 完会嵌套，所以顺手压平。</Cap>
-      <Cap from={408.6} to={423.6}>Option 压平「可能为空」，Either 压平「可能失败」，Future 压平「尚未完成」，IO 压平「副作用的计划」——<Em>同一个数学结构</Em>。</Cap>
-      <Cap from={423.6} to={439.6}>for 推导式只是 flatMap 的糖。单子给你的能力，是把一步步<Em c={MV.fun}>装在盒子里的计算</Em>安全地串成流水线。</Cap>
-      <Cap from={439.6} to={451.6}>三条定律保证：这条流水线无论怎么加括号、怎么重构，<Em c={MV.mon}>语义都不变</Em>。</Cap>
+      <Cap from={389.5} to={398.2} fr={<>Retour à Scala. La théorie des catégories donne flatten, mais en pratique on fusionne <Em c={MV.fun}>map</Em> et <Em c={MV.mon}>flatten</Em> en une seule étape.</>}>回到 Scala。范畴论给的是 flatten，但工程上我们把 <Em c={MV.fun}>map</Em> 和 <Em c={MV.mon}>flatten</Em> 合成了一步——</Cap>
+      <Cap from={398.2} to={408.6} fr={<>Voilà <Em c={MV.mnd}>flatMap</Em>. Son nom porte déjà la vérité : map crée de l'imbrication, puis on l'aplatit.</>}>这就是 <Em c={MV.mnd}>flatMap</Em>。名字早就把真相写在脸上了：map 完会嵌套，所以顺手压平。</Cap>
+      <Cap from={408.6} to={423.6} fr={<>Option aplatit le « peut-être vide », Either le « peut échouer », Future le « pas encore terminé », IO le « plan d'effets » : <Em>même structure mathématique</Em>.</>}>Option 压平「可能为空」，Either 压平「可能失败」，Future 压平「尚未完成」，IO 压平「副作用的计划」——<Em>同一个数学结构</Em>。</Cap>
+      <Cap from={423.6} to={439.6} fr={<>Une for-comprehension n'est que du sucre pour flatMap. Une monade vous permet d'enchaîner sûrement des <Em c={MV.fun}>calculs enfermés dans des boîtes</Em>.</>}>for 推导式只是 flatMap 的糖。单子给你的能力，是把一步步<Em c={MV.fun}>装在盒子里的计算</Em>安全地串成流水线。</Cap>
+      <Cap from={439.6} to={451.6} fr={<>Les trois lois garantissent que cette chaîne garde le même sens quand on déplace les parenthèses ou qu'on la refactorise : <Em c={MV.mon}>la sémantique ne change pas</Em>.</>}>三条定律保证：这条流水线无论怎么加括号、怎么重构，<Em c={MV.mon}>语义都不变</Em>。</Cap>
     </Sprite>
   );
 }
@@ -135,10 +135,10 @@ function Scene7() {
 function Scene8() {
   const t = useT();
   const cards = [
-    { zh: '单子', c: MV.mnd, x: 330, body: '以上这一切结构的名字', at: 459.8 },
-    { zh: '自函子', c: MV.fun, x: 750, body: 'F[_]：Option、Either、Future、IO…', at: 456.2 },
-    { zh: '范畴', c: MV.cat, x: 1170, body: '自函子们组成的世界，箭头是自然变换', at: 457.4 },
-    { zh: '幺半群', c: MV.mon, x: 1590, body: '乘法 flatten · 单位 pure · 结合律', at: 458.6 },
+    { zh: tr('单子', 'Monade'), c: MV.mnd, x: 330, body: tr('以上这一切结构的名字', 'Le nom de toute cette structure'), at: 459.8 },
+    { zh: tr('自函子', 'Endofoncteur'), c: MV.fun, x: 750, body: tr('F[_]：Option、Either、Future、IO…', 'F[_] : Option, Either, Future, IO...'), at: 456.2 },
+    { zh: tr('范畴', 'Catégorie'), c: MV.cat, x: 1170, body: tr('自函子们组成的世界，箭头是自然变换', 'Le monde formé par les endofoncteurs ; les flèches sont les transformations naturelles'), at: 457.4 },
+    { zh: tr('幺半群', 'Monoïde'), c: MV.mon, x: 1590, body: tr('乘法 flatten · 单位 pure · 结合律', 'multiplication flatten · unité pure · associativité'), at: 458.6 },
   ];
   const endFade = ev(t, 472, 1.2); // 收尾
   return (
@@ -154,8 +154,8 @@ function Scene8() {
               border: `2px solid ${d.c}66`, borderRadius: 20, background: '#12171f',
               padding: '30px 32px', boxShadow: `0 0 30px ${d.c}1a`,
             }}>
-              <div style={{ fontFamily: MV.serif, fontSize: 34, fontWeight: 700, color: d.c, marginBottom: 16 }}>{d.zh}</div>
-              <div style={{ fontFamily: MV.sans, fontSize: 24, lineHeight: 1.6, color: '#c3cddb', textWrap: 'pretty' }}>{d.body}</div>
+              <div style={{ fontFamily: isFr() ? MV.sans : MV.serif, fontSize: isFr() ? 31 : 34, fontWeight: 700, color: d.c, marginBottom: 16 }}>{d.zh}</div>
+              <div style={{ fontFamily: MV.sans, fontSize: isFr() ? 22 : 24, lineHeight: 1.6, color: '#c3cddb', textWrap: 'pretty' }}>{d.body}</div>
             </div>
           );
         })}
@@ -168,14 +168,14 @@ function Scene8() {
           fontFamily: MV.serif, fontSize: 52, fontWeight: 700, color: MV.ink, letterSpacing: '0.06em',
           opacity: ev(t, 474.5, 1.0),
         }}>
-          它从来不是魔法。
+          {tr('它从来不是魔法。', "Ce n'était jamais de la magie.")}
         </div>
         <div style={{
           position: 'absolute', left: 0, right: 0, top: 560, textAlign: 'center',
           fontFamily: MV.serif, fontSize: 36, fontWeight: 600, color: MV.dim, letterSpacing: '0.08em',
           opacity: ev(t, 477, 1.0),
         }}>
-          只是<span style={{ color: MV.cat }}>复合</span>，加上一点点<span style={{ color: MV.mon }}>纪律</span>。
+          {tr('只是', 'Seulement de la ')}<span style={{ color: MV.cat }}>{tr('复合', 'composition')}</span>{tr('，加上一点点', ', plus un peu de ')}<span style={{ color: MV.mon }}>{tr('纪律', 'discipline')}</span>{tr('。', '.')}
         </div>
         <div style={{
           position: 'absolute', left: 0, right: 0, top: 700, textAlign: 'center',
@@ -184,8 +184,8 @@ function Scene8() {
         }}>FIN</div>
       </FadeGroup>
 
-      <Cap from={453} to={461.5}>现在再读这句话——每个词，都已经是你的旧相识。</Cap>
-      <Cap from={461.5} to={471.5}>一个<Em c={MV.mnd}>单子</Em>，就是<Em c={MV.fun}>自函子</Em><Em c={MV.cat}>范畴</Em>上的一个<Em c={MV.mon}>幺半群</Em>。如今，这只是一句平凡的陈述。</Cap>
+      <Cap from={453} to={461.5} fr="Relisez maintenant cette phrase : chaque mot est devenu un vieil ami.">现在再读这句话——每个词，都已经是你的旧相识。</Cap>
+      <Cap from={461.5} to={471.5} fr={<>Une <Em c={MV.mnd}>monade</Em> est un <Em c={MV.mon}>monoïde</Em> dans la <Em c={MV.cat}>catégorie</Em> des <Em c={MV.fun}>endofoncteurs</Em>. Maintenant, ce n'est qu'un énoncé ordinaire.</>}>一个<Em c={MV.mnd}>单子</Em>，就是<Em c={MV.fun}>自函子</Em><Em c={MV.cat}>范畴</Em>上的一个<Em c={MV.mon}>幺半群</Em>。如今，这只是一句平凡的陈述。</Cap>
     </Sprite>
   );
 }

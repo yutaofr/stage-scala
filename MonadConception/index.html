@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>单子：自函子范畴上的幺半群 · 动画讲解</title>
+<title>单子 / Monade · 动画讲解 / Présentation animée</title>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@600;700;900&family=Noto+Sans+SC:wght@400;500;700&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet" />
@@ -28,19 +28,20 @@
 
 <script type="text/babel">
   const SCENES = [
-    { t: 0,   name: '第1幕 · 开场名言' },
-    { t: 38,  name: '第2幕 · 范畴' },
-    { t: 104, name: '第3幕 · 函子' },
-    { t: 170, name: '第4幕 · 自函子' },
-    { t: 218, name: '第5幕 · 幺半群' },
-    { t: 290, name: '第6幕 · 自函子范畴上的幺半群' },
-    { t: 388, name: '第7幕 · 回到 Scala' },
-    { t: 452, name: '第8幕 · 终幕' },
+    { t: 0,   name: '第1幕 · 开场名言', fr: 'Acte 1 · Citation' },
+    { t: 38,  name: '第2幕 · 范畴', fr: 'Acte 2 · Catégorie' },
+    { t: 104, name: '第3幕 · 函子', fr: 'Acte 3 · Foncteur' },
+    { t: 170, name: '第4幕 · 自函子', fr: 'Acte 4 · Endofoncteur' },
+    { t: 218, name: '第5幕 · 幺半群', fr: 'Acte 5 · Monoïde' },
+    { t: 290, name: '第6幕 · 自函子范畴上的幺半群', fr: 'Acte 6 · Monoïde dans la catégorie des endofoncteurs' },
+    { t: 388, name: '第7幕 · 回到 Scala', fr: 'Acte 7 · Retour à Scala' },
+    { t: 452, name: '第8幕 · 终幕', fr: 'Acte 8 · Final' },
   ];
 
   function App() {
     return (
       <Stage width={1920} height={1080} duration={484} background={MV.bg} persistKey="monad-video" autoplay={false} loop={false}>
+        <LocaleSwitch />
         <Labeler scenes={SCENES}>
           <Scene1 />
           <Scene2 />

@@ -81,7 +81,7 @@ function Scene5() {
   const t = useT();
   return (
     <Sprite start={218} end={290}>
-      <Chapter from={218.5} to={289} num="Chapter 04" zh="幺半群" en="Monoid" color={MV.mon} />
+      <Chapter from={218.5} to={289} num="Chapter 04" zh="幺半群" fr="Monoïde" en="Monoid" color={MV.mon} />
 
       {/* A：整数加法 */}
       <FadeGroup from={219} to={240.5} exit={0.6}>
@@ -95,7 +95,7 @@ function Scene5() {
         <div style={{
           position: 'absolute', left: 960, top: 800, transform: 'translateX(-50%)',
           fontFamily: MV.sans, fontSize: 26, color: MV.dim, opacity: ev(t, 233, 0.6), whiteSpace: 'nowrap',
-        }}>0 是<span style={{ color: MV.mon }}>单位元</span>：加了等于没加</div>
+        }}>0 {tr('是', 'est ')}<span style={{ color: MV.mon }}>{tr('单位元', "l'élément neutre")}</span>{tr('：加了等于没加', " : l'ajouter ne change rien")}</div>
       </FadeGroup>
 
       {/* B：字符串 / 列表 */}
@@ -104,13 +104,13 @@ function Scene5() {
         <div style={{
           position: 'absolute', left: 960, top: 580, transform: 'translateX(-50%)',
           fontFamily: MV.mono, fontSize: 28, color: MV.dim, opacity: ev(t, 245, 0.6), whiteSpace: 'nowrap',
-        }}>(String, ++)　单位元 ""</div>
+        }}>(String, ++)　{tr('单位元', 'élément neutre')} ""</div>
         <div style={{
           position: 'absolute', left: 960, top: 680, transform: 'translateX(-50%)',
           fontFamily: MV.mono, fontSize: 30, color: MV.ink, opacity: ev(t, 247.5, 0.7), whiteSpace: 'nowrap',
         }}>
           List(1, 2) <span style={{ color: MV.mon }}>++</span> List(3) <span style={{ color: MV.faint }}>==</span> List(1, 2, 3)
-          <span style={{ color: MV.dim, fontSize: 25 }}>　单位元 Nil</span>
+          <span style={{ color: MV.dim, fontSize: 25 }}>　{tr('单位元', 'élément neutre')} Nil</span>
         </div>
       </FadeGroup>
 
@@ -126,7 +126,7 @@ function Scene5() {
         <div style={{
           position: 'absolute', left: 960, top: 680, transform: 'translateX(-50%)', textAlign: 'center',
           fontFamily: MV.sans, fontSize: 27, color: MV.dim, opacity: ev(t, 260, 0.8), whiteSpace: 'nowrap',
-        }}>唯一的要求：<span style={{ color: MV.mon }}>结合律</span>。先算哪一边，结果都一样。</div>
+        }}>{tr('唯一的要求：', 'Seule exigence : ')}<span style={{ color: MV.mon }}>{tr('结合律', 'associativité')}</span>{tr('。先算哪一边，结果都一样。', '. Peu importe le parenthésage, le résultat est le même.')}</div>
       </FadeGroup>
 
       {/* D：抽象出形状 */}
@@ -144,19 +144,19 @@ function Scene5() {
               padding: '44px 64px',
             }}>
               <div style={{ fontFamily: MV.serif, fontSize: 34, fontWeight: 700, color: MV.mon, marginBottom: 30, textAlign: 'center', letterSpacing: '0.08em' }}>
-                幺半群的「形状」
+                {tr('幺半群的「形状」', "La forme d'un monoïde")}
               </div>
               <div style={{ fontFamily: MV.mono, fontSize: 31, lineHeight: 2.0, color: MV.ink }}>
                 <div style={{ opacity: ev(t, 268.5, 0.6) }}>
                   <span style={{ color: MV.mon }}>combine</span><span style={{ color: MV.faint }}> : </span>(M, M) =&gt; M
-                  <span style={{ color: MV.faint, fontSize: 25 }}>　// 乘法</span>
+                  <span style={{ color: MV.faint, fontSize: 25 }}>　// {tr('乘法', 'multiplication')}</span>
                 </div>
                 <div style={{ opacity: ev(t, 270.5, 0.6) }}>
                   <span style={{ color: MV.mon }}>empty</span><span style={{ color: MV.faint }}>   : </span>M
-                  <span style={{ color: MV.faint, fontSize: 25 }}>　　　　 // 单位元</span>
+                  <span style={{ color: MV.faint, fontSize: 25 }}>　　　　 // {tr('单位元', 'élément neutre')}</span>
                 </div>
                 <div style={{ opacity: ev(t, 272.5, 0.6), fontSize: 27, color: MV.dim, marginTop: 8 }}>
-                  约束：combine 满足结合律，empty 两边都不起作用
+                  {tr('约束：combine 满足结合律，empty 两边都不起作用', "Contrainte : combine est associative, empty ne change rien des deux côtés")}
                 </div>
               </div>
             </div>
@@ -164,12 +164,12 @@ function Scene5() {
         })()}
       </FadeGroup>
 
-      <Cap from={219.5} to={228.8}>现在暂时离开范畴，看一个简单得多的结构。两个东西，<Em>合并</Em>成一个。</Cap>
-      <Cap from={228.8} to={240.6}>一堆东西、一个二元运算、一个<Em>不起作用的单位元</Em>——这就是幺半群。</Cap>
-      <Cap from={240.6} to={252.6}>字符串拼接、列表拼接……换了衣服，还是<Em>同一个模式</Em>。</Cap>
-      <Cap from={252.6} to={266.6}>它只提一个要求：<Em>结合律</Em>。括号加在哪儿都行——这让“任意分组归并”成为可能。</Cap>
-      <Cap from={266.6} to={279.8}>把具体例子抹掉，只剩一个形状：一个<Em>乘法</Em>，一个<Em>单位</Em>，一条结合律。</Cap>
-      <Cap from={279.8} to={289.4}>关键一步来了——这个形状<Em c={MV.mnd}>并不挑剔 M 是什么</Em>。哪个世界里有乘法和单位，哪个世界里就有幺半群。</Cap>
+      <Cap from={219.5} to={228.8} fr={<>Quittons un instant les catégories pour regarder une structure beaucoup plus simple : deux choses se <Em>combinent</Em> en une.</>}>现在暂时离开范畴，看一个简单得多的结构。两个东西，<Em>合并</Em>成一个。</Cap>
+      <Cap from={228.8} to={240.6} fr={<>Un ensemble de choses, une opération binaire, et un <Em>élément neutre qui ne change rien</Em> : c'est un monoïde.</>}>一堆东西、一个二元运算、一个<Em>不起作用的单位元</Em>——这就是幺半群。</Cap>
+      <Cap from={240.6} to={252.6} fr={<>Concaténation de chaînes, concaténation de listes... les habits changent, le <Em>motif reste le même</Em>.</>}>字符串拼接、列表拼接……换了衣服，还是<Em>同一个模式</Em>。</Cap>
+      <Cap from={252.6} to={266.6} fr={<>Il ne demande qu'une chose : <Em>l'associativité</Em>. Les parenthèses peuvent bouger, le résultat reste le même.</>}>它只提一个要求：<Em>结合律</Em>。括号加在哪儿都行——这让“任意分组归并”成为可能。</Cap>
+      <Cap from={266.6} to={279.8} fr={<>Effacez les exemples concrets : il reste une forme, une <Em>multiplication</Em>, une <Em>unité</Em>, une loi d'associativité.</>}>把具体例子抹掉，只剩一个形状：一个<Em>乘法</Em>，一个<Em>单位</Em>，一条结合律。</Cap>
+      <Cap from={279.8} to={289.4} fr={<>L'étape clé arrive : cette forme <Em c={MV.mnd}>ne se soucie pas de ce qu'est M</Em>. Là où il y a multiplication et unité, il peut y avoir un monoïde.</>}>关键一步来了——这个形状<Em c={MV.mnd}>并不挑剔 M 是什么</Em>。哪个世界里有乘法和单位，哪个世界里就有幺半群。</Cap>
     </Sprite>
   );
 }
@@ -181,7 +181,7 @@ function Scene6() {
   const p2 = 326, p3 = 358, p4 = 374; // 阶段起点：乘法 / 定律 / 集大成
   return (
     <Sprite start={290} end={388}>
-      <Chapter from={290.5} to={387} num="Chapter 05" zh="自函子范畴上的幺半群" en="" color={MV.mnd} />
+      <Chapter from={290.5} to={387} num="Chapter 05" zh="自函子范畴上的幺半群" fr="Monoïde dans la catégorie des endofoncteurs" en="" color={MV.mnd} />
 
       {/* P1：自函子们自己的范畴 */}
       <FadeGroup from={291} to={p2 - 0.5} exit={0.8}>
@@ -213,14 +213,14 @@ function Scene6() {
           }}>
             List(1, 2, 3)<span style={{ color: MV.pur }}>.headOption</span>
             <span style={{ color: MV.faint }}>  ⇒  </span>Some(1)
-            <span style={{ color: MV.dim, fontFamily: MV.sans, fontSize: 24 }}>　换容器，不碰值</span>
+            <span style={{ color: MV.dim, fontFamily: MV.sans, fontSize: 24 }}>　{tr('换容器，不碰值', 'changer le contenant, sans toucher à la valeur')}</span>
           </div>
         </FadeGroup>
         <div style={{
           position: 'absolute', left: 960, top: 188, transform: 'translateX(-50%)',
           fontFamily: MV.sans, fontSize: 25, color: MV.dim, letterSpacing: '0.1em',
           opacity: ev(t, 296, 0.8), whiteSpace: 'nowrap',
-        }}>对象 = <span style={{ color: MV.fun }}>自函子</span>　·　箭头 = <span style={{ color: MV.pur }}>自然变换</span></div>
+        }}>{tr('对象 = ', 'objets = ')}<span style={{ color: MV.fun }}>{tr('自函子', 'endofoncteurs')}</span>　·　{tr('箭头 = ', 'flèches = ')}<span style={{ color: MV.pur }}>{tr('自然变换', 'transformations naturelles')}</span></div>
       </FadeGroup>
 
       {/* 右上角任务卡：乘法=? 单位=?（贯穿 P1 末尾到 P3）*/}
@@ -230,10 +230,10 @@ function Scene6() {
           border: `2px solid ${MV.mon}77`, borderRadius: 20, background: '#131820',
           padding: '26px 34px', boxShadow: `0 0 30px ${MV.mon}1a`,
         }}>
-          <div style={{ fontFamily: MV.serif, fontSize: 26, fontWeight: 700, color: MV.mon, marginBottom: 18 }}>套用幺半群形状</div>
+          <div style={{ fontFamily: isFr() ? MV.sans : MV.serif, fontSize: 26, fontWeight: 700, color: MV.mon, marginBottom: 18 }}>{tr('套用幺半群形状', 'Appliquer la forme du monoïde')}</div>
           {[
-            { q: '乘法 combine', a: 'flatten', at: 339 },
-            { q: '单位 empty', a: 'pure', at: 353 },
+            { q: tr('乘法 combine', 'multiplication combine'), a: 'flatten', at: 339 },
+            { q: tr('单位 empty', 'unité empty'), a: 'pure', at: 353 },
           ].map((d, i) => {
             const ans = ev(t, d.at, 0.5, Easing.easeOutBack);
             return (
@@ -256,7 +256,7 @@ function Scene6() {
         <div style={{
           position: 'absolute', left: 120, top: 268, fontFamily: MV.sans, fontSize: 26, color: MV.dim,
           opacity: ev(t, p2 + 0.5, 0.6), whiteSpace: 'nowrap',
-        }}>自函子的「乘法」：把 F 套进 F —— <span style={{ color: MV.fun, fontFamily: MV.mono }}>F ∘ F</span></div>
+        }}>{tr('自函子的「乘法」：把 F 套进 F —— ', 'La « multiplication » des endofoncteurs : mettre F dans F — ')}<span style={{ color: MV.fun, fontFamily: MV.mono }}>F ∘ F</span></div>
         <BoxC x={150} y={330} w={460} h={250} color={MV.fun} label="Some" from={p2 + 1.5}>
           <BoxC x={110} y={56} w={240} h={150} color={MV.fun} label="Some" from={p2 + 2.1} labelSize={19} style={{ position: 'absolute' }}>
             <ValDot x={120} y={78} label="42" from={p2 + 2.6} size={64} style={{ position: 'absolute' }} />
@@ -276,7 +276,7 @@ function Scene6() {
           opacity: ev(t, p2 + 7, 0.7), whiteSpace: 'nowrap',
         }}>
           <span style={{ color: MV.mon }}>combine</span> : F ∘ F ~&gt; F
-          <span style={{ color: MV.faint }}>　即　</span>
+          <span style={{ color: MV.faint }}>　{tr('即', 'c.-à-d.')}　</span>
           <span style={{ color: MV.mnd }}>F[F[A]] =&gt; F[A]</span>
         </div>
         {/* 单位行 */}
@@ -284,7 +284,7 @@ function Scene6() {
         <div style={{
           position: 'absolute', left: 380, top: 855, fontFamily: MV.sans, fontSize: 23, color: MV.dim,
           opacity: ev(t, p2 + 17.8, 0.6), width: 280, textAlign: 'center', marginLeft: -0,
-        }}>裸值 · Id[A] = A</div>
+        }}>{tr('裸值 · Id[A] = A', 'valeur nue · Id[A] = A')}</div>
         <BoxC x={1020} y={718} w={300} h={164} color={MV.fun} label="Some" from={p2 + 20.2}>
           <ValDot x={150} y={84} label="42" from={p2 + 20.6} size={64} style={{ position: 'absolute' }} />
         </BoxC>
@@ -293,14 +293,14 @@ function Scene6() {
           opacity: ev(t, p2 + 21.5, 0.7), whiteSpace: 'nowrap', lineHeight: 1.7,
         }}>
           <span style={{ color: MV.mon }}>empty</span> : Id ~&gt; F<br />
-          <span style={{ color: MV.faint }}>即 </span><span style={{ color: MV.mnd }}>A =&gt; F[A]</span>
+          <span style={{ color: MV.faint }}>{tr('即 ', 'c.-à-d. ')}</span><span style={{ color: MV.mnd }}>A =&gt; F[A]</span>
         </div>
       </FadeGroup>
 
       {/* P3：两条定律 */}
       <FadeGroup from={p3} to={p4 - 0.5} exit={0.6}>
         <div style={{ position: 'absolute', left: 0, right: 0, top: 250, textAlign: 'center', fontFamily: MV.serif, fontSize: 33, fontWeight: 700, color: MV.ink, opacity: ev(t, p3 + 0.3, 0.6) }}>
-          幺半群定律，自动翻译成<span style={{ color: MV.mnd }}>单子定律</span>
+          {tr('幺半群定律，自动翻译成', 'Les lois du monoïde se traduisent automatiquement en ')}<span style={{ color: MV.mnd }}>{tr('单子定律', 'lois de monade')}</span>
         </div>
         <SvgLayer>
           {/* 结合律菱形 */}
@@ -327,7 +327,7 @@ function Scene6() {
           fontFamily: MV.mono, fontSize: 28, color: MV.ink, opacity: ev(t, p3 + 8.5, 0.7),
         }}>
           fa<span style={{ color: MV.mnd }}>.pure.flatten</span> <span style={{ color: MV.faint }}>==</span> fa <span style={{ color: MV.faint }}>==</span> fa<span style={{ color: MV.mnd }}>.map(pure).flatten</span>
-          <span style={{ color: MV.dim, fontFamily: MV.sans, fontSize: 24 }}>　（单位律：pure 进去再压平，什么都没发生）</span>
+          <span style={{ color: MV.dim, fontFamily: MV.sans, fontSize: 24 }}>　{tr('（单位律：pure 进去再压平，什么都没发生）', "(loi d'unité : pure entre puis flatten, rien ne change)")}</span>
         </div>
       </FadeGroup>
 
@@ -345,19 +345,19 @@ function Scene6() {
         <div style={{
           position: 'absolute', left: 0, right: 0, top: 430, textAlign: 'center',
           fontFamily: MV.sans, fontSize: 26, color: MV.dim, opacity: ev(t, p4 + 2, 0.8),
-        }}>外加结合律与单位律</div>
+        }}>{tr('外加结合律与单位律', "plus associativité et lois d'unité")}</div>
         <QuoteLine y={560} size={54} hlAt={[p4 + 4.0, p4 + 4.6, p4 + 5.2, p4 + 5.8]} />
       </FadeGroup>
 
-      <Cap from={291.5} to={302.6}>既然自函子这么重要，干脆给它们盖一座<Em c={MV.cat}>自己的范畴</Em>：每一个自函子，是其中一个对象。</Cap>
-      <Cap from={302.6} to={314.4}>对象之间的箭头叫<Em c={MV.pur}>自然变换</Em>：把一种容器整体换成另一种，而不碰里面的值。</Cap>
-      <Cap from={314.4} to={p2 + 0.2}>现在，把第四章那个幺半群的形状<Em c={MV.mon}>套到这座范畴上</Em>。只需回答两个问题：乘法是什么？单位是什么？</Cap>
-      <Cap from={p2 + 0.2} to={p2 + 12}>自函子的乘法就是<Em c={MV.fun}>复合</Em>：F 套 F，得到 F[F[A]]。而 combine: F∘F ~&gt; F，展开看就是 <Em c={MV.mnd}>F[F[A]] =&gt; F[A]</Em>。</Cap>
-      <Cap from={p2 + 12} to={p2 + 17}>等一下——这不就是 <Em c={MV.mnd}>flatten</Em> 吗！第三章那个嵌套的不适感，在这里被一招化解。</Cap>
-      <Cap from={p2 + 17} to={p3 - 0.3}>单位呢？是什么都不做的恒等函子 Id。empty: Id ~&gt; F，翻译过来就是 A =&gt; F[A]——正是 <Em c={MV.mnd}>pure</Em>。</Cap>
-      <Cap from={p3 - 0.3} to={p3 + 8.2}><Em c={MV.mon}>结合律</Em>说：三层嵌套，先压哪两层都一样，殊途同归。</Cap>
-      <Cap from={p3 + 8.2} to={p4 - 0.3}><Em c={MV.mon}>单位律</Em>说：pure 放进去再 flatten，等于什么都没发生。</Cap>
-      <Cap from={p4 + 0.3} to={387.6}>谜底揭晓：在自函子的范畴里选一个 F，配上乘法 flatten 与单位 pure——这个<Em c={MV.mon}>幺半群</Em>，就叫<Em c={MV.mnd}>单子</Em>。</Cap>
+      <Cap from={291.5} to={302.6} fr={<>Puisque les endofoncteurs sont si importants, construisons-leur leur <Em c={MV.cat}>propre catégorie</Em> : chaque endofoncteur y est un objet.</>}>既然自函子这么重要，干脆给它们盖一座<Em c={MV.cat}>自己的范畴</Em>：每一个自函子，是其中一个对象。</Cap>
+      <Cap from={302.6} to={314.4} fr={<>Les flèches entre ces objets s'appellent <Em c={MV.pur}>transformations naturelles</Em> : elles changent tout le contenant sans toucher aux valeurs.</>}>对象之间的箭头叫<Em c={MV.pur}>自然变换</Em>：把一种容器整体换成另一种，而不碰里面的值。</Cap>
+      <Cap from={314.4} to={p2 + 0.2} fr={<>Maintenant, appliquons la forme du monoïde du chapitre 4 <Em c={MV.mon}>à cette catégorie</Em>. Deux questions : quelle est la multiplication ? Quelle est l'unité ?</>}>现在，把第四章那个幺半群的形状<Em c={MV.mon}>套到这座范畴上</Em>。只需回答两个问题：乘法是什么？单位是什么？</Cap>
+      <Cap from={p2 + 0.2} to={p2 + 12} fr={<>La multiplication des endofoncteurs, c'est la <Em c={MV.fun}>composition</Em> : F dans F donne F[F[A]]. Et combine: F∘F ~&gt; F devient <Em c={MV.mnd}>F[F[A]] =&gt; F[A]</Em>.</>}>自函子的乘法就是<Em c={MV.fun}>复合</Em>：F 套 F，得到 F[F[A]]。而 combine: F∘F ~&gt; F，展开看就是 <Em c={MV.mnd}>F[F[A]] =&gt; F[A]</Em>。</Cap>
+      <Cap from={p2 + 12} to={p2 + 17} fr={<>Attendez : c'est exactement <Em c={MV.mnd}>flatten</Em> ! Le malaise de l'imbrication du chapitre 3 disparaît ici d'un seul geste.</>}>等一下——这不就是 <Em c={MV.mnd}>flatten</Em> 吗！第三章那个嵌套的不适感，在这里被一招化解。</Cap>
+      <Cap from={p2 + 17} to={p3 - 0.3} fr={<>Et l'unité ? C'est le foncteur identité Id, qui ne fait rien. empty: Id ~&gt; F se traduit par A =&gt; F[A] : c'est <Em c={MV.mnd}>pure</Em>.</>}>单位呢？是什么都不做的恒等函子 Id。empty: Id ~&gt; F，翻译过来就是 A =&gt; F[A]——正是 <Em c={MV.mnd}>pure</Em>。</Cap>
+      <Cap from={p3 - 0.3} to={p3 + 8.2} fr={<><Em c={MV.mon}>L'associativité</Em> dit : avec trois niveaux d'imbrication, peu importe quelles deux couches vous aplatissez d'abord.</>}><Em c={MV.mon}>结合律</Em>说：三层嵌套，先压哪两层都一样，殊途同归。</Cap>
+      <Cap from={p3 + 8.2} to={p4 - 0.3} fr={<><Em c={MV.mon}>La loi d'unité</Em> dit : mettre pure puis flatten revient à ne rien faire.</>}><Em c={MV.mon}>单位律</Em>说：pure 放进去再 flatten，等于什么都没发生。</Cap>
+      <Cap from={p4 + 0.3} to={387.6} fr={<>Révélation : dans la catégorie des endofoncteurs, choisir F avec une multiplication flatten et une unité pure donne un <Em c={MV.mon}>monoïde</Em>. Ce monoïde s'appelle une <Em c={MV.mnd}>monade</Em>.</>}>谜底揭晓：在自函子的范畴里选一个 F，配上乘法 flatten 与单位 pure——这个<Em c={MV.mon}>幺半群</Em>，就叫<Em c={MV.mnd}>单子</Em>。</Cap>
     </Sprite>
   );
 }
