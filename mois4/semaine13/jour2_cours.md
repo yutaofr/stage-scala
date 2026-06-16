@@ -27,8 +27,9 @@ footer: "Jour 2 — Les Futures (Programmation Non-Bloquante)"
 Une `Future[T]` est un conteneur qui représentera une valeur de type `T` **dans le futur**. C'est un ticket de tombola : on ne sait pas encore si on a gagné, mais on peut déjà prévoir ce qu'on fera du lot.
 
 ```scala
-import scala.concurrent.Future
-import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.{Future, ExecutionContext}
+
+given ExecutionContext = ExecutionContext.global
 
 val f: Future[Int] = Future {
   Thread.sleep(1000)
@@ -36,7 +37,8 @@ val f: Future[Int] = Future {
 }
 ```
 
-> 💡 Le code à l'intérieur du bloc `Future { ... }` s'exécute sur un autre thread immédiatement.
+> [!TIP]
+> Le code à l'intérieur du bloc `Future { ... }` s'exécute sur un autre thread immédiatement.
 
 ---
 
@@ -105,4 +107,4 @@ Nous allons modifier notre `ClearingService` pour qu'il lance la validation de c
 - Elles transforment les temps d'attente (I/O, réseau) en opportunités de calcul.
 - Ton moteur de clearing devient "Asynchrone".
 
-**Prochaine étape** : Paralléliser tes validations dans le TP 62 !
+**Prochaine étape** : Paralléliser tes validations dans le TP du Jour 2 !

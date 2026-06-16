@@ -45,7 +45,7 @@ Si vous avez 8 cœurs et que vous lancez 8 appels `Thread.sleep` (ou lecture dis
 
 ---
 
-# 3. La Solution : Dédiayer les Pools
+# 3. La Solution : Dédier les Pools
 
 On utilise des pools différents selon la nature du travail.
 
@@ -85,4 +85,4 @@ Nous allons segmenter notre application :
 - Un bon développeur Scala sait exactement où s'exécute chaque partie de son code.
 - Plus tu maîtrises tes pools, plus ton application est stable sous charge.
 
-**Prochaine étape** : Configurer tes propres pools dans le TP 63 !
+**Prochaine étape** : Configurer tes propres pools dans le TP du Jour 3 !

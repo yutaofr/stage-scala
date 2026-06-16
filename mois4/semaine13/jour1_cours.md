@@ -26,12 +26,11 @@ footer: "Jour 1 — Threads JVM & Problèmes de Concurrence"
 
 Un thread est un "fil d'exécution". Votre ordinateur possède plusieurs cœurs, il peut donc faire tourner plusieurs threads en parallèle.
 
-### En Java/Scala
+### En Scala 3
 ```scala
-val thread = new Thread(new Runnable {
-  def run(): Unit = println("Travail en parallèle")
-})
+val thread = new Thread(() => println("Travail en parallèle"))
 thread.start()
+thread.join() // Attend que le thread termine
 ```
 
 > [!WARNING]
@@ -54,10 +53,13 @@ Si deux threads modifient la même variable en même temps, le résultat final e
 
 # 3. Pourquoi la FP aide ici ?
 
-L'immuabilité (Mois 3) élimine 90% des problèmes de concurrence. Si un objet ne peut pas être modifié, il peut être partagé entre 1000 threads sans aucun danger.
+L'immuabilité (Mois 3) élimine les **data races** : si un objet ne peut pas être modifié, il peut être partagé entre 1000 threads sans aucun danger de corruption.
+
+> [!WARNING]
+> L'immuabilité ne suffit pas à elle seule pour gérer de l'état partagé. Il faut aussi un **mécanisme de coordination** : `AtomicReference`, un acteur centralisé, ou une structure concurrente. L'immuabilité garantit la sécurité de lecture, la coordination garantit la cohérence d'écriture.
 
 ### En Scala
-On préférera toujours passer des messages immuables plutôt que de partager des variables mutables.
+On combine l'immuabilité des données avec des mécanismes de coordination (Atomic, Acteurs) pour obtenir un code concurrent sûr et performant.
 
 ---
 
@@ -82,4 +84,4 @@ Nous allons simuler deux banques qui tentent de débiter le même compte en mêm
 - L'immuabilité est la meilleure défense contre la corruption de données.
 - Demain, nous verrons comment faire de la concurrence "propre" avec les **Futures**.
 
-**Prochaine étape** : Provoquer une race condition dans le TP 61 !
+**Prochaine étape** : Provoquer une race condition dans le TP du Jour 1 !

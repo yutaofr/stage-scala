@@ -7,9 +7,9 @@
 ## Exercice 1 : Le Compte Bancaire (Starter Kit)
 
 > [!TIP]
-> **Nouveau Format Starter Kit :** Pour t'éviter de perdre du temps sur la configuration SBT, tu trouveras dans `src/main/scala/exercises/s13/` un squelette de code pré-configuré. Utilise ces fichiers pour tes TPs !
+> **Starter Kit Fourni :** Pour t'éviter de perdre du temps sur la configuration, tu trouveras dans `src/main/scala/distributed/concurrency/` un squelette de code pré-configuré (voir **Kit 13.1** dans le starter kit). Utilise ces fichiers pour tes TPs !
 
-1. Ouvre `exercises/s13/UnsafeBankAccountApp.scala`.
+1. Ouvre `distributed/concurrency/RaceDemo.scala` (fourni dans le Kit 13.1).
 2. Crée une classe interne `BankAccount` contenant une variable `var balance: Double = 1000.0`.
 3. Crée une méthode `withdraw(amount: Double)` qui fait :
    ```scala
@@ -34,8 +34,13 @@
 ## Exercice 3 : Vers l'Immuabilité (1h30)
 
 1. Réécris ton compte en mode immutable : `case class Account(balance: Double)`.
-2. Comment gérerais-tu les modifications simultanées sans `var` ? 
-   - *Indice : Imagine que chaque virement renvoie un nouvel objet Account.*
-3. Réfléchis à comment un "Gestionnaire" pourrait centraliser ces nouveaux objets.
+2. Utilise un `java.util.concurrent.atomic.AtomicReference[Account]` pour gérer les modifications concurrentes sans verrou :
+   ```scala
+   import java.util.concurrent.atomic.AtomicReference
+   val account = AtomicReference(Account(1000.0))
+   // Utilise account.updateAndGet pour modifier de manière atomique
+   ```
+3. Réfléchis : pourquoi cette combinaison (donnée immuable + référence atomique) est-elle plus sûre que `synchronized` ?
+4. *Bonus :* Imagine qu'un "Acteur" centralisé pourrait jouer le même rôle que l'AtomicReference. On découvrira ce modèle au Jour 4.
 
-**Livrable** : Code source démontrant la race condition et son correctif par verrouillage, avec un paragraphe d'analyse sur la perte de performance liée au verrouillage.
+**Livrable** : Code source démontrant la race condition, son correctif par `synchronized`, et la version immuable + `AtomicReference` avec un paragraphe d'analyse comparant les trois approches.

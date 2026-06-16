@@ -15,9 +15,9 @@
 
 ## Exercice 2 : Création de Pools Dédiés (1h30)
 
-1. Crée un objet `CustomContexts`.
-2. Définit un `cpuContext` (FixedThreadPool de 4 threads).
-3. Définit un `ioContext` (CachedThreadPool).
+1. Crée un objet `CustomPools` (voir le Kit 13.3 du starter kit).
+2. Définis un `cpuPool` (FixedThreadPool avec le nombre de cœurs).
+3. Définis un `ioPool` (CachedThreadPool).
 4. Migre tes fonctions de validation CPU vers le premier, et tes fonctions de lecture fichier vers le second.
 
 ---

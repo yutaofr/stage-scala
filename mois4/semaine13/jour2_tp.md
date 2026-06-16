@@ -21,10 +21,13 @@
 
 ---
 
-## Exercice 3 : Aggregration Multi-Sources (1h30)
+## Exercice 3 : Agrégation Multi-Sources (1h30)
 
 1. Simule deux services externes : `BankService` (vérifie le compte) et `AntiFraudService` (vérifie le risque).
 2. Pour chaque transaction, appelle les deux services en parallèle via des Futures.
 3. Combine les résultats pour n'accepter la transaction que si les deux services renvoient `Right`.
 
-**Livrable** : Code source asynchrone utilisant les Futures et `Future.sequence` pour traiter des batchs en parallèle.
+> [!TIP]
+> Réutilise les types `Transaction` et `ClearingError` définis dans le package `clearing` du Mois 3. Le Kit 13.2 du starter kit montre comment les intégrer avec les Futures.
+
+**Livrable** : Code source asynchrone utilisant les Futures et `Future.sequence` pour traiter des batchs en parallèle, avec agrégation multi-sources.

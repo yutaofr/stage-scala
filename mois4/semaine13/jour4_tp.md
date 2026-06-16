@@ -7,12 +7,12 @@
 ## Exercice 1 : Le Coffre-Fort (Starter Kit)
 
 > [!TIP]
-> **Starter Kit Fourni :** Créer une boucle d'événements asynchrone est compliqué en 4h. Utilise le fichier `exercises/s13/ActorFramework.scala` qui te fournit toute la plomberie d'Acteurs. Ton but est d'écrire la méthode `receive` !
+> **Starter Kit Fourni (Kit 13.4) :** Le squelette de l'acteur Pekko Typed est fourni dans `distributed/actors/BankVaultActor.scala`. Les messages (`Credit`, `Debit`, `GetBalance`) et les réponses sont déjà définis. Ton but est d'écrire la **logique métier** dans le pattern matching !
 
-1. Ouvre le squelette du framework d'acteurs fourni.
-2. Complète l'acteur `BankVaultActor` qui maintient la balance.
-3. Implémente les messages `Debit(amount)`, `Credit(amount)` et gère les dans le pattern matching.
-4. Envoie 100 messages de débit aléatoires et vérifie que le solde final est exact sans utiliser `synchronized`.
+1. Ouvre `distributed/actors/BankVaultActor.scala` (Kit 13.4 du starter kit).
+2. Complète la logique du `Credit` : calculer le nouveau solde et retourner `TransactionResult(true, newBalance)`.
+3. Complète la logique du `Debit` : vérifier que le solde est suffisant avant de débiter. Si le solde est insuffisant, retourner `TransactionResult(false, balance)` sans modifier l'état.
+4. Lance un `ActorSystem` avec 5 acteurs (un par banque) et envoie-leur 100 messages concurrents. Vérifie que les soldes finaux sont exacts sans utiliser `synchronized`.
 
 ---
 

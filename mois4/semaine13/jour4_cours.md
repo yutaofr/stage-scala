@@ -34,31 +34,51 @@ C'est un goulot d'étranglement. Un acteur, lui, traite ses messages **un par un
 # 2. Qu'est-ce qu'un Acteur ?
 
 Un acteur possède :
-1. **Un État** (Privé, jamais partagé).
-2. **Un Comportement** (Comment il réagit aux messages).
-3. **Une Mailbox** (Dépôt des messages entrants).
+1. **Un État** (Privé, jamais partagé — géré par récursion immuable).
+2. **Un Comportement** (`Behavior[T]` : comment il réagit aux messages de type `T`).
+3. **Une Mailbox** (Dépôt des messages entrants, traités un par un).
 
 ```scala
-case class Deposit(amount: BigDecimal)
+import org.apache.pekko.actor.typed.Behavior
+import org.apache.pekko.actor.typed.scaladsl.Behaviors
 
-class BankAccount extends Actor:
-  var balance = BigDecimal(0)
-  
-  def receive =
-    case Deposit(amt) => balance += amt
+// Les messages que l'acteur comprend
+sealed trait Command
+case class Deposit(amount: BigDecimal) extends Command
+case class GetBalance() extends Command
+
+// L'acteur : un comportement récursif qui porte son état
+def bankAccount(balance: BigDecimal): Behavior[Command] =
+  Behaviors.receive { (context, message) =>
+    message match
+      case Deposit(amt) =>
+        val newBalance = balance + amt
+        context.log.info(s"Dépôt de $amt → Solde : $newBalance")
+        bankAccount(newBalance) // Nouvel état via récursion
+      case GetBalance() =>
+        context.log.info(s"Solde actuel : $balance")
+        Behaviors.same // Pas de changement d'état
+  }
 ```
+
+> [!TIP]
+> Remarque : pas de `var` ! L'état est porté par le paramètre de la fonction récursive `bankAccount(balance)`. C'est la même philosophie FP qu'au Mois 3.
 
 ---
 
-# 3. Envoi de Message : "Fire and Forget"
+# 3. Envoi de Message : "Tell" (Fire and Forget)
 
-On n'appelle pas de méthode. On utilise l'opérateur `!`.
+On n'appelle pas de méthode. On utilise l'opérateur `!` (**tell**).
 
 ```scala
-bankAccount ! Deposit(100.0)
+import org.apache.pekko.actor.typed.ActorRef
+
+val bankRef: ActorRef[Command] = ??? // Créé par le système
+bankRef ! Deposit(100.0)
 ```
 - L'appel est **immédiat** et non-bloquant.
 - L'acteur traitera le message quand il sera libre.
+- Le typage `ActorRef[Command]` garantit à la compilation qu'on ne peut envoyer que des `Command`.
 - C'est l'essence même de la distribution.
 
 ---
@@ -84,4 +104,4 @@ Nous allons modéliser chaque banque comme un acteur indépendant. Le moteur de 
 - Ils sont l'unité de base des systèmes hautement distribués.
 - Demain, nous verrons comment les faire survivre aux pannes.
 
-**Prochaine étape** : Créer ton premier acteur de banque dans le TP 64 !
+**Prochaine étape** : Créer ton premier acteur de banque dans le TP du Jour 4 !

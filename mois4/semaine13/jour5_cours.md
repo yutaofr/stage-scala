@@ -95,4 +95,4 @@ Nous allons implémenter un superviseur pour nos acteurs `BankVault`. Si l'un d'
 | J4 | Modèle d'Acteurs | Modélisation par messages, état confiné |
 | J5 | Supervision | Résilience "Let it Crash", auto-réparation |
 
-**Prochaine étape** : Tester la résilience dans le TP 65 !
+**Prochaine étape** : Tester la résilience dans le TP du Jour 5 !
