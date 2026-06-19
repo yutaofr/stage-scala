@@ -18,16 +18,25 @@
 
 ## Exercice 2 : Le Guichet Central (Orchestrateur) (1h30)
 
-1. Crée un acteur `ClearingManager`.
-2. Il doit recevoir une liste de résultats de netting.
-3. Pour chaque résultat, il doit envoyer le bon message de crédit/débit aux acteurs `BankVault` concernés.
+> [!TIP]
+> **Starter Kit fourni (Kit 13.6) :** Le squelette `ClearingManager.scala` est fourni. Le protocole, l'**annuaire d'acteurs** (`Map[bankId -> ActorRef]`) et le routage des réponses sont pré-câblés. Tu n'écris que la décision *crédit ou débit ?* (ZONE STAGIAIRE).
+
+1. Crée un acteur `ClearingManager` (cf. Kit 13.6).
+2. Il reçoit un résultat de netting : une `Map[String, BigDecimal]` (banque → position nette).
+3. Pour chaque position, il envoie le bon message au **bon** acteur `BankVault` : il le retrouve dans son annuaire `Map[bankId -> ActorRef]`, puis dispatch `Credit` (position positive) ou `Debit` (position négative).
 4. Utilise l'opérateur `!` pour toutes les communications.
+
+> [!NOTE]
+> **Comment l'acteur destinataire est-il retrouvé ?** En Pekko Typed il n'y a pas de recherche par nom : le `ClearingManager` doit **détenir l'`ActorRef`** du coffre. L'annuaire `vaults: Map[String, ActorRef[BankVaultActor.Command]]` est cet « carnet d'adresses ». `vaults.get(bankId)` → `ActorRef` → `ref ! Credit(...)` empile le message dans la mailbox de CE coffre précis.
 
 ---
 
 ## Exercice 3 : Asynchronisme total (1h)
 
-1. Ajoute un délai aléatoire (`sleep`) dans le traitement des messages du `BankVault`.
+> [!TIP]
+> **Starter Kit fourni (Kit 13.7) :** Le snippet de modification de `BankVaultActor` (ajout du `Thread.sleep` aléatoire) est fourni.
+
+1. Ajoute un délai aléatoire (`sleep`) dans le traitement des messages du `BankVault` (Kit 13.7).
 2. Observe que le `ClearingManager` continue d'envoyer ses messages sans jamais attendre, illustrant le modèle non-bloquant.
 
 **Livrable** : Code source implémentant un mini-système d'acteurs pour la mise à jour des soldes post-clearing.

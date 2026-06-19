@@ -174,10 +174,11 @@ object BankVaultActor:
   case class Debit(amount: BigDecimal, replyTo: ActorRef[Response]) extends Command
   case class GetBalance(replyTo: ActorRef[Response]) extends Command
 
-  // Réponses
+  // Réponses — elles portent le `bankId` : un même destinataire (le ClearingManager)
+  // reçoit les réponses de plusieurs coffres dans UNE seule mailbox et doit savoir QUI répond.
   sealed trait Response
-  case class BalanceResponse(balance: BigDecimal) extends Response
-  case class TransactionResult(success: Boolean, newBalance: BigDecimal) extends Response
+  case class BalanceResponse(bankId: String, balance: BigDecimal) extends Response
+  case class TransactionResult(bankId: String, success: Boolean, newBalance: BigDecimal) extends Response
 
   def apply(bankId: String, initialBalance: BigDecimal = BigDecimal(0)): Behavior[Command] =
     active(bankId, initialBalance)
@@ -192,18 +193,18 @@ object BankVaultActor:
           // === ZONE STAGIAIRE ===
           val newBalance = ???  // TODO : calculer le nouveau solde
           context.log.info(s"[$bankId] Crédit de $amount → Nouveau solde : $newBalance")
-          replyTo ! TransactionResult(true, newBalance)
+          replyTo ! TransactionResult(bankId, true, newBalance)
           active(bankId, newBalance)
 
         case Debit(amount, replyTo) =>
           // === ZONE STAGIAIRE ===
           // TODO : Vérifier que le solde est suffisant
-          // Si oui : débiter et retourner TransactionResult(true, ...)
-          // Si non : retourner TransactionResult(false, balance) sans modifier
+          // Si oui : débiter et retourner TransactionResult(bankId, true, ...)
+          // Si non : retourner TransactionResult(bankId, false, balance) sans modifier
           ???
 
         case GetBalance(replyTo) =>
-          replyTo ! BalanceResponse(balance)
+          replyTo ! BalanceResponse(bankId, balance)
           Behaviors.same
     }
 ```
@@ -284,3 +285,173 @@ object SupervisedBanks:
 
 > [!CAUTION]
 > **Perte d'état au Restart** : Après un restart, le solde de l'acteur est réinitialisé à `initialBalance`. En production, on résout ce problème avec l'**Event Sourcing** (persister chaque message, rejouer au redémarrage). Ce sera un sujet futur.
+
+---
+
+## Kit 13.6 — ClearingManager / Orchestrateur (Pekko) — **Exercice 2**
+
+**Fichier fourni :** `src/main/scala/distributed/actors/ClearingManager.scala`
+
+> [!TIP]
+> **Idée clé.** Le `ClearingManager` reçoit les **positions nettes** calculées par le netting (`Map[bankId -> position]`, cf. Kit 13.2) et, pour chaque banque, envoie un `Credit` (position positive) ou un `Debit` (position négative) au **bon** acteur `BankVault`.
+>
+> Comment trouve-t-il le « bon » acteur ? Il porte un **annuaire** `Map[String, ActorRef[BankVaultActor.Command]]` (banque → référence d'acteur). En Pekko Typed, il n'y a pas de recherche d'acteur par nom : **on dispatch en détenant l'`ActorRef`.**
+
+```scala
+package distributed.actors
+
+import org.apache.pekko.actor.typed.{ActorRef, ActorSystem, Behavior}
+import org.apache.pekko.actor.typed.scaladsl.Behaviors
+
+/**
+ * STARTER KIT : Le protocole, l'annuaire d'acteurs et le routage des réponses
+ * sont pré-câblés (ZONE TUTEUR). Le stagiaire écrit UNIQUEMENT la décision
+ * "crédit ou débit ?" et le dispatch via `!` (ZONE STAGIAIRE).
+ */
+object ClearingManager:
+
+  // === ZONE TUTEUR : Protocole de messages ===
+  sealed trait Command
+  /** Applique un résultat de netting : banque -> position nette (+ créditeur / − débiteur). */
+  case class ApplyNetting(positions: Map[String, BigDecimal]) extends Command
+  /** Message INTERNE : on "replie" les réponses des BankVault dans NOTRE protocole. */
+  private case class WrappedResult(response: BankVaultActor.Response) extends Command
+
+  /**
+   * @param vaults l'ANNUAIRE : à chaque bankId correspond la référence de SON acteur.
+   *               C'est ce `Map` qui permet de "trouver" l'acteur destinataire.
+   */
+  def apply(vaults: Map[String, ActorRef[BankVaultActor.Command]]): Behavior[Command] =
+    Behaviors.setup { context =>
+      // UN SEUL adaptateur : Pekko n'enregistre qu'UN adaptateur PAR CLASSE de message
+      // (un 2e appel pour la même classe REMPLACE le 1er). C'est pourquoi la réponse
+      // porte elle-même son `bankId` — et non l'adaptateur.
+      val responseAdapter: ActorRef[BankVaultActor.Response] =
+        context.messageAdapter(resp => WrappedResult(resp))
+
+      Behaviors.receiveMessage {
+        case ApplyNetting(positions) =>
+          positions.foreach { (bankId, net) =>
+            vaults.get(bankId) match
+              case Some(vaultRef) =>
+                // === ZONE STAGIAIRE ===
+                // TODO : selon le SIGNE de `net`, envoyer le bon message au coffre :
+                //   - net > 0  → vaultRef ! BankVaultActor.Credit(net, responseAdapter)
+                //   - net < 0  → vaultRef ! BankVaultActor.Debit(-net, responseAdapter)
+                //   - net == 0 → rien (logger éventuellement "position nulle")
+                ???
+              case None =>
+                context.log.warn(s"Aucun coffre connu pour la banque '$bankId' — message ignoré")
+          }
+          Behaviors.same
+
+        // ZONE TUTEUR : réception ASYNCHRONE des réponses (preuve du non-blocage)
+        case WrappedResult(BankVaultActor.TransactionResult(bankId, success, newBalance)) =>
+          val verdict = if success then "OK" else "REFUSÉE (solde insuffisant)"
+          context.log.info(s"[$bankId] Transaction $verdict → solde = $newBalance")
+          Behaviors.same
+
+        case WrappedResult(BankVaultActor.BalanceResponse(bankId, balance)) =>
+          context.log.info(s"[$bankId] Solde = $balance")
+          Behaviors.same
+      }
+    }
+
+  // === ZONE TUTEUR : Runner pré-câblé ===
+  @main def clearingDemo(): Unit =
+    val root: Behavior[Nothing] = Behaviors.setup[Nothing] { context =>
+      // 1) Créer un acteur (= un coffre) PAR banque. Chaque spawn = un acteur DISTINCT :
+      //    mailbox propre, état propre (balance), chemin/identité unique (/user/<nom>).
+      val banques = List("BMCE" -> BigDecimal(1000), "CIH" -> BigDecimal(1000), "BP" -> BigDecimal(1000))
+      val vaults: Map[String, ActorRef[BankVaultActor.Command]] =
+        banques.map { (id, solde) => id -> context.spawn(BankVaultActor(id, solde), id) }.toMap
+
+      // 2) Créer le manager EN LUI DONNANT l'annuaire des coffres.
+      val manager = context.spawn(ClearingManager(vaults), "clearing-manager")
+
+      // 3) Lui envoyer un résultat de netting (somme nette = 0, comme un vrai clearing).
+      manager ! ApplyNetting(Map(
+        "BMCE" -> BigDecimal(250),   // créditeur net  → Credit(250)
+        "CIH"  -> BigDecimal(-300),  // débiteur net   → Debit(300)
+        "BP"   -> BigDecimal(50)     // créditeur net  → Credit(50)
+      ))
+
+      Behaviors.empty
+    }
+    val system = ActorSystem[Nothing](root, "clearing-system")
+    Thread.sleep(2000)
+    system.terminate()
+```
+
+> [!CAUTION]
+> **Piège Pekko vérifié à la compilation/exécution :** `context.messageAdapter` n'enregistre **qu'UN adaptateur par classe de message**. Créer un adaptateur par banque (toutes de type `Response`) ne fonctionne pas : le dernier écrase les précédents et **toutes** les réponses sont mal attribuées. La bonne solution est celle ci-dessus : **un seul adaptateur**, et c'est la **réponse qui porte son `bankId`**.
+
+> [!TIP]
+> **Plus simple, si le message adapter te paraît trop avancé pour le Jour 4 :** remplace tout le routage de réponses par `context.system.ignoreRef[BankVaultActor.Response]` comme `replyTo`. Le manager dispatch alors sans rien écouter en retour. Tu observeras quand même l'asynchronisme via les logs du `BankVault` (Exercice 3).
+
+**Exercice du stagiaire :** Écrire la ZONE STAGIAIRE (décision crédit/débit selon le signe + `!`). Lancer `clearingDemo` et vérifier dans les logs que chaque banque reçoit la bonne opération.
+
+---
+
+## Kit 13.7 — Asynchronisme total — **Exercice 3**
+
+Pas de nouveau fichier : on **modifie** `BankVaultActor.active` pour simuler un traitement lent, et on observe que le `ClearingManager` n'attend jamais.
+
+```scala
+// Dans BankVaultActor, AU DÉBUT du traitement de chaque message Credit/Debit :
+import scala.util.Random
+
+case Credit(amount, replyTo) =>
+  Thread.sleep(Random.between(50, 300)) // simule un traitement lent (réseau, écriture disque…)
+  val newBalance = balance + amount
+  context.log.info(s"[$bankId] Crédit de $amount → Nouveau solde : $newBalance")
+  replyTo ! TransactionResult(true, newBalance)
+  active(bankId, newBalance)
+```
+
+**Ce qu'il faut observer :**
+- Le `foreach` du `ClearingManager` envoie ses 3 messages avec `!` et **rend la main immédiatement** : les `!` ne font qu'**empiler** les messages dans les mailbox des coffres.
+- Chaque `BankVault` traite SES messages un par un, chacun prenant un temps aléatoire. Les logs `TransactionResult` arrivent donc **plus tard et entrelacés** — preuve que rien n'a bloqué le manager.
+- Plusieurs banques traitent **en parallèle** (acteurs distincts, threads distincts du dispatcher), mais **à l'intérieur d'un même coffre** l'ordre reste séquentiel (un seul message à la fois) → pas de race condition, sans `synchronized`.
+
+> [!CAUTION]
+> `Thread.sleep` dans un acteur **bloque le thread du dispatcher** : utile pour *illustrer* l'asynchronisme au Jour 4, mais c'est un anti-pattern en production (on préfère `Behaviors.withTimers` / messages planifiés, vus plus tard). À mentionner au stagiaire pour ne pas ancrer une mauvaise habitude.
+
+---
+
+## ✅ Corrigé de référence (à consulter APRÈS avoir essayé)
+
+```scala
+// --- Kit 13.4 : Credit / Debit ---
+case Credit(amount, replyTo) =>
+  val newBalance = balance + amount
+  context.log.info(s"[$bankId] Crédit de $amount → Nouveau solde : $newBalance")
+  replyTo ! TransactionResult(bankId, true, newBalance)
+  active(bankId, newBalance)
+
+case Debit(amount, replyTo) =>
+  if balance >= amount then
+    val newBalance = balance - amount
+    context.log.info(s"[$bankId] Débit de $amount → Nouveau solde : $newBalance")
+    replyTo ! TransactionResult(bankId, true, newBalance)
+    active(bankId, newBalance)          // nouvel état
+  else
+    context.log.warn(s"[$bankId] Débit de $amount REFUSÉ (solde : $balance)")
+    replyTo ! TransactionResult(bankId, false, balance)
+    Behaviors.same                       // état INCHANGÉ
+
+// --- Kit 13.6 : dispatch crédit/débit (ZONE STAGIAIRE) ---
+if net > 0 then
+  vaultRef ! BankVaultActor.Credit(net, responseAdapter)
+else if net < 0 then
+  vaultRef ! BankVaultActor.Debit(-net, responseAdapter)   // -net = montant positif à débiter
+else
+  context.log.info(s"[$bankId] position nette nulle, rien à faire")
+
+// --- Kit 13.5 : SendToBank (même schéma de dispatch) ---
+case SendToBank(bankId, command) =>
+  banks.get(bankId) match
+    case Some(ref) => ref ! command
+    case None      => context.log.warn(s"Banque inconnue : $bankId")
+  Behaviors.same
+```
