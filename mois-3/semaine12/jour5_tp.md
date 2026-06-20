@@ -1,4 +1,4 @@
-# TP Jour 5 : Clearing Engine v3.0 — La Démo Indestructible
+# TP Jour 5 : Clearing Engine v2.3 — La Démo Indestructible
 
 **Durée :** ~4h | **Fil Rouge :** Démonstration finale de la maturité fonctionnelle
 
@@ -6,7 +6,7 @@
 
 ## Exercice 1 : Intégration Finale (2h)
 
-1. Ton application `ClearingAppV30` doit assembler toutes les briques du Mois 3 :
+1. Ton application `ClearingAppV23` doit assembler toutes les briques du Mois 3 :
    - Cœur pur et immuable.
    - Pipeline Railway (Either/Try).
    - Sérialisation via Type Classes (JSON/CSV/XML).
@@ -42,4 +42,4 @@
 
 **Bilan Mois 3** : Objectifs dépassés. Le stagiaire possède un socle théorique et pratique de haut niveau. Prêt pour la phase de mise à l'échelle (Mois 4).
 
-**Livrable** : Code source complet v3.0, rapport de tests ScalaCheck et tags Git.
+**Livrable** : Code source complet v2.3, rapport de tests ScalaCheck et tag Git `v2.3.0`.

@@ -6,8 +6,8 @@ header: "Stage ATH — Mois 5, Semaine 20"
 footer: "Jour 4 — GRANDE DÉMONSTRATION COMPLÈTE"
 ---
 
-# Soutenance Finale
-## Le Couronnement de 5 Mois d'Excellence
+# Soutenance finale
+## Présenter le travail, les preuves et les limites
 
 **Durée :** ~2h | **Fil Rouge :** C'est ton jour !
 
@@ -18,13 +18,13 @@ footer: "Jour 4 — GRANDE DÉMONSTRATION COMPLÈTE"
 - Présentation devant le jury d'ATH.
 - Démonstration en direct du Clearing Engine v4.0.
 - Session de Questions/Réponses techniques.
-- Célébration de la réussite du stage !
+- Recueil des retours et décisions de suite.
 
 ---
 
 # 1. Votre Message Clé
 
-"J'ai construit un système industriel, moderne et résilient, capable d'accompagner la transformation digitale de la monétique marocaine."
+"J'ai construit et mesuré un prototype distribué de clearing. Je peux expliquer ses garanties, ses limites et le chemin nécessaire vers la production."
 
 ---
 
@@ -50,6 +50,6 @@ footer: "Jour 4 — GRANDE DÉMONSTRATION COMPLÈTE"
 - **Mois 3** : Programmation Fonctionnelle Avancée.
 - **Mois 4** : Systèmes Distribués (ZIO/Kafka/Cassandra).
 - **Mois 5** : Industrialisation & Observabilité.
-- **Aujourd'hui** : Tu es un Ingenieur Backend Scala accompli.
+- **Aujourd'hui** : tu sais présenter un projet backend Scala avec rigueur.
 
 **BRAVO !** 🎉👏

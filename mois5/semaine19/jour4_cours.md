@@ -30,7 +30,7 @@ Une API sans doc est une API inutilisable.
 
 ---
 
-# 2. Tapir : Le futur des APIs Scala
+# 2. Tapir : décrire une API avec des valeurs Scala
 
 Tapir permet de décrire tes endpoints avec des types Scala purs.
 ```scala
@@ -40,7 +40,7 @@ val ingestEndpoint = endpoint.post
   .out(stringBody)
 ```
 - **Sécurité** : Si tu changes le type `Transaction`, la doc change toute seule.
-- **Modularité** : Tu décris une fois, et Tapir génère le serveur, le client et la doc.
+- **Modularité** : la même description peut être interprétée en serveur, client et documentation, selon les modules choisis.
 
 ---
 
@@ -73,4 +73,4 @@ Nous allons exposer une route `/docs` sur notre moteur de clearing. Elle affiche
 - Tu offres une expérience "Premium" aux autres développeurs.
 - Ton application est prête à être intégrée dans le Système d'Information Global.
 
-**Prochaine étape** : Exposer ton Swagger dans le TP 94 !
+**Prochaine étape** : Utiliser le Kit 19.4 dans le TP du Jour 4.

@@ -35,9 +35,12 @@ C'est une base de données optimisée pour les chiffres qui changent au cours du
 # 2. Les 4 Types Clés
 
 1. **Counter** : Une valeur qui ne fait que monter (ex: Nombre total de transactions).
-2. **Gauge** : Une valeur qui peut monter et descendre (ex: Occupation CPU, nombre d'utilisateurs connectés).
-3. **Histogram** : Pour mesurer des durées (ex: Temps de validation). Permet de calculer des centiles (p99).
-4. **Summary** : Similaire à l'histogramme mais calculé côté client.
+2. **Gauge** : Une valeur qui peut monter et descendre, comme un lag courant.
+3. **Histogram** : Répartit les observations dans des buckets et permet d'agréger des quantiles côté Prometheus.
+4. **Summary** : Calcule des quantiles côté client ; ils s'agrègent difficilement entre instances.
+
+> [!WARNING]
+> Un label crée une série par valeur. N'utilise jamais `txId` comme label Prometheus.
 
 ---
 
@@ -46,7 +49,7 @@ C'est une base de données optimisée pour les chiffres qui changent au cours du
 ZIO possède une bibliothèque `zio-metrics-connectors` qui rend l'instrumentation très simple.
 
 ```scala
-val txCounter = Metric.counter("transactions_total")
+val txCounter = Metric.counter("clearing_transactions_processed_total")
   .tagged(MetricLabel("app", "clearing-engine"))
 
 // Dans le code
@@ -73,7 +76,7 @@ Nous allons exposer un endpoint HTTP (`/metrics`) sur notre moteur de clearing. 
 
 - Les métriques donnent une vue d'ensemble du système.
 - On ne peut pas améliorer ce qu'on ne mesure pas.
-- Prometheus est le standard absolu de l'industrie Cloud.
+- Prometheus est un outil largement adopté pour les métriques et l'alerting.
 - Ton application devient "Observable".
 
-**Prochaine étape** : Exposer tes métriques dans le TP 82 !
+**Prochaine étape** : Utiliser le Kit 17.2 dans le TP du Jour 2.

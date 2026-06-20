@@ -16,9 +16,9 @@ footer: "Jour 2 — ZLayer & Dependency Injection"
 # 📋 Objectifs du Jour
 
 - Comprendre le rôle du canal **R** dans ZIO.
-- Maîtriser le concept de **ZLayer** (Construction de services).
-- Apprendre à assembler des dépendances complexes sans effort.
-- Remplacer Spring par la puissance native de ZIO.
+- Maîtriser le concept de **ZLayer** pour construire des services.
+- Assembler un graphe de dépendances explicite.
+- Comparer l'injection ZIO avec un conteneur d'injection classique.
 
 ---
 
@@ -43,9 +43,9 @@ val dbLayer: ZLayer[Config, Nothing, Database] =
   ZLayer.fromFunction(config => new Database(config))
 ```
 
-### Pourquoi c'est génial ?
+### Ce que ZLayer apporte
 - **Testabilité** : On peut échanger le "RealLayer" par un "MockLayer" en une ligne.
-- **Cycle de vie** : ZIO gère l'ouverture et la fermeture des services automatiquement.
+- **Cycle de vie** : un `ZLayer.scoped` peut acquérir et libérer une ressource.
 
 ---
 
@@ -61,7 +61,7 @@ val fullApp = myProgram.provide(
 ```
 
 > [!TIP]
-> Si une dépendance manque, le compilateur vous donne un message d'erreur très précis indiquant quelle pièce du puzzle est absente.
+> Si une dépendance manque, le type résiduel indique ce que le programme demande encore. Le message dépend toutefois de la complexité du graphe.
 
 ---
 
@@ -82,8 +82,8 @@ Nous allons transformer notre `ClearingService` en un service ZIO. Il dépendra 
 # 📝 Résumé du Jour
 
 - Le canal **R** rend les dépendances de ton code explicites et vérifiables au moment de la compilation.
-- `ZLayer` est l'outil ultime de modularité.
+- `ZLayer` construit et partage les services nécessaires à un effet.
 - Ton application est maintenant un assemblage de composants interchangeables et testables.
 - Tu commences à voir la puissance du "Graphe de Dépendances" de ZIO.
 
-**Prochaine étape** : Créer tes couches de clearing dans le TP 67 !
+**Prochaine étape** : Utiliser le Kit 14.2 dans le TP du Jour 2.

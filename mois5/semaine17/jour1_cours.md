@@ -16,7 +16,7 @@ footer: "Jour 1 — Les 3 Piliers de l'Observabilité"
 # 📋 Objectifs du Jour
 
 - Comprendre la différence entre Monitoring et Observabilité.
-- Découvrir les **3 piliers** : Logs, Métriques, Traces.
+- Découvrir trois signaux majeurs : logs, métriques et traces.
 - Apprendre à utiliser **Logback** pour des logs professionnels.
 - Transformer nos logs en JSON pour qu'ils soient lisibles par une machine.
 
@@ -29,7 +29,7 @@ L'observabilité est la capacité de comprendre l'état interne du système uniq
 
 ---
 
-# 2. Les 3 Piliers
+# 2. Trois signaux complémentaires
 
 1. **Logs** : Événements discrets (ex: "Transaction X validée").
 2. **Métriques** : Chiffres agrégés sur le temps (ex: "150 tx/sec", "CPU à 40%").
@@ -39,7 +39,7 @@ L'observabilité est la capacité de comprendre l'état interne du système uniq
 
 # 3. Logs Structurés (JSON)
 
-Un log texte est difficile à filtrer. Un log JSON est une base de données.
+Un log texte libre est difficile à filtrer. Un log JSON est un événement structuré que les outils peuvent indexer.
 
 ### Avant (Mauvais) ❌
 `INFO: Bank A sent 100 DH at 12:00`
@@ -59,7 +59,7 @@ Un log texte est difficile à filtrer. Un log JSON est une base de données.
 
 # 🏗️ Application : Logback & SLF4J
 
-Nous allons configurer la bibliothèque **Logback** pour que chaque étape de notre moteur de clearing génère un log JSON riche, incluant l'ID de la transaction et le temps de traitement.
+Nous allons produire des logs JSON avec un contexte compatible avec les Fibers. Un `MDC` basé uniquement sur le thread peut perdre la corrélation quand une Fiber change de thread ; ZIO Logging fournit un contexte fondé sur `FiberRef`.
 
 ---
 
@@ -78,4 +78,4 @@ Nous allons configurer la bibliothèque **Logback** pour que chaque étape de no
 - Le format JSON est le standard de l'industrie.
 - Ton application commence à parler le langage des Ops.
 
-**Prochaine étape** : Configurer Logback dans le TP 81 !
+**Prochaine étape** : Utiliser le Kit 17.1 dans le TP du Jour 1.

@@ -7,26 +7,36 @@
 ## Exercice 1 : Connexion Réactive (Starter Kit)
 
 > [!TIP]
-> **Starter Kit Fourni :** Faire le pont entre l'API Asynchrone de Datastax en Java et ZIO est complexe pour une journée. Sers-toi du Helper fourni : `exercises/s16/CassandraAsyncBridge.scala`.
+> **Starter Kit fourni :** utilise le **Kit 16.2**, fichier `distributed/persistence/ClearingRepository.scala`.
 
-1. Ajoute les dépendances du driver Datastax.
-2. Utilise le mécanisme de `Scope` (M4-J3) pour garantir que la session (`CqlSession`) sera fermée proprement à la fin du programme.
-3. Inspecte la fonction `fromCompletionStage` fournie dans le Starter Kit, tu l'utiliseras à l'exercice suivant !
+1. Vérifie les dépendances du driver dans le build.
+2. Lance le programme avec la couche `CqlSession` scoped.
+3. Inspecte le helper `executeAsync`.
+4. Coupe Cassandra et vérifie que l'erreur reste dans le canal `Task`.
+
+**Validation :** la session s'ouvre une fois, se partage et se ferme à l'arrêt.
 
 ---
 
 ## Exercice 2 : Implémentation du SAVE (1h30)
 
-1. Implémente la méthode `save(tx: Transaction): ZIO[Any, Throwable, Unit]`.
-2. Utilise un `PreparedStatement` pour la sécurité et la performance.
-3. Vérifie via la console `cqlsh` que les transactions enregistrées sont bien présentes.
+1. Prépare les statements au démarrage de la couche.
+2. Implémente `stage` et `markStage` avec `processing_state`.
+3. Persiste ensuite les quatre projections par banque, date et paire.
+4. Réutilise les mêmes clés lors d'une reprise.
+5. Vérifie le résultat avec `cqlsh`.
+
+**Validation :** deux appels avec le même ID conservent une ligne d'état et les mêmes projections.
 
 ---
 
 ## Exercice 3 : Test de Performance (1h)
 
-1. Génère une liste de 100 transactions fictives.
-2. Enregistre-les en utilisant `ZIO.foreachPar`.
-3. Mesure le temps total. Compare avec une écriture séquentielle (`ZIO.foreach`).
+1. Génère cent transactions déterministes.
+2. Compare `ZIO.foreach` avec `ZIO.foreachPar(...).withParallelism(8)`.
+3. Répète chaque mesure au moins trois fois après un warm-up.
+4. Compare débit, latence et erreurs ; ne conserve pas seulement la meilleure valeur.
+
+**Validation :** le rapport contient les paramètres et les trois mesures de chaque variante.
 
 **Livrable** : Code source du TransactionRepository et logs de performance montrant les bénéfices de l'écriture asynchrone parallèle.

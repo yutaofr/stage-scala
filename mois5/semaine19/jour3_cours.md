@@ -41,7 +41,7 @@ jobs:
   build-and-test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Run Tests
         run: sbt test
 ```
@@ -50,19 +50,20 @@ jobs:
 
 # 3. Sécurité des Secrets
 
-On ne met JAMAIS de mot de passe dans le YAML. On utilise les `GitHub Secrets`.
+Ne place pas de mot de passe dans le YAML. Utilise les secrets du dépôt ou de l'environnement.
 Ils sont injectés dans le pipeline via des variables d'environnement sécurisées.
 
 ---
 
-# 🏗️ Application : Le Pipeline Héroïque
+# 🏗️ Application : Le pipeline de livraison
 
 Nous allons écrire le fichier de configuration qui permettra à ATH d'être à la pointe de l'industrie :
-- À chaque commit sur `main` :
+- Sur chaque pull request :
   - Lancement des tests unitaires.
   - Lancement des tests d'intégration.
   - Build de l'image Docker multi-stage.
-  - Publication sur le Docker Hub (simulé).
+- Sur un tag ou une branche autorisée :
+  - Publication de l'image après succès des contrôles.
 
 ---
 
@@ -78,7 +79,6 @@ Nous allons écrire le fichier de configuration qui permettra à ATH d'être à 
 
 - Le pipeline CI/CD est l'usine de ton application.
 - GitHub Actions simplifie l'automatisation en restant proche du code.
-- Ton rôle de développeur s'arrête au `git push`, le reste est automatique.
-- Tu es devenu un développeur "DevOps".
+- L'automatisation rend les contrôles répétables, mais le développeur reste responsable du diagnostic et de la décision de livraison.
 
-**Prochaine étape** : Automatiser ton projet dans le TP 93 !
+**Prochaine étape** : Utiliser le Kit 19.3 dans le TP du Jour 3.

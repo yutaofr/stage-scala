@@ -69,31 +69,33 @@ import scala.concurrent.duration.*
  * STARTER KIT : Le pipeline parallèle est pré-câblé.
  * Le stagiaire implémente uniquement les fonctions métier.
  *
- * NOTE : Les types `clearing.Transaction` et `clearing.ClearingError`
- * proviennent du package `clearing` défini dans les TPs du Mois 3.
- * Assure-toi que ce package est accessible dans ton classpath.
+ * NOTE : Le domaine vient du cœur v2.3. Il est aussi fourni dans
+ * `fil-rouge/src/main/scala/clearing` pour éviter toute redéfinition locale.
  */
 object FuturePipeline:
   given ec: ExecutionContext = ExecutionContext.global
 
+  import clearing.core.ClearingError
+  import clearing.model.*
+
   // === ZONE STAGIAIRE : Implémenter ces fonctions ===
 
   /** Valide une transaction (simuler un délai réseau de 200ms) */
-  def validateAsync(tx: clearing.Transaction): Future[Either[String, clearing.Transaction]] =
+  def validateAsync(tx: Transaction): Future[Either[ClearingError, Transaction]] =
     Future {
       Thread.sleep(200) // Simule un appel réseau
       ???  // TODO : implémenter la validation
     }
 
   /** Calcule la position nette d'un batch */
-  def calculateNetting(txs: List[clearing.Transaction]): Future[Map[String, BigDecimal]] =
+  def calculateNetting(txs: List[Transaction]): Future[Map[BankCode, Money]] =
     Future {
       ???  // TODO : implémenter le netting (réutiliser le code du Mois 3)
     }
 
   // === ZONE TUTEUR : Infrastructure pré-câblée ===
 
-  def runParallelValidation(transactions: List[clearing.Transaction]): Future[List[Either[String, clearing.Transaction]]] =
+  def runParallelValidation(transactions: List[Transaction]): Future[List[Either[ClearingError, Transaction]]] =
     Future.sequence(transactions.map(validateAsync))
 
   def runWithTimeout[T](future: Future[T], timeout: Duration = 5.seconds): T =
@@ -107,7 +109,7 @@ object FuturePipeline:
 
     val netting = runWithTimeout(calculateNetting(valid))
     netting.foreach { (bank, net) =>
-      println(f"$bank%-6s : $net%12.2f DH")
+      println(f"${bank.value}%-6s : ${net.value}%12.2f DH")
     }
 ```
 
@@ -300,6 +302,7 @@ object SupervisedBanks:
 ```scala
 package distributed.actors
 
+import clearing.model.*
 import org.apache.pekko.actor.typed.{ActorRef, ActorSystem, Behavior}
 import org.apache.pekko.actor.typed.scaladsl.Behaviors
 
@@ -313,7 +316,7 @@ object ClearingManager:
   // === ZONE TUTEUR : Protocole de messages ===
   sealed trait Command
   /** Applique un résultat de netting : banque -> position nette (+ créditeur / − débiteur). */
-  case class ApplyNetting(positions: Map[String, BigDecimal]) extends Command
+  case class ApplyNetting(positions: Map[BankCode, Money]) extends Command
   /** Message INTERNE : on "replie" les réponses des BankVault dans NOTRE protocole. */
   private case class WrappedResult(response: BankVaultActor.Response) extends Command
 
@@ -321,7 +324,7 @@ object ClearingManager:
    * @param vaults l'ANNUAIRE : à chaque bankId correspond la référence de SON acteur.
    *               C'est ce `Map` qui permet de "trouver" l'acteur destinataire.
    */
-  def apply(vaults: Map[String, ActorRef[BankVaultActor.Command]]): Behavior[Command] =
+  def apply(vaults: Map[BankCode, ActorRef[BankVaultActor.Command]]): Behavior[Command] =
     Behaviors.setup { context =>
       // UN SEUL adaptateur : Pekko n'enregistre qu'UN adaptateur PAR CLASSE de message
       // (un 2e appel pour la même classe REMPLACE le 1er). C'est pourquoi la réponse
@@ -336,8 +339,8 @@ object ClearingManager:
               case Some(vaultRef) =>
                 // === ZONE STAGIAIRE ===
                 // TODO : selon le SIGNE de `net`, envoyer le bon message au coffre :
-                //   - net > 0  → vaultRef ! BankVaultActor.Credit(net, responseAdapter)
-                //   - net < 0  → vaultRef ! BankVaultActor.Debit(-net, responseAdapter)
+                //   - net.value > 0  → vaultRef ! BankVaultActor.Credit(net.value, responseAdapter)
+                //   - net.value < 0  → vaultRef ! BankVaultActor.Debit(-net.value, responseAdapter)
                 //   - net == 0 → rien (logger éventuellement "position nulle")
                 ???
               case None =>

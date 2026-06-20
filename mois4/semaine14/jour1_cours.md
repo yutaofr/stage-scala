@@ -17,19 +17,19 @@ footer: "Jour 1 — Qu'est-ce qu'un Effet ? ZIO[R, E, A]"
 
 - Comprendre le concept de **Programmation Orientée Effets**.
 - Découvrir la structure de type `ZIO[R, E, A]`.
-- En finir avec le monde impur (I/O, Exceptions).
+- Isoler les I/O et rendre leurs erreurs explicites.
 - Écrire son premier programme "Bonjour le Monde" avec ZIO.
 
 ---
 
 # 1. Qu'est-ce qu'un Effet ?
 
-Un effet est une description de ce que le programme doit faire.
+Un effet est une valeur qui décrit ce que le programme devra faire. L'effet reste pur tant que le runtime ne l'exécute pas.
 - `Future` : Lance le travail immédiatement.
 - `ZIO` : Est une **recette**. Tant qu'on ne l'exécute pas, rien ne se passe.
 
-### Pourquoi c'est mieux ?
-C'est 100% pur (Referential Transparency). On peut manipuler les actions comme des données complexes.
+### Pourquoi c'est utile ?
+On peut composer, tester, répéter ou interrompre la description avant son exécution. Les effets de bord existent toujours, mais ils sont localisés et pilotés.
 
 ---
 
@@ -46,13 +46,13 @@ val program: ZIO[Any, IOException, Unit] = Console.printLine("Hello ATH")
 
 ---
 
-# 3. La Sécurité Totale
+# 3. Erreurs typées, défauts et interruption
 
-Avec ZIO, les erreurs ne sont plus des interruptions (exceptions). Ce sont des valeurs typées dans le canal **E**.
+Les erreurs prévues apparaissent dans le canal **E**. ZIO distingue aussi les défauts non récupérables et l'interruption d'une Fiber : le type `E` ne remplace donc pas toute la gestion des incidents.
 
 ### Comparaison
-- JVM brute : `def read(): String` (Peut crasher si le fichier manque).
-- ZIO : `def read(): ZIO[Any, FileNotFoundError, String]` (Le compilateur t'oblige à gérer l'absence de fichier).
+- JVM brute : `def read(): String` peut lever une exception non visible dans la signature.
+- ZIO : `def read(): ZIO[Any, FileReadError, String]` rend l'échec attendu visible et permet un traitement exhaustif.
 
 ---
 
@@ -72,9 +72,8 @@ Nous allons créer un programme ZIO qui demande le nom d'une banque à l'utilisa
 
 # 📝 Résumé du Jour
 
-- ZIO transforme les actions impures en blueprints purs.
-- Le typage `[R, E, A]` documente parfaitement le comportement de ton code.
-- ZIO est le standard actuel pour les applications Scala à haute performance.
-- Bienvenue dans le monde du "Zéro Effet de Bord Subi".
+- ZIO transforme les opérations avec effets en descriptions composables.
+- Le typage `[R, E, A]` documente les dépendances, les erreurs attendues et le résultat.
+- Le runtime exécute l'effet et gère les Fibers, l'interruption et les ressources.
 
-**Prochaine étape** : Tes premiers programmes ZIO dans le TP 66 !
+**Prochaine étape** : Utiliser le Kit 14.1 dans le TP du Jour 1.

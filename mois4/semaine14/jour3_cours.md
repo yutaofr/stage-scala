@@ -15,7 +15,7 @@ footer: "Jour 3 — Gestion des Ressources (Scope)"
 
 # 📋 Objectifs du Jour
 
-- Comprendre le problème des fuites de mémoire (Memory Leaks).
+- Comprendre le problème des fuites de ressources.
 - Utiliser le type `Scope`.
 - Apprendre à utiliser `ZIO.acquireRelease` pour garantir le nettoyage.
 - Gérer les fichiers et les connexions réseau sans peur.
@@ -26,8 +26,8 @@ footer: "Jour 3 — Gestion des Ressources (Scope)"
 
 Si vous ouvrez 1000 fichiers sans les fermer, votre système d'exploitation finira par refuser d'en ouvrir de nouveaux.
 
-### Pourquoi try/finally ne suffit pas ?
-En programmation asynchrone, le "finally" peut s'exécuter avant que le traitement asynchrone ne soit terminé.
+### Pourquoi le scope est préférable ?
+Un `try/finally` bien placé peut fermer une ressource, mais il se compose mal avec l'interruption et les traitements concurrents. Un scope rattache explicitement la durée de vie de la ressource à celle de l'effet.
 
 ---
 
@@ -55,7 +55,7 @@ def processFile: ZIO[Scope, IOException, Unit] =
   yield ()
 ```
 
-> 💡 Dès que le programme sort du `Scope`, le fichier est fermé automatiquement. C'est le "Garbage Collection" des ressources externes.
+> 💡 Dès que le programme sort du `Scope`, le finaliseur est exécuté. Ce mécanisme est déterministe et distinct du Garbage Collector.
 
 ---
 
@@ -67,7 +67,7 @@ Nous allons créer un service qui lit un batch CSV volumineux. Nous utiliserons 
 
 # 🧠 Quiz Rapide
 
-1. Une ressource est-elle libérée si le programme crashe ? (Oui, ZIO le garantit).
+1. Une ressource est-elle libérée si l'effet échoue ou si sa Fiber est interrompue ? (Oui, si elle a été acquise dans le scope).
 2. Puis-je utiliser une ressource en dehors de son `Scope` ? (Non, elle sera déjà fermée).
 3. Pourquoi passer par `acquireRelease` plutôt qu'un simple `close()` manuel ? (Pour gérer les interruptions et les erreurs de manière déterministe).
 
@@ -80,4 +80,4 @@ Nous allons créer un service qui lit un batch CSV volumineux. Nous utiliserons 
 - Ton moteur de clearing est maintenant "propre" : il ne laisse aucune trace derrière lui.
 - Tu as acquis une compétence de développeur système senior.
 
-**Prochaine étape** : Sécuriser tes accès fichiers dans le TP 68 !
+**Prochaine étape** : Utiliser le Kit 14.3 dans le TP du Jour 3.

@@ -53,7 +53,7 @@ setUp(
 
 # 3. Analyser le rapport Gatling
 
-Gatling génère un rapport HTML magnifique avec :
+Gatling génère un rapport HTML avec :
 - Le nombre de requêtes par seconde (RPS).
 - Les temps de réponse (min, max, p95, p99).
 - Le taux d'erreur.
@@ -62,14 +62,14 @@ Gatling génère un rapport HTML magnifique avec :
 
 # 🏗️ Application : Le Test de Stress ATH
 
-Nous allons créer un scénario Gatling qui injecte massivement des transactions dans notre endpoint HTTP (ou directement dans Kafka via un plugin). L'objectif est de voir à partir de quel débit le dashboard Grafana commence à afficher des dossiers d'alerte.
+Nous allons cibler un adaptateur HTTP de laboratoire qui publie les requêtes dans Kafka. L'objectif est d'identifier le premier SLO dépassé et le composant saturé.
 
 ---
 
 # 🧠 Quiz Rapide
 
 1. Gatling est-il écrit en Scala ? (Oui).
-2. Quelle métrique est la plus importante pour l'expérience utilisateur ? (La latence p99, car elle montre le cas le plus défavorable).
+2. Que représente la p99 ? (99 % des observations sont inférieures ou égales à cette valeur ; ce n'est pas le maximum).
 3. Pourquoi injecter des utilisateurs progressivement plutôt que tous d'un coup ? (Pour simuler la réalité d'une journée de travail et observer comment le système s'adapte).
 
 ---
@@ -81,4 +81,4 @@ Nous allons créer un scénario Gatling qui injecte massivement des transactions
 - Ton application doit tenir les pics d'activité bancaire du matin.
 - Plus tu connais tes limites, plus tu es prêt pour la production.
 
-**Prochaine étape** : Torturer ton moteur dans le TP 86 !
+**Prochaine étape** : Utiliser le Kit 18.1 dans le TP du Jour 1.

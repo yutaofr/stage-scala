@@ -25,7 +25,7 @@ footer: "Jour 2 — Docker Compose Complet"
 # 1. La vision globale
 
 Ton système de clearing n'est pas qu'un JAR. C'est une symphonie :
-- Kafka & Zookeeper (Transport).
+- Kafka KRaft (Transport).
 - Cassandra (Persistance).
 - Clearing Engine (Cœur).
 - Prometheus & Grafana (Vues).
@@ -54,14 +54,13 @@ services:
 
 # 3. Variables d'Environnement
 
-Ne jamais mettre d'IPs en dur dans ton code !
-Utilise les noms de services Docker (`host: "kafka"`) et passe les secrets/config via le fichier `.env`.
+Ne mets pas d'IP en dur. Utilise les noms DNS de services Docker. Le fichier `.env` convient aux paramètres non sensibles ; utilise des secrets ou une injection externe pour les identifiants sensibles.
 
 ---
 
 # 🏗️ Application : Le Stack Complet v4.0
 
-Nous allons construire un fichier `docker-compose.yml` héroïque. En tapant `docker-compose up`, tout le système de clearing démarrera, se connectera et commencera à monitorer les transactions automatiquement.
+Nous allons construire un Compose reproductible. `docker compose up --wait` devra attendre les healthchecks utiles, tandis que l'application conservera aussi des retries de démarrage bornés.
 
 ---
 
@@ -79,4 +78,4 @@ Nous allons construire un fichier `docker-compose.yml` héroïque. En tapant `do
 - Ton système est portable : il tournera de la même façon sur ton Mac que sur le serveur de la banque.
 - Tu maîtrises l'orchestration de niveau intermédiaire.
 
-**Prochaine étape** : Assembler le stack dans le TP 92 !
+**Prochaine étape** : Utiliser le Kit 19.2 dans le TP du Jour 2.

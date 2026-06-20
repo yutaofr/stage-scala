@@ -44,9 +44,9 @@ Le jury ne veut pas lire tes slides, il veut t'écouter.
 # 3. Pitcher la Valeur Métier
 
 N'oublie pas que tu travailles pour une banque.
-- "ZIO permet d'éviter les erreurs de virement."
-- "Kafka permet un clearing 24/7."
-- "Cassandra archive l'histoire bancaire du pays."
+- "ZIO rend les erreurs et les dépendances explicites."
+- "Kafka découple ingestion et traitement et permet la reprise."
+- "Cassandra sert des lectures prévues à partir de données persistées."
 
 ---
 
@@ -70,4 +70,4 @@ Nous allons construire le plan détaillé de tes 15 slides. Nous sélectionneron
 - Une bonne communication double la valeur de ton code.
 - Tu es maintenant prêt à devenir un "Communicant Technique".
 
-**Prochaine étape** : Construire ton deck dans le TP 97 !
+**Prochaine étape** : Utiliser le Kit 20.2 dans le TP du Jour 2.

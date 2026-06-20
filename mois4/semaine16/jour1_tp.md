@@ -4,32 +4,46 @@
 
 ---
 
+## Point de départ
+
+- Copie le **Kit 16.0** et le **Kit 16.1** de `starter_kit_s16.md`.
+- Écris d'abord les requêtes attendues, puis vérifie que chaque requête fournit toute sa clé de partition.
+- N'utilise pas `ALLOW FILTERING` pour contourner un schéma inadapté.
+
 ## Exercice 1 : Le Cluster Cassandra (Starter Kit)
 
 > [!IMPORTANT]
 > **Starter Kit Infrastructure :** Déployer Cassandra de zéro est complexe. Pour te concentrer sur la modélisation des données, utilise l'infrastructure pré-configurée.
 
-1. Démarre l'infrastructure via : `docker-compose -f docker-compose.infra.yml up -d cassandra`
-2. Ce fichier contient déjà les *Healthchecks* nécessaires et installe l'outil CLI interne.
-3. Attends 1 minute, puis ouvre un terminal interactif dans le conteneur :
+1. Démarre Cassandra avec `docker compose -f docker/docker-compose-full.yml up -d --wait cassandra`.
+2. Lance `docker compose -f docker/docker-compose-full.yml run --rm cassandra-init`.
+3. Ouvre un terminal interactif :
    ```bash
    docker exec -it cassandra-node cqlsh
    ```
+
+**Validation :** le keyspace et les quatre tables du kit apparaissent dans `DESCRIBE KEYSPACE`.
 
 ---
 
 ## Exercice 2 : Création du Keyspace & Table (1h30)
 
-1. Crée un Keyspace nommé `ath_clearing` avec une réplication simple.
-2. Crée la table `transactions_by_day` optimisée pour répondre à la question : "Quelles sont les transactions de telle banque pour tel jour ?".
-3. Insère manuellement 3 lignes via `INSERT INTO`.
+1. Pour le laboratoire local, conserve une réplication à `1` et note qu'elle n'est pas tolérante aux pannes.
+2. Étudie `transactions_by_bank_day` et `clearing_history_by_day`. Explique pourquoi l'historique journalier est réparti en plusieurs buckets.
+3. Insère trois transactions pour deux banques et deux dates.
+4. Dessine la répartition logique des partitions.
+
+**Validation :** la requête banque + jour ne scanne qu'une partition logique.
 
 ---
 
 ## Exercice 3 : Requêtes de Lecture (1h30)
 
-1. Effectue un `SELECT` filtré sur une banque.
-2. Tente de filtrer sur un champ qui n'est pas dans la clé primaire. Observe l'erreur (ou l'obligation d'utiliser `ALLOW FILTERING`).
-3. **Réflexion** : Pourquoi est-il dangereux d'utiliser `ALLOW FILTERING` en production ?
+1. Lis les transactions d'une banque pour une journée.
+2. Tente la requête « top des paires » sur cette table et observe qu'elle n'est pas adaptée.
+3. Propose la clé de `pair_activity_by_day`.
+4. Explique le coût potentiel d'`ALLOW FILTERING`.
+
+**Validation :** le livrable relie chaque requête à une table et à une clé de partition.
 
 **Livrable** : Schéma CQL de la table `transactions_by_day` et captures d'écran des premiers SELECT réussis.

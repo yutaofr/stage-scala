@@ -31,9 +31,9 @@ Le Chaos Engineering consiste à injecter des pannes de manière contrôlée pou
 
 # 2. La Méthodologie
 
-1. **Hypothèse** : "Si je coupe 1 broker Kafka sur 3, le système continue de tourner".
+1. **Hypothèse** : "Si Cassandra devient indisponible 30 secondes, le consumer ne valide pas les offsets concernés".
 2. **Mesure** : Regarder le dashboard Grafana (Tout est vert).
-3. **Injection** : `docker-compose stop kafka-1`.
+3. **Injection** : `docker compose stop cassandra`.
 4. **Analyse** : Est-ce que le système a tenu ? Y a-t-il eu une perte de données ?
 
 ---
@@ -48,7 +48,7 @@ Il existe des outils pour simuler des pannes complexes :
 
 # 🏗️ Application : Le Test de Survie d'ATH
 
-Nous allons jouer les "méchants". Pendant que le simulateur envoie des virement, nous allons éteindre Cassandra. Nous devrons observer que le moteur ZIO retente indéfiniment sans rien perdre, puis repart proprement dès que Cassandra revient.
+Pendant que le simulateur envoie des virements, nous allons rendre Cassandra indisponible. Le moteur applique une politique bornée, n'avance pas les offsets concernés et expose l'incident. La reprise est ensuite vérifiée par les IDs et les offsets.
 
 ---
 
@@ -66,4 +66,4 @@ Nous allons jouer les "méchants". Pendant que le simulateur envoie des virement
 - Injecter des erreurs permet d'avoir confiance dans son code de résilience.
 - Un système robuste est un système qui ne craint pas la panne.
 
-**Prochaine étape** : Injecter le chaos dans le TP 87 !
+**Prochaine étape** : Utiliser le Kit 18.2 dans le TP du Jour 2.

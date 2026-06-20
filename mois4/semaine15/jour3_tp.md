@@ -7,28 +7,36 @@
 ## Exercice 1 : Le Consumer Simple (Starter Kit)
 
 > [!TIP]
-> **Starter Kit Fourni :** Gérer manuellement les offsets Kafka et la boucle ZStream prend trop de temps. Utilise le fichier `exercises/s15/KafkaConsumerBase.scala`. Concentre-toi sur l'écriture de la méthode métier `processTransaction`.
+> **Starter Kit fourni :** utilise le **Kit 15.2** et le **Kit 15.3**, fichier `distributed/kafka/KafkaPipeline.scala`.
 
-1. Ouvre le squelette `KafkaConsumerBase`.
-2. Observe comment la configuration du stream et le commit sont déjà faits pour toi.
-3. Complète `processTransaction(key, value)` pour qu'elle affiche simplement la valeur brute de chaque message reçu.
+1. Ouvre le squelette et repère `subscribe`, `poll`, traitement, publication, commit et fermeture.
+2. Complète les tests du `RecordProcessor`.
+3. Pour ce premier exercice, journalise clé, partition, offset et valeur.
+4. Ajoute un hook d'arrêt qui ferme le consumer.
+
+**Validation :** `Ctrl+C` ferme le consumer sans stacktrace et sans attendre le timeout maximal.
 
 ---
 
 ## Exercice 2 : Branchement du Domaine (1h30)
 
-1. À l'intérieur de ta boucle, transforme chaque `String` reçue en un objet `Transaction` (utilise `Transaction.fromCsv`).
-2. Appelle ton `TransactionValidator` (v2.3) pour valider la transaction.
-3. Affiche : `[OFFSET: X] TX ID: Y -> STATUS: Z`.
+1. Transforme chaque JSON en `Transaction`.
+2. Appelle le validateur v2.4.
+3. Publie le résultat valide dans `clearing-output`.
+4. Pour un JSON invalide, publie le payload et la cause dans `clearing-dlq` avant d'autoriser le commit.
+
+**Validation :** un record valide atteint `clearing-output` ; un record invalide atteint `clearing-dlq`.
 
 ---
 
 ## Exercice 3 : Test de Reprise (1h)
 
-1. Lance ton simulateur (S15-J2) pour envoyer 10 messages.
-2. Lance ton consumer pour les lire.
-3. Arrête ton consumer (`Ctrl+C`).
-4. Relance ton simulateur pour envoyer 10 nouveaux messages.
-5. Relance ton consumer et vérifie qu'il lit les 10 nouveaux messages **sans relire les anciens**.
+1. Envoie dix messages puis traite-les jusqu'au commit.
+2. Redémarre : aucun ancien message ne doit être rejoué.
+3. Recommence en arrêtant le consumer après l'effet métier mais avant le commit.
+4. Redémarre et observe le record relu.
+5. Explique pourquoi ce doublon est normal en at-least-once.
+
+**Validation :** les deux scénarios sont reproduits avec les offsets correspondants.
 
 **Livrable** : Code source du consumer asynchrone intégré avec la logique de validation du moteur de clearing.

@@ -15,7 +15,7 @@ footer: "Jour 1 — Modélisation Cassandra (Orientation Query)"
 
 # 📋 Objectifs du Jour
 
-- Comprendre pourquoi SQL (PostgreSQL) ne suffit plus pour du Big Data.
+- Comprendre quand Cassandra répond mieux qu'une base relationnelle.
 - Apprendre les principes de la modélisation NoSQL (Wide-Column Store).
 - Découvrir la loi d'or : **"Une Table par Requête"**.
 - Créer son premier schéma de table pour l'historique du clearing.
@@ -24,10 +24,10 @@ footer: "Jour 1 — Modélisation Cassandra (Orientation Query)"
 
 # 1. Pourquoi Cassandra pour ATH ?
 
-Nous traitons des millions de transactions par jour. Cassandra permet :
-- **Disponibilité Totale** : Aucune panne possible (Architecture sans maître).
-- **Écritures Flash** : Les données sont écrites dans un journal et en mémoire immédiatement.
-- **Linéarité** : Si tu veux 2x plus de perfs, tu rajoutes 2x plus de serveurs.
+Nous traitons des millions de transactions par jour. Cassandra apporte :
+- **Haute disponibilité** : l'architecture distribuée évite un maître unique, à condition de configurer réplication et cohérence.
+- **Écritures séquentielles** : commit log et memtables favorisent un débit d'écriture élevé.
+- **Scalabilité horizontale** : l'ajout de nœuds peut augmenter la capacité, après mesure et rééquilibrage.
 
 ---
 
@@ -43,7 +43,7 @@ On veut pouvoir dire : "Donne-moi toutes les transactions de la banque CIH".
 
 ---
 
-# 3. Le Langage CQL (Cassandra Query Language)
+# 3. Le langage CQL
 
 Il ressemble au SQL mais n'autorise pas les jointures (`JOIN`).
 
@@ -82,4 +82,4 @@ Nous allons ajouter un nœud Cassandra à notre `docker-compose.yml` et créer l
 - La dénormalisation est ton amie.
 - Demain, nous allons y écrire depuis Scala via ZIO.
 
-**Prochaine étape** : Lancer ton Cassandra dans le TP 76 !
+**Prochaine étape** : Utiliser les Kits 16.0 et 16.1 dans le TP du Jour 1.

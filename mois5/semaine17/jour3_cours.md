@@ -34,17 +34,16 @@ Dans un système distribué, une erreur peut venir de n'importe quel service.
 
 - **Trace ID** : Un identifiant unique pour toute l'opération (de bout en bout).
 - **Span** : Une étape spécifique (ex: "Parsing CSV", "Saving to Cassandra").
-- **Parent/Child** : Les spans sont organisées en hiérarchie.
+- **Parent/Child** : les spans sont organisés en hiérarchie causale.
 
 ---
 
 # 3. Propaguer via Kafka
 
-Kafka permet d'ajouter des **Headers** aux messages. Nous allons y stocker le `Trace ID`.
-Cela permettra au moteur de clearing de savoir qu'il traite une transaction qui a été générée par tel simulateur à telle seconde.
+Kafka permet d'ajouter des headers. Un propagateur injecte le contexte W3C, notamment `traceparent`, puis le consumer l'extrait avant de créer son span enfant. Un Trace ID seul ne contient ni Span ID, ni flags, ni format de propagation.
 
 > [!TIP]
-> ZIO-Telemetry automatise cette propagation sans que vous ayez à modifier votre code métier.
+> ZIO Telemetry facilite la création des spans. La propagation Kafka doit néanmoins être configurée ou instrumentée explicitement.
 
 ---
 
@@ -69,4 +68,4 @@ Nous allons instrumenter notre pipeline complet. Chaque transaction générée c
 - Tu peux maintenant prouver exactement où se trouve un ralentissement dans ton système.
 - Ton application est "Transparente".
 
-**Prochaine étape** : Visualiser tes traces dans le TP 83 !
+**Prochaine étape** : Utiliser le Kit 17.3 dans le TP du Jour 3.

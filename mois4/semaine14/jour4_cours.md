@@ -25,11 +25,11 @@ footer: "Jour 4 — Fibers & Concurrence ZIO"
 # 1. Qu'est-ce qu'une Fiber ?
 
 Une Fiber est un "thread virtuel" géré par ZIO (pas par l'OS).
-- 1 Thread JVM = ~1 Mo de mémoire.
-- 1 Fiber ZIO = ~Humains octets.
+- Un thread natif réserve notamment une pile, souvent dimensionnée en centaines de kilo-octets ou davantage.
+- Une Fiber stocke un état logique beaucoup plus léger, géré par le runtime.
 
 ### Pouvoir
-Vous pouvez lancer **plusieurs centaines de milliers** de Fibers sur une seule machine sans la ralentir.
+Une application peut gérer un grand nombre de Fibers, mais la limite dépend du travail, de la mémoire et des ressources externes. Il faut mesurer et borner les accès I/O.
 
 ---
 
@@ -63,19 +63,19 @@ yield ()
 ```
 
 > [!TIP]
-> ZIO garantit que même en cas d'interruption, les ressources (`Scope`) sont libérées. C'est unique sur la JVM.
+> Une ressource acquise dans un `Scope` est finalisée lors de l'interruption. D'autres bibliothèques JVM proposent aussi des formes de gestion structurée ; l'intérêt de ZIO est leur intégration uniforme.
 
 ---
 
 # 🏗️ Application : Validation Parallèle v2
 
-Nous allons réécrire notre moteur de clearing pour valider toutes les lignes d'un batch en parallèle. Grâce à `foreachPar`, nous allons diviser le temps de traitement par le nombre de cœurs de la machine.
+Nous allons valider les lignes d'un batch avec un parallélisme borné. Le gain dépendra du type de travail : CPU, réseau ou stockage.
 
 ---
 
 # 🧠 Quiz Rapide
 
-1. Puis-je lancer 1 million de Fibers ? (Oui).
+1. Puis-je fixer à l'avance un nombre universel de Fibers sans risque ? (Non, il faut mesurer et limiter les ressources rares).
 2. Quel opérateur permet d'exécuter une liste de tâches en parallèle ? (`foreachPar`).
 3. Que se passe-t-il pour une Fiber si son parent meurt ? (ZIO l'interrompt par défaut par sécurité).
 
@@ -88,4 +88,4 @@ Nous allons réécrire notre moteur de clearing pour valider toutes les lignes d
 - L'interruption sûre est la clé de la résilience.
 - Ton moteur de clearing est maintenant prêt pour le "Big Data".
 
-**Prochaine étape** : Paralléliser tes traitements avec ZIO dans le TP 69 !
+**Prochaine étape** : Utiliser le Kit 14.4 dans le TP du Jour 4.

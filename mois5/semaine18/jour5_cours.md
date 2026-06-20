@@ -48,7 +48,7 @@ Pour scaler horizontalement, une application doit être **Stateless** (Sans éta
 
 # 🏗️ Application : Le Cluster de Clearing
 
-Nous allons modifier notre `docker-compose.yml` pour lancer **3 instances** de notre moteur de clearing. Nous observerons Kafka répartir les messages entre les 3. Puis nous en "tuerons" une et nous verrons les deux autres absorber le trafic sans perdre une seule transaction.
+Nous allons modifier notre `docker-compose.yml` pour lancer **3 instances** du moteur. Nous observerons l'affectation des partitions, puis nous arrêterons une instance et mesurerons relecture, lag et retour au nominal.
 
 ---
 
@@ -56,7 +56,7 @@ Nous allons modifier notre `docker-compose.yml` pour lancer **3 instances** de n
 
 1. Puis-je avoir 10 instances de mon application pour un topic qui n'a que 2 partitions ? (Oui, mais 8 instances seront inutiles car elles n'auront rien à lire).
 2. Qu'est-ce qu'un "Rebalance" ? (Le processus de Kafka pour redistribuer les partitions quand un membre du groupe part ou arrive).
-3. Pourquoi l'idempotence est-elle encore plus importante en HA ? (Parce que pendant un rebalance, un message peut être envoyé brièvement aux deux instances).
+3. Pourquoi l'idempotence est-elle encore plus importante en HA ? (Parce qu'un crash ou un rebalance peut provoquer une relecture si l'effet a réussi avant le commit).
 
 ---
 
@@ -66,7 +66,7 @@ Nous allons modifier notre `docker-compose.yml` pour lancer **3 instances** de n
 - Tu l'as cassé avec du Chaos Engineering.
 - Tu l'as observé à la loupe avec VisualVM.
 - Tu l'as optimisé avec le Tuning JVM.
-- Tu l'as rendu immortel avec la Haute Disponibilité.
-- Ton application est maintenant un roc.
+- Tu as testé la continuité de traitement avec plusieurs instances.
+- Tu connais désormais les limites observées du laboratoire.
 
-**Prochaine étape** : Déployer ton cluster dans le TP 90 !
+**Prochaine étape** : Utiliser le Kit 18.5 dans le TP du Jour 5.

@@ -41,8 +41,8 @@ Un bon dashboard doit répondre à 3 questions en 3 secondes :
 # 3. Le Langage PromQL
 
 Pour créer un graphique, on utilise des requêtes Prometheus.
-- `sum(rate(clearing_transactions_total[1m]))` : Débit par minute.
-- `histogram_quantile(0.99, sum(rate(duration_bucket[5m])) by (le))` : Latence p99.
+- `sum(rate(clearing_transactions_processed_total[5m]))` : débit moyen par seconde.
+- `histogram_quantile(0.99, sum by (le) (rate(clearing_processing_duration_seconds_bucket[5m])))` : estimation de la latence p99.
 
 ---
 
@@ -70,4 +70,4 @@ Nous allons créer un dashboard complet incluant :
 - Tu as maintenant un système digne d'un grand centre d'opération bancaire.
 - Demain, nous ferons en sorte que le système nous prévienne tout seul en cas de problème.
 
-**Prochaine étape** : Créer ton dashboard dans le TP 84 !
+**Prochaine étape** : Utiliser le Kit 17.4 dans le TP du Jour 4.

@@ -1,6 +1,35 @@
 # Starter Kit Semaine 14 : ZIO — Orchestration des Effets
 
-Le stagiaire ne doit PAS écrire le boilerplate ZIO. On lui fournit les couches et les runners. Il implémente la logique métier à l'intérieur.
+Le kit part du projet compilable [`../../fil-rouge`](../../fil-rouge). Le stagiaire implémente les zones marquées `TODO` et conserve les erreurs métier dans le canal typé.
+
+## Utilisation
+
+1. Copie le dossier `fil-rouge/` dans ton espace de travail.
+2. Lance `sbt test` avant toute modification.
+3. Copie ensuite chaque kit dans le chemin indiqué.
+4. Compile après chaque exercice.
+5. Remplace chaque `???` par une implémentation ; aucun `???` ne doit rester dans le livrable.
+
+## Kit 14.0 — Contrat de reprise S13 → S14
+
+**Projet fourni :** `fil-rouge/`
+
+Le projet contient :
+
+- `clearing.model` : `TransactionId`, `BankCode`, `Money` et `Transaction` ;
+- `clearing.core` : `ClearingError`, le validateur et le netting pur ;
+- `clearing.contract` : `TransactionSubmittedV1` et son codec JSON ;
+- les propriétés minimales héritées de S12 ;
+- un `build.sbt` exécutable.
+
+**Contrôle obligatoire :**
+
+```bash
+cd fil-rouge
+sbt test
+```
+
+Ne recrée pas ces types dans `distributed.*`. Les couches distribuées importent le domaine, puis convertissent les types opaques en primitives uniquement aux frontières.
 
 ---
 
@@ -12,7 +41,10 @@ Le stagiaire ne doit PAS écrire le boilerplate ZIO. On lui fournit les couches 
 package distributed.zio
 
 import zio.*
+import clearing.core.ClearingError
+import clearing.model.*
 import zio.Console.*
+import java.io.IOException
 
 /**
  * STARTER KIT : Le runner ZIO est pré-câblé.
@@ -21,12 +53,16 @@ import zio.Console.*
 object ZioStarter extends ZIOAppDefault:
 
   // === ZONE STAGIAIRE ===
-  val clearingLogic: ZIO[Any, Nothing, Unit] = for
-    _ <- printLine("=== Moteur de Clearing ZIO ===").orDie
+  enum InputError:
+    case EmptyBank
+    case InvalidCount(value: String)
+
+  val clearingLogic: ZIO[Any, IOException | InputError, Unit] = for
+    _ <- printLine("=== Moteur de Clearing ZIO ===")
     // TODO : Demander le nombre de transactions à traiter via readLine
     // TODO : Générer N transactions aléatoires
     // TODO : Afficher le résumé
-    _ <- printLine("Fin du traitement").orDie
+    _ <- printLine("Fin du traitement")
   yield ()
 
   def run = clearingLogic
@@ -51,17 +87,17 @@ import zio.*
 // --- Service Interfaces (fournis par le tuteur) ---
 
 trait TransactionRepository:
-  def findAll: Task[List[clearing.Transaction]]
-  def save(tx: clearing.Transaction): Task[Unit]
+  def findAll: Task[List[Transaction]]
+  def save(tx: Transaction): Task[Unit]
 
 trait ValidationService:
-  def validate(tx: clearing.Transaction): Task[Either[clearing.ClearingError, clearing.Transaction]]
+  def validate(tx: Transaction): IO[ClearingError, Transaction]
 
 trait NettingService:
-  def calculate(txs: List[clearing.Transaction]): Task[Map[String, BigDecimal]]
+  def calculate(txs: List[Transaction]): UIO[Map[BankCode, Money]]
 
 trait ReportService:
-  def generate(positions: Map[String, BigDecimal]): Task[String]
+  def generate(positions: Map[BankCode, Money]): UIO[String]
 
 // --- Companion Objects avec ZLayer (fournis par le tuteur) ---
 
@@ -69,15 +105,15 @@ object TransactionRepository:
   val live: ZLayer[Any, Nothing, TransactionRepository] = ZLayer.succeed {
     new TransactionRepository:
       // === ZONE STAGIAIRE : implémenter ===
-      def findAll: Task[List[clearing.Transaction]] = ???
-      def save(tx: clearing.Transaction): Task[Unit] = ???
+      def findAll: Task[List[Transaction]] = ???
+      def save(tx: Transaction): Task[Unit] = ???
   }
 
   // Version Mock pour les tests
   val mock: ZLayer[Any, Nothing, TransactionRepository] = ZLayer.succeed {
     new TransactionRepository:
       def findAll = ZIO.succeed(List.empty)
-      def save(tx: clearing.Transaction) = ZIO.unit
+      def save(tx: Transaction) = ZIO.unit
   }
 
 object ValidationService:
@@ -99,8 +135,7 @@ object ClearingApp extends ZIOAppDefault:
     repo    <- ZIO.service[TransactionRepository]
     txs     <- repo.findAll
     valSvc  <- ZIO.service[ValidationService]
-    results <- ZIO.foreach(txs)(valSvc.validate)
-    valid    = results.collect { case Right(tx) => tx }
+    valid   <- ZIO.foreach(txs)(valSvc.validate)
     netting <- ZIO.service[NettingService].flatMap(_.calculate(valid))
     report  <- ZIO.service[ReportService].flatMap(_.generate(netting))
     _       <- Console.printLine(report)
@@ -114,7 +149,7 @@ object ClearingApp extends ZIOAppDefault:
   )
 ```
 
-**Exercice du stagiaire :** Remplir les `???` dans les `live` de chaque service en réutilisant le code du Mois 3 (v2.3). Lancer avec `Mock` d'abord, puis `live`.
+**Exercice du stagiaire :** utiliser `ZIO.fromEither` dans `ValidationService.live`, puis déléguer le netting au cœur pur. Lancer avec `mock`, puis avec `live`.
 
 ---
 
@@ -124,6 +159,7 @@ object ClearingApp extends ZIOAppDefault:
 package distributed.zio
 
 import zio.*
+import clearing.model.Transaction
 import java.io.{BufferedReader, FileReader}
 
 /**
@@ -131,11 +167,11 @@ import java.io.{BufferedReader, FileReader}
  * Le stagiaire implémente le parsing des lignes.
  */
 object FileProcessor:
-  def readTransactionFile(path: String): ZIO[Any, Throwable, List[clearing.Transaction]] =
+  def readTransactionFile(path: String): ZIO[Any, Throwable, List[Transaction]] =
     ZIO.acquireReleaseWith(
       acquire = ZIO.attempt(new BufferedReader(new FileReader(path)))
     )(
-      release = reader => ZIO.succeed(reader.close())
+      release = reader => ZIO.attempt(reader.close()).orDie
     ) { reader =>
       ZIO.attempt {
         // === ZONE STAGIAIRE ===
@@ -154,6 +190,7 @@ object FileProcessor:
 package distributed.zio
 
 import zio.*
+import clearing.model.*
 
 /**
  * STARTER KIT : Le pattern de parallélisme est fourni.
@@ -161,22 +198,22 @@ import zio.*
  */
 object ParallelClearing:
   def clearBatch(
-    batches: List[List[clearing.Transaction]]
-  ): ZIO[NettingService, Throwable, List[Map[String, BigDecimal]]] =
+    batches: List[List[Transaction]]
+  ): ZIO[NettingService, Nothing, List[Map[BankCode, Money]]] =
     ZIO.foreachPar(batches) { batch =>
       for
         svc    <- ZIO.service[NettingService]
         result <- svc.calculate(batch)
       yield result
-    }.withParallelism(4)  // Max 4 fibers en parallèle
+    }.withParallelism(4)  // Au plus 4 validations actives
 
   def clearWithTimeout(
-    txs: List[clearing.Transaction],
+    txs: List[Transaction],
     timeout: Duration = 2.seconds
-  ): ZIO[NettingService, Throwable, Map[String, BigDecimal]] =
+  ): ZIO[NettingService, Throwable, Map[BankCode, Money]] =
     val batches = txs.grouped(1000).toList
     clearBatch(batches)
-      .map(_.foldLeft(Map.empty[String, BigDecimal]) { (acc, m) =>
+      .map(_.foldLeft(Map.empty[BankCode, Money]) { (acc, m) =>
         // === ZONE STAGIAIRE ===
         // TODO : fusionner les maps de positions nettes
         ???
@@ -198,9 +235,9 @@ import zio.*
  * Le stagiaire branche sa logique d'appel externe.
  */
 object ResilientCalls:
-  // Politique de retry : 3 tentatives, délai exponentiel
+  // Politique de retry : au plus 3 nouvelles tentatives, délai exponentiel
   val retryPolicy: Schedule[Any, Throwable, Any] =
-    Schedule.exponential(100.millis) && Schedule.recurs(3)
+    (Schedule.exponential(100.millis) && Schedule.recurs(3)).jittered
 
   def callExchangeRate(currency: String): ZIO[Any, Throwable, BigDecimal] =
     ZIO.attempt {

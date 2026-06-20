@@ -47,7 +47,9 @@ producer.send(record)
 ### Garanties de livraison (`acks`)
 - `acks=0` : Le producteur n'attend aucune réponse (Super rapide, peu fiable).
 - `acks=1` : Le leader a bien reçu le message.
-- `acks=all` : Tous les serveurs ont répliqué le message (Sécurité maximum ✅).
+- `acks=all` : toutes les répliques actuellement dans l'ISR ont accusé réception. Avec une réplication à `1`, cela reste un seul broker.
+
+Pour réduire les doublons produits lors des retries, active `enable.idempotence=true`. Cette option ne rend pas tout le traitement métier exactly-once.
 
 ---
 
@@ -81,4 +83,4 @@ Nous allons coder un programme qui génère 100 transactions aléatoires par sec
 - La sérialisation transforme tes objets métier en octets pour le réseau.
 - Ton système commence à avoir un "débit".
 
-**Prochaine étape** : Injecter tes transactions dans le TP 72 !
+**Prochaine étape** : Utiliser le Kit 15.1 dans le TP du Jour 2.

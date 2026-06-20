@@ -30,7 +30,7 @@ footer: "Jour 5 — Demo Mois 4 (Clearing Engine v3.1)"
 
 ### Semaine 15 & 16 : L'Infrastructure de Données
 - Kafka pour le transport asynchrone et le dédoublonnage.
-- Cassandra pour le stockage Big Data et le reporting par banques.
+- Cassandra pour les lectures prévisibles et les projections par banque.
 
 ---
 
@@ -39,7 +39,7 @@ footer: "Jour 5 — Demo Mois 4 (Clearing Engine v3.1)"
 Votre application est désormais une véritable **Plateforme** :
 - **Temps Réel** : Traitement instantané via Kafka.
 - **Résilience** : Auto-réparatrice via les Acteurs et les Retries ZIO.
-- **Persistance** : Archivage indestructible dans Cassandra.
+- **Persistance** : archivage répliquable dans Cassandra, avec garanties dépendantes du cluster et du niveau de cohérence.
 - **Modularité** : Entièrement configurable via ZLayer.
 
 ---
@@ -50,8 +50,8 @@ On quitte le monde du développement pour celui de la **Production** :
 1. **Tests d'Intégration** : Utiliser `TestContainers` pour automatiser les tests avec Kafka et Cassandra.
 2. **CI/CD** : Builder l'image Docker avec `GitHub Actions` ou `SBT Native Packager`.
 3. **Observabilité** : Monitorer le moteur avec `Prometheus` et `Grafana`.
-4. **Kubernetes** : Déployer et scaler son moteur dans le Cloud.
-5. **Projet Final** : Présentation devant le jury ATH.
+4. **Performance et haute disponibilité** : mesurer les limites et lancer plusieurs instances.
+5. **Projet final** : préparer une livraison et une présentation vérifiables.
 
 ---
 
@@ -66,6 +66,6 @@ On quitte le monde du développement pour celui de la **Production** :
 
 # 📝 Conclusion
 
-Tu as franchi un cap immense. Tu ne codes plus des suites de commandes, tu designes des **Systèmes**. Cette expertise est ce qui différencie un développeur d'un architecte. Prépare-toi pour le mois final : celui de la mise en production réelle !
+Tu as franchi un cap : tu raisonnes désormais en composants, dépendances et garanties. Le mois final vérifiera l'exploitabilité du prototype et préparera une livraison démontrable.
 
-**Dernière étape** : Grande Démo v3.1 dans le TP 80 !
+**Dernière étape** : Utiliser le Kit 16.4 dans le TP du Jour 5.

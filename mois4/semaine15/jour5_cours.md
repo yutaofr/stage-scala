@@ -25,14 +25,14 @@ footer: "Jour 5 — Revue Pipeline & Clearing Engine v3.0"
 # 1. Rétrospective Architecturale
 
 ### Version 2.3 (Mois 3)
-- Pure, Typée, Indestructible.
+- Cœur métier pur, erreurs attendues typées.
 - Mais s'exécutait sur une collection statique en mémoire (`List`).
 
 ### Version 3.0 (S15)
 - **Connectée** : Lit ses données depuis un flux Kafka.
 - **Réactive** : Traite chaque transaction en quelques millisecondes.
 - **Scalable** : Prête à être déployée en plusieurs instances.
-- **Garantie** : Plus aucun message n'est perdu ni traité en double.
+- **Garantie visée** : traitement at-least-once, détection des doublons pendant l'exécution et préparation d'une déduplication durable.
 
 ---
 
@@ -77,6 +77,6 @@ Dernière étape du mois 4 : La mémoire à long terme.
 
 # 📝 Conclusion
 
-Félicitations ! Tu as fait entrer le système d'ATH dans l'ère du Big Data. Ton moteur est maintenant une brique d'infrastructure moderne, capable de gérer les flux financiers d'un pays entier.
+Le moteur v3.0 démontre un pipeline Kafka local. Les limites de réplication, de déduplication et de persistance restent explicites avant toute extrapolation à la production.
 
-**Dernière étape** : Finaliser la v3.0 dans le TP 75 !
+**Dernière étape** : Utiliser le Kit 15.4 dans le TP du Jour 5.

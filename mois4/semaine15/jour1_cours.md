@@ -28,7 +28,7 @@ Dans le clearing batch (S1 à S14), on attend que le fichier arrive. C'est lent.
 Avec Kafka, chaque transaction est envoyée dès qu'elle arrive. Le clearing se fait **au fil de l'eau**.
 
 ### Avantages
-- **Scalabilité** : Kafka peut absorber des millions de messages par seconde.
+- **Scalabilité** : Kafka répartit le stockage et le traitement par partitions ; le débit réel dépend du cluster et de la configuration.
 - **Persistance** : Si le moteur de clearing s'arrête, il reprend là où il en était (grâce aux Offsets).
 - **Découplage** : La banque envoie le message, elle ne sait pas qui va le traiter.
 
@@ -38,7 +38,7 @@ Avec Kafka, chaque transaction est envoyée dès qu'elle arrive. Le clearing se 
 
 - **Topic** : Une catégorie (ex: `transactions-entrees`).
 - **Partition** : Un topic est divisé en plusieurs fichiers sur plusieurs serveurs. C'est ce qui permet le parallélisme.
-- **Offset** : Un numéro séquentiel unique à chaque message dans une partition.
+- **Offset** : La position séquentielle d'un record dans une partition. Il n'est unique qu'à l'intérieur de cette partition.
 
 ---
 
@@ -47,13 +47,13 @@ Avec Kafka, chaque transaction est envoyée dès qu'elle arrive. Le clearing se 
 Plusieurs instances de notre moteur peuvent lire le même topic ensemble. Kafka répartit les partitions entre elles.
 
 > [!TIP]
-> Si vous avez 3 partitions et 3 serveurs, chaque serveur traite 1/3 du trafic. C'est la puissance du **Scalabilité Horizontale**.
+> Avec trois partitions, un groupe peut faire travailler au plus trois consumers en parallèle sur ce topic. La répartition exacte dépend du volume de chaque partition.
 
 ---
 
 # 🏗️ Application : Setup de l'Infrastructure
 
-Nous allons utiliser Docker Compose pour lancer un broker Kafka local. Ce sera le point d'entrée de notre futur moteur de clearing temps réel.
+Nous allons utiliser Docker Compose pour lancer un broker Kafka local en mode **KRaft**. Depuis Kafka 4, ZooKeeper n'est plus utilisé.
 
 ---
 
@@ -61,7 +61,7 @@ Nous allons utiliser Docker Compose pour lancer un broker Kafka local. Ce sera l
 
 1. Kafka est-il une base de données ? (Non, c'est un journal de messages distribué).
 2. Que se passe-t-il si un message est lu par un Consumer ? (Il reste dans Kafka pendant une durée définie, il n'est pas supprimé après lecture).
-3. À quoi sert l'Offset ? (À savoir quel message a déjà été traité pour ne pas le traiter deux fois).
+3. À quoi sert l'offset validé par un groupe ? (À indiquer la prochaine position à lire ; il ne prouve pas à lui seul que l'effet métier a été appliqué exactement une fois).
 
 ---
 
@@ -72,4 +72,4 @@ Nous allons utiliser Docker Compose pour lancer un broker Kafka local. Ce sera l
 - Les partitions sont la clé de la performance.
 - Demain, nous allons "pousser" des transactions dans Kafka.
 
-**Prochaine étape** : Lancer ton premier Kafka dans le TP 71 !
+**Prochaine étape** : Utiliser le Kit 15.0 dans le TP du Jour 1.

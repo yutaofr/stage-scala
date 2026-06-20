@@ -43,7 +43,7 @@ Une fuite arrive quand vous gardez une référence vers un objet dont vous n'ave
 - **Exemple** : Ajouter des données dans une `Mutable Map` globale et oublier de les supprimer.
 
 > [!TIP]
-> En Scala immuable, les fuites sont plus rares, mais elles peuvent exister (ex: Fibers ZIO qui ne s'arrêtent jamais).
+> L'immutabilité empêche certaines corruptions d'état, pas la rétention mémoire. Un cache sans limite, une Fiber non interrompue ou une queue non bornée peuvent retenir des objets.
 
 ---
 
@@ -67,4 +67,4 @@ Nous allons lancer notre moteur de clearing et y connecter **VisualVM**. Nous ob
 - Il permet de passer d'une intuition ("je pense que c'est lent là") à une certitude ("je sais que c'est cette fonction qui bloque").
 - Maîtriser le profilage est indispensable pour optimiser les coûts Cloud d'une entreprise.
 
-**Prochaine étape** : Espionner ton moteur dans le TP 88 !
+**Prochaine étape** : Utiliser le Kit 18.3 dans le TP du Jour 3.

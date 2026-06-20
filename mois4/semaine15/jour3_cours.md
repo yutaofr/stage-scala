@@ -16,7 +16,7 @@ footer: "Jour 3 — Consumers & Streaming"
 # 📋 Objectifs du Jour
 
 - Utiliser la bibliothèque `KafkaConsumer` en Scala.
-- Implémentez la boucle de consommation (Poll Loop).
+- Implémenter la boucle de consommation (poll loop).
 - Comprendre la gestion automatique et manuelle des Offsets.
 - Intégrer notre moteur v2.3 dans le flux de consommation.
 
@@ -33,7 +33,7 @@ props.put("group.id", "clearing-engine-group")
 // configuration...
 
 val consumer = new KafkaConsumer[String, String](props)
-consumer.subscribe(Collections.singletonList("clearing-transactions"))
+consumer.subscribe(Collections.singletonList("clearing-input"))
 ```
 
 ---
@@ -53,20 +53,22 @@ while (true) {
 ```
 
 > [!CAUTION]
-> Une boucle de consommation ne doit jamais s'arrêter, sauf lors de l'arrêt gracieux (Shutdown) de l'application.
+> La boucle doit tolérer les périodes sans record, mais elle doit aussi pouvoir s'arrêter proprement et fermer le consumer.
 
 ---
 
 # 3. Intégration ZIO
 
-Dans un monde réel, on utiliserait **ZIO-Kafka** pour transformer cette boucle bloquante en un flux asynchrone élégant.
+Une version ultérieure pourra utiliser **zio-kafka**. Le TP conserve d'abord le client Java pour rendre visibles le poll, le traitement et le commit.
 
 ```scala
-Consumer.subscribeAnd(Subscription.topics("clearing-transactions"))
-  .flatMap(_.map(record => process(record.value)).runDrain)
+Consumer
+  .plainStream(Subscription.topics("clearing-input"), Serde.string, Serde.string)
+  .mapZIO(record => process(record.value))
+  .runDrain
 ```
 
-> 💡 ZIO-Kafka se charge des threads, de la gestion des erreurs et des offsets pour nous.
+> 💡 Une bibliothèque facilite le câblage, mais l'application doit encore choisir quand un offset peut être validé et comment traiter un record invalide.
 
 ---
 
@@ -79,8 +81,8 @@ Nous allons coder le "pont" entre Kafka et notre logique métier. Le moteur va l
 # 🧠 Quiz Rapide
 
 1. Puis-je avoir deux consumers du même groupe sur la même partition ? (Non, un seul à la fois).
-2. Que se passe-t-il si je relance mon consumer avec le même `group.id` ? (Il reprend à l'offset où il s'était arrêté).
-3. Pourquoi utiliser un délai dans le `poll()` ? (Pour ne pas faire chauffer le CPU à vide si le topic est désert).
+2. Que se passe-t-il si je relance mon consumer avec le même `group.id` ? (Il reprend à l'offset validé, selon la politique de reset si aucun offset n'existe).
+3. À quoi sert le timeout de `poll()` ? (À borner l'attente et à rendre la boucle réactive aux événements de contrôle).
 
 ---
 
@@ -90,4 +92,4 @@ Nous allons coder le "pont" entre Kafka et notre logique métier. Le moteur va l
 - Les `group.id` permettent de répartir la charge de travail.
 - Ton moteur de clearing n'attend plus les fichiers : il vit au rythme des transactions du pays.
 
-**Prochaine étape** : Brancher ton moteur sur Kafka dans le TP 73 !
+**Prochaine étape** : Utiliser le Kit 15.2 dans le TP du Jour 3.

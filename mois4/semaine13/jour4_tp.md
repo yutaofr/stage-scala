@@ -22,8 +22,8 @@
 > **Starter Kit fourni (Kit 13.6) :** Le squelette `ClearingManager.scala` est fourni. Le protocole, l'**annuaire d'acteurs** (`Map[bankId -> ActorRef]`) et le routage des réponses sont pré-câblés. Tu n'écris que la décision *crédit ou débit ?* (ZONE STAGIAIRE).
 
 1. Crée un acteur `ClearingManager` (cf. Kit 13.6).
-2. Il reçoit un résultat de netting : une `Map[String, BigDecimal]` (banque → position nette).
-3. Pour chaque position, il envoie le bon message au **bon** acteur `BankVault` : il le retrouve dans son annuaire `Map[bankId -> ActorRef]`, puis dispatch `Credit` (position positive) ou `Debit` (position négative).
+2. Il reçoit le résultat du cœur v2.3 : `Map[BankCode, Money]`.
+3. Pour chaque position, il retrouve l'acteur dans `Map[BankCode, ActorRef]`, puis convertit `Money` en `BigDecimal` uniquement dans le message `Credit` ou `Debit`.
 4. Utilise l'opérateur `!` pour toutes les communications.
 
 > [!NOTE]

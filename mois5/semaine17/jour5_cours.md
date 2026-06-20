@@ -26,7 +26,7 @@ footer: "Jour 5 — Alerting & SLOs"
 
 - **SLI (Service Level Indicator)** : Ce que l'on mesure (ex: Taux de succès).
 - **SLO (Service Level Objective)** : La cible (ex: 99.9% de succès).
-- **Error Budget** : Le droit à l'erreur (ex: 0.1% de pannes autorisées par mois).
+- **Error Budget** : la part d'indisponibilité ou d'échec compatible avec le SLO sur une période.
 
 ---
 
@@ -53,8 +53,7 @@ Une alerte ne doit se déclencher que si :
 
 # 🏗️ Application : L'Alerte "Système KO"
 
-Nous allons configurer une règle d'alerte : "Si le moteur de clearing est arrêté pendant plus de 2 minutes, envoyer une notification".
-Et une seconde règle : "Si plus de 10% des transactions échouent pendant 5 minutes, déclencher l'alerte rouge".
+Nous allons configurer une alerte d'absence de cible et une alerte de taux d'erreur. Les seuils du laboratoire servent à vérifier le mécanisme ; un seuil de production doit découler d'un SLO et d'une fenêtre.
 
 ---
 
@@ -72,4 +71,4 @@ Et une seconde règle : "Si plus de 10% des transactions échouent pendant 5 min
 - Elle produit des logs JSON, expose des métriques, génère des traces et surveille ses propres objectifs (SLOs).
 - Tu peux maintenant dire avec certitude : "Mon système fonctionne et je le prouve avec Grafana".
 
-**Prochaine étape** : Configurer tes alertes dans le TP 85 !
+**Prochaine étape** : Utiliser le Kit 17.5 dans le TP du Jour 5.

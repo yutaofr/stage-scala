@@ -1,31 +1,47 @@
-# TP Jour 5 : Le Client HTTP Indestructible
+# TP Jour 5 : Le client HTTP résilient
 
 **Durée :** ~4h | **Fil Rouge :** Finalisation de la couche asynchrone ZIO
 
 ---
 
-## Exercice 1 : Réessaie Exponentiel (2h)
+## Point de départ
 
-1. Simule une fonction `fetchFromUnstableAPI()` qui échoue 80% du temps.
-2. Applique un `retry` avec un `Schedule.exponential(100.millis) && Schedule.recurs(5)`.
-3. Affiche les horaires de chaque tentative pour vérifier la croissance de l'intervalle.
-4. Teste le cas où ça finit par réussir, et le cas où ça échoue même après 5 tentatives.
+- Copie le **Kit 14.5** de `starter_kit_s14.md`.
+- Le mock doit être déterministe : il échoue sur les trois premiers appels puis réussit.
+- Les erreurs de validation et d'authentification ne doivent pas être retentées.
+
+## Exercice 1 : Retry exponentiel borné (2h)
+
+1. Implémente le mock déterministe avec un `Ref[Int]`.
+2. Modélise `TemporaryRateError` et `InvalidCurrency`.
+3. Applique un retry borné uniquement à `TemporaryRateError`.
+4. Journalise le numéro de tentative et le délai.
+5. Teste un succès après trois erreurs, puis une erreur non récupérable.
+
+**Validation :** le premier scénario réussit au quatrième appel ; le second échoue sans retry.
 
 ---
 
 ## Exercice 2 : Le Circuit Breaker (Simulation) (1h30)
 
-1. Utilise un `Ref` (ou une variable simple) pour compter les échecs.
-2. Si les échecs dépassent 3, bloque l'accès à la fonction pendant 10 secondes (renvoie immédiatement une erreur sans appeler l'API).
-3. C'est l'implémentation manuelle du concept de Circuit Breaker.
+1. Utilise un `Ref` pour stocker l'état `Closed`, `Open(until)` ou `HalfOpen`.
+2. Ouvre le circuit après trois échecs consécutifs.
+3. Refuse les appels pendant la fenêtre d'ouverture sans appeler le service.
+4. Autorise un seul appel de test en état `HalfOpen`.
+5. Remets le circuit à zéro après un succès.
+
+**Validation :** un compteur séparé prouve qu'aucun appel distant n'a lieu lorsque le circuit est ouvert.
 
 ---
 
 ## Exercice 3 : Revue de Code ZIO (30 min)
 
-1. Analyse ton moteur de clearing complet.
-2. Identifie les points de friction restants avant le passage au temps réel (Kafka).
+1. Analyse le moteur v2.4 avec une grille : dépendances, erreurs, ressources, concurrence, retry.
+2. Identifie trois risques avant Kafka : saturation, doublons et reprise après panne.
+3. Pour chaque risque, écris une preuve à produire pendant la S15.
 
-**Bilan Mois 4 - Semaine 14** : ZIO est maîtrisé. Le candidat est prêt pour le streaming de données et le Big Data.
+**Validation :** la revue contient trois risques, trois décisions et trois preuves observables.
 
-**Livrable** : Code source v3.0 finale incluant ZIO, ZLayer, Fibers et Schedules.
+**Bilan Semaine 14** : le Clearing Engine v2.4 possède une orchestration ZIO explicite. La maîtrise sera confirmée par les tests de la semaine suivante.
+
+**Livrable** : Clearing Engine v2.4, tests des politiques de retry/circuit breaker et grille de revue avant Kafka.

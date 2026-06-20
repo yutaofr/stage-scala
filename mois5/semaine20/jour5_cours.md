@@ -18,7 +18,7 @@ footer: "Jour 5 — Knowledge Transfer & Archivage"
 - Archiver proprement le code source (GitHub/GitLab).
 - Rédiger le document de passation (Technical Handover).
 - Faire le bilan personnel du stage.
-- Pot de départ ! 🎉
+- Clore les accès et transmettre les responsabilités.
 
 ---
 
@@ -35,7 +35,7 @@ Qu'est-ce que ton successeur doit savoir pour maintenir ton code ?
 
 - On ne part pas avec le code sur sa clé USB.
 - On fait une "Release" propre sur le repo central de l'entreprise.
-- On ferme les "Issues" et on nettoie les branches temporaires.
+- On ferme uniquement les issues résolues et on archive ou supprime les branches selon la politique de l'équipe.
 
 ---
 
@@ -43,7 +43,7 @@ Qu'est-ce que ton successeur doit savoir pour maintenir ton code ?
 
 Ce stage n'était qu'un début. Tu as maintenant :
 - Une méthodologie de travail rigoureuse.
-- Une maîtrise de la stack logicielle la plus recherchée du marché.
+- Une expérience concrète de Scala, ZIO et systèmes distribués.
 - Un réseau professionnel chez ATH.
 
 ---

@@ -3,7 +3,7 @@
 ## Jour 1 — Polissage & Bugfix
 **TP (journée complète)** : 
 - Fix des derniers bugs identifiés lors de la pre-demo.
-- Polissage du code : nommage, suppression du code mort, formatage.
+- Polissage du code : nommage, suppression justifiée du code mort, formatage.
 - Vérification que tous les tests passent (unit + intégration + propriétés).
 
 ## Jour 2 — Préparation des Slides de Démonstration
@@ -14,14 +14,14 @@
 
 ## Jour 3 — Répétition Générale
 **TP (journée complète)** :
-- Scénario complet : Lancer l'infra Docker → Injecter des transactions → Observer le dashboard Grafana → Consulter l'API REST → Couper Kafka → Observer la reprise.
+- Scénario complet : lancer l'infrastructure → injecter des transactions → observer Grafana → consulter l'API → arrêter une instance du moteur → observer le rebalance.
 - Timing : viser 30 minutes de demo + 15 minutes de Q&A.
 
 ## Jour 4 — 🎉 GRANDE DÉMONSTRATION COMPLÈTE 🎉
 **Devant l'équipe ATH :**
 1. Présentation du contexte de compensation interbancaire.
 2. Démonstration live du système distribué complet.
-3. Injection de 10 000 transactions en temps réel.
+3. Injection d'un volume validé pendant les tests de charge.
 4. Monitoring sur Grafana.
 5. Simulation de panne et reprise automatique.
 6. Questions-réponses.
@@ -29,7 +29,7 @@
 ## Jour 5 — Clôture du Stage
 - **Knowledge Transfer** : Présentation du code et de l'architecture à l'équipe.
 - **Archivage** : Tagging final sur Git, mise à jour du README.
-- **Pot de départ** 🥂
+- **Bilan** : retours techniques, compétences acquises et prochaines étapes.
 
 ---
 
@@ -45,10 +45,15 @@
 | v1.1 | S6 | Validation exhaustive avec reporting d'erreurs |
 | v1.2 | S7 | Netting multilatéral N-banques |
 | v1.3 | S8 | Interop Java/Spring |
-| v2.0 | S9 | Code 100% pur (aucun effet de bord) |
-| v2.1 | S10 | Erreurs typées (`Either`/`Try`), ne crashe jamais |
+| v2.0 | S9 | Cœur métier pur, effets isolés aux frontières |
+| v2.1 | S10 | Erreurs attendues modélisées avec `Either`/`Try` |
 | v2.2 | S11 | Types opaques + sérialisation polymorphe |
-| v2.3 | S12 | Testé par propriétés (ScalaCheck) |
+| v2.3 | S12 | Cœur fonctionnel, types opaques et propriétés de netting |
+| v2.3.1 | S13 | Première orchestration concurrente sans changement du domaine |
+| v2.4 | S14 | Effets ZIO, ressources et concurrence bornée |
 | v3.0 | S15 | Streaming Kafka temps réel |
 | v3.1 | S16 | Pipeline complet Kafka → ZIO → Cassandra |
-| **FINAL** | S20 | Prod-ready : Monitoring, CI/CD, API REST, Haute Disponibilité |
+| v3.2 | S17 | Logs, métriques, traces et alertes |
+| v3.3 | S18 | Limites mesurées et continuité multi-instance |
+| v4.0-rc | S19 | Image, CI et API documentée |
+| **FINAL** | S20 | Candidat livré : observabilité, CI, API, reprise et limites documentées |

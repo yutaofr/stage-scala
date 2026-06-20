@@ -53,7 +53,7 @@ Une bonne démo n'est pas une lecture de code. C'est un récit :
 
 # 🏗️ Application : La Version 4.0
 
-Nous allons taguer notre code `v4.0.0-final`. C'est la version qui sera présentée au jury. Nous allons faire une répétition générale de la démo, du simulateur jusqu'au dashboard.
+Nous allons préparer un candidat `v4.0.0-rc1`. Le tag final ne sera créé qu'après les contrôles et la soutenance de la S20.
 
 ---
 
@@ -72,4 +72,4 @@ Nous allons taguer notre code `v4.0.0-final`. C'est la version qui sera présent
 - Tu as appris à documenter et à sécuriser ton infrastructure.
 - Félicitations, tu viens de terminer le cycle complet de développement logiciel.
 
-**Prochaine étape** : La semaine de vérité... la Semaine 20 !
+**Prochaine étape** : Utiliser le Kit 19.5 dans le TP du Jour 5.

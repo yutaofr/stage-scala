@@ -3,20 +3,20 @@ marp: true
 theme: default
 paginate: true
 header: "Stage ATH — Mois 3, Semaine 12"
-footer: "Jour 5 — Demo Mois 3 (Clearing Engine v3.0)"
+footer: "Jour 5 — Demo Mois 3 (Clearing Engine v2.3)"
 ---
 
 # Bilan du Mois 3
 ## La Maîtrise de l'Abstraction Fonctionnelle
 
-**Durée :** ~2h | **Fil Rouge :** Clearing Engine v3.0 — La Certification Mathématique
+**Durée :** ~2h | **Fil Rouge :** Clearing Engine v2.3 — La Certification Mathématique
 
 ---
 
 # 📋 Objectifs du Jour
 
 - Récapituler les piliers de la FP (RT, Pureté, Composition, Monades, PBT).
-- Comparer l'architecture v1.1 (Impérative) et v3.0 (Fonctionnelle).
+- Comparer l'architecture v1.1 (Impérative) et v2.3 (Fonctionnelle).
 - Démontrer la résilience et la précision du moteur face à des tests massifs.
 - Découvrir le programme du Mois 4 : Programmation Distribuée & Big Data.
 
@@ -24,7 +24,7 @@ footer: "Jour 5 — Demo Mois 3 (Clearing Engine v3.0)"
 
 # 1. Évolution Architecturale
 
-| Aspect          | v1.0 (Mois 1)       | v2.0 (Mois 2)          | v3.0 (Mois 3)             |
+| Aspect          | v1.0 (Mois 1)       | v2.0 (Mois 2)          | v2.3 (Mois 3)             |
 |-----------------|----------------------|------------------------|----------------------------|
 | **Erreurs**     | `try/catch`          | `Either[Error, A]`     | Railway + MonadicLogger    |
 | **Types**       | `String`, `Double`   | Case classes           | Opaque Types (BankCode, Money) |

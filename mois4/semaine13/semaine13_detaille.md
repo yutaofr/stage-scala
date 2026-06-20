@@ -19,3 +19,9 @@
 ## Jour 5 — Supervision & Hiérarchie
 **Cours (2h)** : Stratégies de supervision (Restart, Stop, Escalate). L'arbre d'acteurs.
 **TP (4h)** : Créer un superviseur qui redémarre les acteurs de validation en cas de crash.
+
+## Livraison fil rouge — v2.3.1
+
+La S13 conserve le domaine et les invariants de la v2.3. Elle ajoute une première orchestration concurrente avec `Future` et Pekko. Le starter doit encore importer le cœur `clearing` ; il ne redéfinit ni `Transaction`, ni `ClearingError`, ni le netting.
+
+**Preuve attendue :** lancer les validations concurrentes, comparer leur résultat au pipeline séquentiel v2.3 et montrer que les mêmes transactions produisent les mêmes positions nettes.

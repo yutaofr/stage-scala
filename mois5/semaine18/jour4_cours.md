@@ -25,14 +25,14 @@ footer: "Jour 4 — Tuning GC & JVM"
 # 1. Le rôle du Garbage Collector
 
 La JVM gère la mémoire automatiquement. Le GC identifie les objets qui ne sont plus référencés et libère leur espace.
-- **Stop The World (STW)** : Moment où le GC met l'application en pause pour nettoyer. Pour un moteur de clearing, ces pauses doivent être < 10ms.
+- **Stop The World (STW)** : phase pendant laquelle les threads applicatifs sont suspendus. La cible acceptable dépend du SLO mesuré.
 
 ---
 
 # 2. Les différents algorithmes
 
-- **G1GC (Garbage First)** : Le standard actuel. Découpe la heap en régions. Très bon compromis débit/latence.
-- **ZGC / Shenandoah** : Les nouveaux venus. Conçus pour des pauses ultra-faibles (< 1ms) même sur des heaps géantes.
+- **G1GC (Garbage First)** : collecteur par défaut courant, organisé en régions et orienté compromis débit/latence.
+- **ZGC / Shenandoah** : collecteurs à faible pause ; aucune valeur de pause n'est garantie sans mesure sur la charge réelle.
 
 ---
 
@@ -40,7 +40,7 @@ La JVM gère la mémoire automatiquement. Le GC identifie les objets qui ne sont
 
 - `-Xms` : Taille initiale de la Heap.
 - `-Xmx` : Taille maximale de la Heap.
-- **Règle d'or** : En production, fixez `-Xms = -Xmx` pour éviter que la JVM ne passe son temps à redimensionner la mémoire.
+- Fixer `-Xms = -Xmx` peut stabiliser certains environnements, mais augmente la mémoire réservée. Ce choix doit être testé avec les limites du conteneur.
 
 ---
 
@@ -66,4 +66,4 @@ Nous allons comparer le comportement de notre moteur sous charge avec deux confi
 - Bien régler sa Heap est la première étape d'une mise en production réussie.
 - Le monitoring des pauses GC est crucial pour respecter nos SLOs de performance.
 
-**Prochaine étape** : Trouver ton réglage optimal dans le TP 89 !
+**Prochaine étape** : Utiliser le Kit 18.4 dans le TP du Jour 4.

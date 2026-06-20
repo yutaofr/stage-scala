@@ -45,19 +45,21 @@ for
 yield ()
 ```
 
-- Si le `save` échoue, le `commit` n'est pas fait (Sécurité).
+- Si le `save` échoue, le commit n'est pas fait : le record sera relu.
 - Tout est asynchrone et non-bloquant.
+
+La relecture implique une sémantique at-least-once. La persistance doit donc reconnaître un ID déjà vu et reconstruire les projections manquantes.
 
 ---
 
 # 3. La Latence vs Le Débit
 
 Dans un système distribué, il faut trouver l'équilibre :
-- **Latence** : Temps pour qu'UNE transaction soit traitée (doit être < 100ms).
-- **Débit** : Nombre de transactions par seconde (doit être > 10 000/s).
+- **Latence** : temps d'une transaction, mesuré par percentile.
+- **Débit** : nombre de transactions terminées par seconde.
 
 > [!TIP]
-> ZIO excelle dans les deux grâce à ses Fibers ultra-légères.
+> Les Fibers réduisent le coût d'orchestration ; Kafka, Cassandra, le réseau et le modèle de données déterminent souvent la limite réelle.
 
 ---
 
@@ -82,4 +84,4 @@ Nous allons assembler les TP de la S15 (Kafka) et de la S16 (Cassandra). Le rés
 - Ton application est maintenant une pièce maîtresse du système d'information.
 - Tu maîtrises le cycle de vie complet de l'information financière.
 
-**Prochaine étape** : Assembler ton pipeline complet dans le TP 78 !
+**Prochaine étape** : Utiliser le Kit 16.3 dans le TP du Jour 3.

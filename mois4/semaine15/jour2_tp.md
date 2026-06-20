@@ -4,28 +4,41 @@
 
 ---
 
+## Point de départ
+
+- Copie le **Kit 15.1** de `starter_kit_s15.md`.
+- Utilise `sender` comme clé Kafka pour conserver l'ordre par banque émettrice.
+- Ferme toujours le producer dans un `finally` ou via une ressource gérée.
+
 ## Exercice 1 : Le Producteur Simple (1h30)
 
-1. Crée un objet `ClearingProducer`.
-2. Configure-le pour se connecter à ton broker local.
-3. Envoie une seule transaction codée en dur.
-4. Utilise la console Kafka (`kafka-console-consumer`) pour vérifier que le message est bien arrivé.
+1. Complète la sérialisation JSON d'une transaction déterministe.
+2. Configure `acks=all` et `enable.idempotence=true`.
+3. Envoie une transaction avec son ID comme en-tête et sa banque émettrice comme clé.
+4. Vérifie valeur, clé, partition et offset avec le consumer console.
+
+**Validation :** la transaction reçue se désérialise et possède le même ID que l'objet source.
 
 ---
 
 ## Exercice 2 : Générateur de Flux (1h30)
 
-1. Crée une boucle qui génère 50 transactions aléatoires.
-2. Utilise ton `Transaction.toCsv` pour formater le message.
-3. Envoie-les toutes dans le topic `clearing-transactions`.
-4. Ajoute un petit délai (`Thread.sleep(100)`) pour simuler une activité continue.
+1. Génère cinquante transactions avec une seed fixe.
+2. Envoie-les vers `clearing-input`.
+3. Limite le rythme à dix transactions par seconde sans bloquer le thread principal si tu utilises ZIO.
+4. Compte les accusés de réception réussis et échoués.
+
+**Validation :** le nombre d'accusés de réception réussis correspond au nombre de records visibles.
 
 ---
 
 ## Exercice 3 : Asynchronisme et Callbacks (1h)
 
-1. Modifie ton envoi pour utiliser la version avec Callback : `producer.send(record, (metadata, exception) => ...)`.
-2. Affiche la partition et l'offset où chaque transaction a été enregistrée.
-3. Force une erreur (en éteignant Docker Kafka) et observe comment le producteur réagit via l'exception dans le callback.
+1. Utilise le callback de `producer.send`.
+2. Affiche la partition et l'offset en cas de succès.
+3. Arrête Kafka après quelques envois et observe les retries puis l'erreur finale.
+4. Attends la fin des callbacks avant de fermer le producer.
+
+**Validation :** le programme ne déclare pas « terminé » avant la réception de tous les callbacks.
 
 **Livrable** : Code source du simulateur de transactions capable de peupler un topic Kafka en continu.

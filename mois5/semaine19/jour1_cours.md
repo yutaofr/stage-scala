@@ -17,7 +17,7 @@ footer: "Jour 1 — Docker Multi-Stage & Images Optimisées"
 
 - Comprendre pourquoi une image Docker lourde est un problème.
 - Maîtriser le **Multi-Stage Build**.
-- Choisir la bonne image de base (Alpine, Distroless).
+- Choisir une image de base selon compatibilité, sécurité et exploitabilité.
 - Isoler les dépendances de compilation du binaire final.
 
 ---
@@ -52,8 +52,9 @@ CMD ["java", "-jar", "clearing-engine.jar"]
 
 # 3. Alpine vs Distroless
 
-- **Alpine** : Très petite (~5 Mo), mais utilise `musl` au lieu de `glibc` (parfois des bugs bizarres en Java).
-- **Distroless** (Google) : Plus sécurisée, elle ne contient AUCUN shell. On ne peut même pas faire `docker exec`. C'est le top pour la prod.
+- **Alpine** : petite, basée sur `musl`; il faut vérifier la compatibilité des dépendances natives et de la JVM.
+- **Distroless** : surface réduite et absence de shell, au prix d'un diagnostic interactif plus difficile.
+- **JRE classique** : plus lourd, mais souvent plus simple à diagnostiquer.
 
 ---
 
@@ -67,7 +68,7 @@ Nous allons transformer notre `Dockerfile` actuel. Nous allons passer d'une imag
 
 1. À quoi sert le mot-clé `AS` dans un Dockerfile ? (A nommer une étape pour pouvoir y faire référence plus tard).
 2. Est-il utile de garder le code source (`.scala`) dans l'image finale ? (Non, seul le `.jar` est nécessaire).
-3. Pourquoi privilégier les images "alpine" ? (Pour leur taille extrêmement réduite).
+3. Faut-il toujours choisir Alpine ? (Non, la taille n'est qu'un critère parmi la compatibilité, la sécurité et l'exploitation).
 
 ---
 
@@ -77,4 +78,4 @@ Nous allons transformer notre `Dockerfile` actuel. Nous allons passer d'une imag
 - Une image de production doit être un "caillou" (inerte et solide).
 - Tu as appris à diviser par 5 le temps de déploiement de ton moteur.
 
-**Prochaine étape** : Alléger ton image dans le TP 91 !
+**Prochaine étape** : Utiliser le Kit 19.1 dans le TP du Jour 1.

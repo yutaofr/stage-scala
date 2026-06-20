@@ -17,7 +17,7 @@ footer: "Jour 4 — Dénormalisation & Reporting"
 
 - Apprendre à créer des "Vues" dénormalisées dans Cassandra.
 - Comprendre le concept de **Materialized Views** (et ses limites).
-- Utiliser Scala pour agrégatuer des données de reporting.
+- Utiliser Scala pour agréger des données de reporting.
 - Simuler un dashboard financier temps réel.
 
 ---
@@ -35,8 +35,7 @@ Si on veut voir l'historique par **Banque** ET l'historique par **Date**, on cr�
 
 # 2. L'Agrégation Côté Application
 
-Cassandra ne sait pas faire de `SUM()` ou de `AVG()` complexes sur des millions de lignes sans index.
-C'est souvent l'application Scala qui récupère les données et fait le calcul (ou on utilise Spark).
+Cassandra n'est pas conçu pour des agrégations ad hoc sur tout le cluster. On prépare une projection adaptée, on agrège une partition bornée, ou on utilise un moteur analytique.
 
 ```scala
 val allTxs: ZIO[Any, Throwable, List[Transaction]] = repo.findAllByBank(bankId)
@@ -56,7 +55,7 @@ CREATE TABLE current_positions (
 );
 ```
 
-On met à jour cette table à chaque fois qu'une transaction passe dans le flux Kafka.
+On écrit une position calculée de façon déterministe. Une opération « ajouter un delta » répétée après un crash ne serait pas idempotente.
 
 ---
 
@@ -81,4 +80,4 @@ Nous allons ajouter une étape à notre pipeline : après l'archivage dans `tran
 - Ton application est maintenant capable de fournir des réponses instantanées à la direction financière.
 - Tu as complété la vision "Temps Réel + Historique" (Architecture Lambda/Kappa).
 
-**Prochaine étape** : Créer tes tables de reporting dans le TP 79 !
+**Prochaine étape** : Utiliser le Kit 16.1 dans le TP du Jour 4.

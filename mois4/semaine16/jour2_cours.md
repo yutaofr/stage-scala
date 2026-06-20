@@ -51,12 +51,12 @@ val liveLayer = ZLayer.fromFunction(session => new TransactionRepositoryLive(ses
 
 ---
 
-# 3. Écritures en Rafale
+# 3. Écritures asynchrones bornées
 
-Cassandra adore les écritures parallèles. Au lieu d'écrire une par une, nous allons utiliser `ZIO.foreachPar` pour envoyer des centaines de transactions simultanément vers la base.
+Cassandra accepte plusieurs écritures en vol. Nous utiliserons un parallélisme borné pour augmenter le débit sans saturer le pool du driver ni le cluster.
 
 > [!TIP]
-> Plus on envoie de données à Cassandra, plus il est efficace, car il peut regrouper les écritures sur disque.
+> Commence avec une petite limite, mesure la latence et les erreurs, puis ajuste. Un parallélisme illimité peut réduire le débit.
 
 ---
 
@@ -81,4 +81,4 @@ Nous allons coder la couche d'accès aux données (DAO) qui traduit nos objets `
 - Ton application est maintenant capable d'écrire sur disque à la vitesse de l'éclair.
 - Tu maîtrises le pipeline de données moderne : Flux -> Calcul -> Stockage.
 
-**Prochaine étape** : Brancher ton moteur sur Cassandra dans le TP 77 !
+**Prochaine étape** : Utiliser le Kit 16.2 dans le TP du Jour 2.
