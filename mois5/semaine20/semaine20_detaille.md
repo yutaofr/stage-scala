@@ -55,5 +55,5 @@
 | v3.1 | S16 | Pipeline complet Kafka → ZIO → Cassandra |
 | v3.2 | S17 | Logs, métriques, traces et alertes |
 | v3.3 | S18 | Limites mesurées et continuité multi-instance |
-| v4.0-rc | S19 | Image, CI et API documentée |
+| v4.0.0-rc1 | S19 | Image, CI et API documentée |
 | **FINAL** | S20 | Candidat livré : observabilité, CI, API, reprise et limites documentées |

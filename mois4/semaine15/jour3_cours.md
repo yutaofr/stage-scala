@@ -18,7 +18,7 @@ footer: "Jour 3 — Consumers & Streaming"
 - Utiliser la bibliothèque `KafkaConsumer` en Scala.
 - Implémenter la boucle de consommation (poll loop).
 - Comprendre la gestion automatique et manuelle des Offsets.
-- Intégrer notre moteur v2.3 dans le flux de consommation.
+- Intégrer notre cœur métier (inchangé depuis v2.3) dans le flux de consommation.
 
 ---
 
@@ -47,7 +47,7 @@ while (true) {
   val records = consumer.poll(Duration.ofMillis(100))
   for (record <- records) {
     val tx = Transaction.fromCsv(record.value())
-    process(tx) // C'est ici que ton moteur v2.3 intervient !
+    process(tx) // C'est ici que ton cœur métier (inchangé depuis v2.3) intervient !
   }
 }
 ```

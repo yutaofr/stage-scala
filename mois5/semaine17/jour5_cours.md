@@ -70,5 +70,6 @@ Nous allons configurer une alerte d'absence de cible et une alerte de taux d'err
 - Tu as rendu ton application **Professionnelle**.
 - Elle produit des logs JSON, expose des métriques, génère des traces et surveille ses propres objectifs (SLOs).
 - Tu peux maintenant dire avec certitude : "Mon système fonctionne et je le prouve avec Grafana".
+- **Version livrée** : Clearing Engine **v3.2** (application observable : logs, métriques, traces, alertes).
 
 **Prochaine étape** : Utiliser le Kit 17.5 dans le TP du Jour 5.

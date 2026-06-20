@@ -176,7 +176,7 @@ object FileProcessor:
       ZIO.attempt {
         // === ZONE STAGIAIRE ===
         // TODO : Lire toutes les lignes et les parser en Transaction
-        // Réutiliser Transaction.fromCsv du Mois 2
+        // Parser chaque ligne CSV en Transaction (réutiliser la logique de parsing du Mois 2)
         ???
       }
     }

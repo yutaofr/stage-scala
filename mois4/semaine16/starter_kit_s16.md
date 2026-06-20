@@ -32,6 +32,21 @@ services:
       timeout: 5s
       retries: 20
 
+  kafka-init:
+    image: apache/kafka:4.3.0
+    depends_on:
+      kafka:
+        condition: service_healthy
+    entrypoint:
+      - /bin/sh
+      - -ec
+      - |
+        for topic in clearing-input clearing-output clearing-dlq; do
+          /opt/kafka/bin/kafka-topics.sh --create --if-not-exists \
+            --topic "$$topic" --partitions 3 --replication-factor 1 \
+            --bootstrap-server kafka:29092
+        done
+
   cassandra:
     image: cassandra:4.1
     ports: ["9042:9042"]

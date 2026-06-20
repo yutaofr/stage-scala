@@ -17,7 +17,7 @@ footer: "Jour 5 — Revue Pipeline & Clearing Engine v3.0"
 
 - Synthétiser l'architecture de streaming Kafka.
 - Analyser les bénéfices du dédoublonnage et du commit manuel.
-- Visualiser le pipeline complet : Simulation -> Kafka -> Moteur v2.3 -> Display.
+- Visualiser le pipeline complet : Simulation -> Kafka -> Cœur métier (v2.3) -> Display.
 - Livrer la version 3.0 (Streaming) du moteur.
 
 ---

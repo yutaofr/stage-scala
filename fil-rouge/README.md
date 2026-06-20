@@ -21,8 +21,8 @@ La migration de l’identifiant est désormais explicite : l’ancien `Int` devi
 | 16 | v3.1 | reprise durable et projections réparables |
 | 17 | v3.2 | corrélation, métriques et traces |
 | 18 | v3.3 | charge, pannes et ingestion HTTP |
-| 19 | v4.0-rc | API Tapir, image et CI |
-| 20 | v4.0 | validation finale et handover |
+| 19 | v4.0.0-rc1 | API Tapir, image et CI |
+| 20 | v4.0.0 | validation finale et handover |
 
 ## Commandes
 

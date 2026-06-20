@@ -16,6 +16,6 @@
 **Cours (2h)** : G1GC, ZGC, heap, logs GC et objectifs de pause. Les paramètres sont des hypothèses à comparer.
 **TP (4h)** : Comparer plusieurs configurations avec la même charge et documenter le compromis observé.
 
-## Jour 5 — High Availability
+## Jour 5 — High Availability (Clearing Engine v3.3)
 **Cours (2h)** : Scaling horizontal. Consumer Groups Kafka. Load Balancing.
 **TP (4h)** : Lancer trois instances du moteur, observer l'affectation des partitions, arrêter une instance et mesurer le rééquilibrage.

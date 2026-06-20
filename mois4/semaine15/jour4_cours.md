@@ -77,7 +77,7 @@ Nous allons d'abord observer la déduplication avec un cache, puis préparer sa 
 
 # 📝 Résumé du Jour
 
-- Les banques exigent des garanties de livraison parfaites.
+- Les banques exigent un haut niveau de fiabilité ; en pratique on vise l'at-least-once complété par une idempotence métier durable.
 - Le paramètre `enable.auto.commit` est le bouton de sécurité du consumer.
 - L'idempotence au niveau applicatif est ta meilleure alliée.
 - Ton moteur est maintenant prêt à affronter des pannes réseau sans corrompre les soldes.

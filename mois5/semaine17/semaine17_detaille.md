@@ -16,6 +16,6 @@
 **Cours (2h)** : Tableaux de bord, PromQL, unités et fenêtres temporelles.
 **TP (4h)** : Créer un dashboard "Clearing Operations" : débit, latence P99, taux d'erreur et lag Kafka.
 
-## Jour 5 — Alerting & SLOs
+## Jour 5 — Alerting & SLOs (Clearing Engine v3.2)
 **Cours (2h)** : SLI, SLO, error budget, alertes actionnables et burn rate.
 **TP (4h)** : Définir des objectifs justifiés, écrire les règles Prometheus et vérifier leur routage dans Alertmanager.

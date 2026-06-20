@@ -68,5 +68,6 @@ Nous allons modifier notre `docker-compose.yml` pour lancer **3 instances** du m
 - Tu l'as optimisé avec le Tuning JVM.
 - Tu as testé la continuité de traitement avec plusieurs instances.
 - Tu connais désormais les limites observées du laboratoire.
+- **Version livrée** : Clearing Engine **v3.3** (limites mesurées et continuité multi-instance).
 
 **Prochaine étape** : Utiliser le Kit 18.5 dans le TP du Jour 5.

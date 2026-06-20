@@ -7,7 +7,7 @@
 ## Point de départ
 
 - Pars du **Kit 14.0**, puis copie le **Kit 14.2** de `starter_kit_s14.md`.
-- Réutilise les types métier du Clearing Engine v2.3.
+- Réutilise les types métier du cœur du Clearing Engine (inchangés depuis v2.3).
 - Commence avec les couches `mock`, puis branche les couches `live`.
 
 ## Exercice 1 : Modularisation du code (1h30)
