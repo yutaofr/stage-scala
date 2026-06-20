@@ -80,6 +80,9 @@ Valeurs selon l’exécution :
 
 L’application lit `KAFKA_BOOTSTRAP_SERVERS`, `CASSANDRA_HOST` et `CASSANDRA_PORT`. Aucun hostname n’est codé en dur dans le domaine.
 
+> [!NOTE]
+> La stack complète de S16 passe à un **double listener** Kafka (EXTERNAL `localhost:9092`, INTERNAL `kafka:29092`). Les services internes au réseau Compose — dont `kafka-init` — ciblent donc `kafka:29092`, là où le Kit 15.0 (listener unique) utilisait `kafka:9092`. Une application lancée hors Compose continue d’utiliser `localhost:9092`.
+
 ---
 
 ## Kit 16.1 — Schéma orienté reprise et requêtes

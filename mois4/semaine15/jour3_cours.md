@@ -46,7 +46,7 @@ Le mode de fonctionnement de Kafka est le "Pull" (On va chercher les données).
 while (true) {
   val records = consumer.poll(Duration.ofMillis(100))
   for (record <- records) {
-    val tx = Transaction.fromCsv(record.value())
+    val tx = decodeTransaction(record.value()) // décode le message JSON du contrat (cf. Kit 15.1)
     process(tx) // C'est ici que ton cœur métier (inchangé depuis v2.3) intervient !
   }
 }

@@ -39,7 +39,7 @@ Grâce à ZIO, l'assemblage est un simple bloc `for`.
 ```scala
 for
   record <- KafkaConsumer.poll
-  tx     <- validate(Transaction.fromCsv(record))
+  tx     <- validate(decodeTransaction(record))
   _      <- TransactionRepo.save(tx)
   _      <- KafkaConsumer.commit
 yield ()
