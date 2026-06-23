@@ -1,53 +1,47 @@
-# TP Jour 1 : Mes premiers pas avec ZIO
+# TP Jour 1 : Observer un premier programme ZIO
 
-**Durée :** ~4h | **Fil Rouge :** Un mini-système interactif
+**Durée :** 30 min utiles | **Format :** 3 micro-exercices de 10 min maximum
 
 ---
 
 ## Point de départ
 
-- Valide d'abord le **Kit 14.0**, puis copie le **Kit 14.1** de `starter_kit_s14.md`.
-- Lance d'abord le squelette sans modification.
-- À la fin de chaque exercice, relance le programme et conserve la sortie de validation.
+- Valide d'abord le **Kit 14.0**.
+- Copie le **Kit 14.1** dans `src/main/scala/distributed/zio/ZioStarter.scala`.
+- Lance le programme avant de modifier quoi que ce soit.
 
-## Exercice 1 : Hello ZIO (1h)
+Le but n'est pas de construire une application interactive. Le but est de voir où ZIO place l'I/O, les erreurs, et le parallèle.
 
-**Objectif :** construire un effet interactif sans lancer d'I/O pendant sa définition.
+## Exercice 1 : La description n'exécute rien (8 min)
 
-1. Vérifie la dépendance ZIO fournie dans le projet du kit.
-2. Dans `ZioStarter`, demande le nom de la banque avec `Console.readLine`.
-3. Nettoie la saisie avec `trim` et refuse une chaîne vide avec `ZIO.fail`.
-4. Affiche un message de bienvenue, puis le nombre de transactions à traiter.
-5. Repère la différence entre la valeur `clearingLogic` et son exécution par `run`.
+1. Lance `sbt "runMain distributed.zio.ZioStarter"`.
+2. Observe les valeurs `rawBank = "AWB"` et `rawCount = "2"`.
+3. Repère dans le code `askRequest`, `clearingLogic`, et `run`.
+4. Écris une phrase : quelle valeur de code décrit le programme, et quelle valeur le lance ?
 
-**Validation :** une banque vide produit un message contrôlé ; une banque valide affiche le récapitulatif.
-
----
-
-## Exercice 2 : Gestion d'Erreur Typée (1h30)
-
-**Objectif :** convertir une exception de parsing en erreur métier, puis répéter proprement la saisie.
-
-1. Crée `readTransactionCount: IO[InputError, Int]`.
-2. Encapsule `toInt` avec `ZIO.attempt` puis transforme l'erreur avec `mapError`.
-3. Refuse les valeurs négatives ou supérieures à `100000`.
-4. Crée une boucle récursive `askUntilValid` qui affiche l'erreur puis redemande la valeur.
-5. Teste successivement `abc`, `-1`, puis `10`.
-
-**Validation :** le programme ne termine pas sur une entrée invalide et retourne finalement `10`.
+**Validation :** la sortie contient la banque, le nombre, une ligne `zip`, et une ligne `zipPar`.
 
 ---
 
-## Exercice 3 : Parallélisme ZIO (1h30)
+## Exercice 2 : Lire une erreur typée (10 min)
 
-**Objectif :** mesurer la différence entre composition séquentielle et parallèle.
+1. Relance le programme.
+2. Remplace `rawBank = "AWB"` par `rawBank = ""`.
+3. Relance, puis remets `AWB` et remplace `rawCount = "2"` par `rawCount = "abc"`.
+4. Relie chaque sortie à un cas de `InputError`.
 
-1. Crée deux effets qui attendent une seconde et renvoient un nom de batch.
-2. Mesure la version séquentielle avec `Clock.nanoTime`.
-3. Exécute les mêmes effets avec `zipPar`.
-4. Compare les durées sans exiger une valeur exacte : environ 2 s en séquentiel, environ 1 s en parallèle.
-5. Ajoute une assertion simple ou un message `PARALLELE_OK` si la seconde durée est inférieure à la première.
+**Validation :** l'erreur est affichée par `catchAll`; le programme ne montre pas de stack trace.
 
-**Validation :** la sortie contient les deux résultats et montre un gain mesuré.
+---
 
-**Livrable** : programme ZIO interactif, sorties des trois cas de saisie et comparaison des deux durées.
+## Exercice 3 : Voir `zipPar` sans parler de threads (10 min)
+
+1. Observe les durées imprimées pour `zip` et `zipPar`.
+2. Relance avec `rawBank = "AWB"` et `rawCount = "2"`.
+3. Dans `batchA` et `batchB`, remplace `300.millis` par `700.millis`.
+4. Relance et compare : `zip` additionne les délais, `zipPar` garde environ le plus long.
+5. Remets `300.millis` si le tuteur veut garder le kit initial.
+
+**Validation :** le stagiaire sait dire : "`zipPar` compose deux effets en parallèle, donc la durée baisse."
+
+**Livrable court :** trois sorties console et trois phrases de constat.

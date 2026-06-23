@@ -1,26 +1,33 @@
-# Starter Kit Semaine 14 : ZIO — Orchestration des Effets
+# Starter Kit Semaine 14 : ZIO en observation
 
-Le kit part du projet compilable [`../../fil-rouge`](../../fil-rouge). Le stagiaire implémente les zones marquées `TODO` et conserve les erreurs métier dans le canal typé.
+Ce kit sert à observer ZIO sans perdre le stagiaire dans une reconstruction du moteur. Chaque snippet est presque complet. Le stagiaire modifie une petite ligne, relance, puis explique ce qu'il voit.
+
+## Règle de la semaine
+
+- Un exercice dure 5 à 10 minutes.
+- Aucun exercice ne demande de recréer le domaine `clearing.*`.
+- Aucun snippet ne laisse de trou d'implémentation.
+- Une validation visible termine chaque exercice : sortie console, erreur typée, erreur de compilation, ou mesure de temps.
+- Si un exercice bloque plus de 10 minutes, le tuteur montre la ligne clé et passe à l'observation.
 
 ## Utilisation
 
-1. Copie le dossier `fil-rouge/` dans ton espace de travail.
-2. Lance `sbt test` avant toute modification.
-3. Copie ensuite chaque kit dans le chemin indiqué.
-4. Compile après chaque exercice.
-5. Remplace chaque `???` par une implémentation ; aucun `???` ne doit rester dans le livrable.
+1. Pars du projet compilable [`../../fil-rouge`](../../fil-rouge).
+2. Lance `sbt test` une fois avant la semaine.
+3. Copie le kit du jour dans le chemin indiqué.
+4. Lance `sbt "runMain distributed.zio.NomDuKit"` quand le kit déclare un objet `ZIOAppDefault`.
+5. Note une phrase de constat après chaque micro-exercice.
 
-## Kit 14.0 — Contrat de reprise S13 → S14
+## Kit 14.0 - Contrat de reprise S13 vers S14
 
 **Projet fourni :** `fil-rouge/`
 
-Le projet contient :
+Le projet contient déjà :
 
-- `clearing.model` : `TransactionId`, `BankCode`, `Money` et `Transaction` ;
-- `clearing.core` : `ClearingError`, le validateur et le netting pur ;
-- `clearing.contract` : `TransactionSubmittedV1` et son codec JSON ;
-- les propriétés minimales héritées de S12 ;
-- un `build.sbt` exécutable.
+- `clearing.model` : `TransactionId`, `BankCode`, `Money`, `Transaction`;
+- `clearing.core` : `ClearingError`, `TransactionValidator`, `PureNettingCalculator`;
+- `distributed.zio` : `ValidationService` et `NettingService`;
+- un `build.sbt` avec ZIO.
 
 **Contrôle obligatoire :**
 
@@ -29,222 +36,330 @@ cd fil-rouge
 sbt test
 ```
 
-Ne recrée pas ces types dans `distributed.*`. Les couches distribuées importent le domaine, puis convertissent les types opaques en primitives uniquement aux frontières.
+Le stagiaire importe ces types. Il ne les recopie pas dans `distributed.*`.
 
 ---
 
-## Kit 14.1 — Premier Programme ZIO
+## Kit 14.1 - Premier programme ZIO
 
-**Fichier fourni :** `src/main/scala/distributed/zio/ZioStarter.scala`
+**Fichier à créer :** `src/main/scala/distributed/zio/ZioStarter.scala`
 
 ```scala
 package distributed.zio
 
 import zio.*
-import clearing.core.ClearingError
-import clearing.model.*
 import zio.Console.*
 import java.io.IOException
 
-/**
- * STARTER KIT : Le runner ZIO est pré-câblé.
- * Le stagiaire écrit la logique dans "clearingLogic".
- */
 object ZioStarter extends ZIOAppDefault:
 
-  // === ZONE STAGIAIRE ===
   enum InputError:
     case EmptyBank
     case InvalidCount(value: String)
 
-  val clearingLogic: ZIO[Any, IOException | InputError, Unit] = for
-    _ <- printLine("=== Moteur de Clearing ZIO ===")
-    // TODO : Demander le nombre de transactions à traiter via readLine
-    // TODO : Générer N transactions aléatoires
-    // TODO : Afficher le résumé
-    _ <- printLine("Fin du traitement")
-  yield ()
+  final case class BatchRequest(bank: String, count: Int)
 
-  def run = clearingLogic
-```
+  private val rawBank = "AWB"
+  private val rawCount = "2"
 
----
+  private def normalizeBank(raw: String): IO[InputError, String] =
+    val bank = raw.trim.toUpperCase
+    ZIO.cond(bank.nonEmpty, bank, InputError.EmptyBank)
 
-## Kit 14.2 — ZLayer Architecture Template
-
-**Fichier fourni :** `src/main/scala/distributed/zio/ClearingLayers.scala`
-
-```scala
-package distributed.zio
-
-import zio.*
-
-/**
- * STARTER KIT : L'architecture en couches est pré-définie.
- * Le stagiaire implémente les "live" de chaque service.
- */
-
-// --- Service Interfaces (fournis par le tuteur) ---
-
-trait TransactionRepository:
-  def findAll: Task[List[Transaction]]
-  def save(tx: Transaction): Task[Unit]
-
-trait ValidationService:
-  def validate(tx: Transaction): IO[ClearingError, Transaction]
-
-trait NettingService:
-  def calculate(txs: List[Transaction]): UIO[Map[BankCode, Money]]
-
-trait ReportService:
-  def generate(positions: Map[BankCode, Money]): UIO[String]
-
-// --- Companion Objects avec ZLayer (fournis par le tuteur) ---
-
-object TransactionRepository:
-  val live: ZLayer[Any, Nothing, TransactionRepository] = ZLayer.succeed {
-    new TransactionRepository:
-      // === ZONE STAGIAIRE : implémenter ===
-      def findAll: Task[List[Transaction]] = ???
-      def save(tx: Transaction): Task[Unit] = ???
-  }
-
-  // Version Mock pour les tests
-  val mock: ZLayer[Any, Nothing, TransactionRepository] = ZLayer.succeed {
-    new TransactionRepository:
-      def findAll = ZIO.succeed(List.empty)
-      def save(tx: Transaction) = ZIO.unit
-  }
-
-object ValidationService:
-  // === ZONE STAGIAIRE : créer le ZLayer.succeed avec l'implémentation ===
-  val live: ZLayer[Any, Nothing, ValidationService] = ???
-
-object NettingService:
-  // === ZONE STAGIAIRE : créer le ZLayer ===
-  val live: ZLayer[Any, Nothing, NettingService] = ???
-
-object ReportService:
-  // === ZONE STAGIAIRE : créer le ZLayer ===
-  val live: ZLayer[Any, Nothing, ReportService] = ???
-
-// --- Programme Principal (fourni par le tuteur) ---
-
-object ClearingApp extends ZIOAppDefault:
-  val program = for
-    repo    <- ZIO.service[TransactionRepository]
-    txs     <- repo.findAll
-    valSvc  <- ZIO.service[ValidationService]
-    valid   <- ZIO.foreach(txs)(valSvc.validate)
-    netting <- ZIO.service[NettingService].flatMap(_.calculate(valid))
-    report  <- ZIO.service[ReportService].flatMap(_.generate(netting))
-    _       <- Console.printLine(report)
-  yield ()
-
-  def run = program.provide(
-    TransactionRepository.live,
-    ValidationService.live,
-    NettingService.live,
-    ReportService.live
-  )
-```
-
-**Exercice du stagiaire :** utiliser `ZIO.fromEither` dans `ValidationService.live`, puis déléguer le netting au cœur pur. Lancer avec `mock`, puis avec `live`.
-
----
-
-## Kit 14.3 — Resource Management
-
-```scala
-package distributed.zio
-
-import zio.*
-import clearing.model.Transaction
-import java.io.{BufferedReader, FileReader}
-
-/**
- * STARTER KIT : La gestion de ressource est pré-câblée.
- * Le stagiaire implémente le parsing des lignes.
- */
-object FileProcessor:
-  def readTransactionFile(path: String): ZIO[Any, Throwable, List[Transaction]] =
-    ZIO.acquireReleaseWith(
-      acquire = ZIO.attempt(new BufferedReader(new FileReader(path)))
-    )(
-      release = reader => ZIO.attempt(reader.close()).orDie
-    ) { reader =>
-      ZIO.attempt {
-        // === ZONE STAGIAIRE ===
-        // TODO : Lire toutes les lignes et les parser en Transaction
-        // Parser chaque ligne CSV en Transaction (réutiliser la logique de parsing du Mois 2)
-        ???
+  private def parseCount(raw: String): IO[InputError, Int] =
+    ZIO
+      .fromOption(raw.trim.toIntOption)
+      .orElseFail(InputError.InvalidCount(raw))
+      .flatMap { count =>
+        ZIO.cond(count >= 0 && count <= 1000, count, InputError.InvalidCount(raw))
       }
+
+  val askRequest: IO[InputError, BatchRequest] =
+    for
+      bank     <- normalizeBank(rawBank)
+      count    <- parseCount(rawCount)
+    yield BatchRequest(bank, count)
+
+  private val batchA: UIO[String] =
+    ZIO.sleep(300.millis) *> ZIO.succeed("batch-A")
+
+  private val batchB: UIO[String] =
+    ZIO.sleep(300.millis) *> ZIO.succeed("batch-B")
+
+  private def timed[A](label: String)(effect: UIO[A]): UIO[String] =
+    for
+      start <- Clock.nanoTime
+      value <- effect
+      end   <- Clock.nanoTime
+    yield s"$label : $value en ${(end - start) / 1000000} ms"
+
+  val previewParallelism: UIO[String] =
+    for
+      sequential <- timed("zip")(batchA.zip(batchB).map { case (a, b) => s"$a + $b" })
+      parallel   <- timed("zipPar")(batchA.zipPar(batchB).map { case (a, b) => s"$a + $b" })
+    yield s"$sequential\n$parallel"
+
+  val clearingLogic: ZIO[Any, IOException | InputError, Unit] =
+    for
+      _       <- printLine("=== Observation ZIO : console et erreurs typées ===")
+      request <- askRequest
+      preview <- previewParallelism
+      _       <- printLine(s"Demande acceptée : ${request.bank}, ${request.count} transaction(s)")
+      _       <- printLine(s"Observation zipPar : $preview")
+    yield ()
+
+  def run =
+    clearingLogic.catchAll {
+      case InputError.EmptyBank =>
+        printLine("Erreur contrôlée : la banque est vide").orDie
+      case InputError.InvalidCount(value) =>
+        printLine(s"Erreur contrôlée : nombre invalide [$value]").orDie
+      case error: IOException =>
+        printLine(s"Erreur console : ${error.getMessage}").orDie
     }
 ```
 
+**À observer :**
+
+- `askRequest` est une description. Le runtime l'exécute seulement dans `run`.
+- Le type `IOException | InputError` annonce les échecs attendus.
+- La sortie compare `zip` et `zipPar` pour rendre le parallèle visible.
+- Pour tester les erreurs, le stagiaire change seulement `rawBank` ou `rawCount`.
+
 ---
 
-## Kit 14.4 — Fiber Parallel Template
+## Kit 14.2 - ZLayer sans construction lourde
+
+**Fichier à créer :** `src/main/scala/distributed/zio/ZLayerObservation.scala`
 
 ```scala
 package distributed.zio
 
-import zio.*
+import clearing.core.*
 import clearing.model.*
+import zio.*
 
-/**
- * STARTER KIT : Le pattern de parallélisme est fourni.
- * Le stagiaire injecte sa logique de netting.
- */
-object ParallelClearing:
-  def clearBatch(
-    batches: List[List[Transaction]]
-  ): ZIO[NettingService, Nothing, List[Map[BankCode, Money]]] =
-    ZIO.foreachPar(batches) { batch =>
-      for
-        svc    <- ZIO.service[NettingService]
-        result <- svc.calculate(batch)
-      yield result
-    }.withParallelism(4)  // Au plus 4 validations actives
+object ZLayerObservation extends ZIOAppDefault:
 
-  def clearWithTimeout(
-    txs: List[Transaction],
-    timeout: Duration = 2.seconds
-  ): ZIO[NettingService, Throwable, Map[BankCode, Money]] =
-    val batches = txs.grouped(1000).toList
-    clearBatch(batches)
-      .map(_.foldLeft(Map.empty[BankCode, Money]) { (acc, m) =>
-        // === ZONE STAGIAIRE ===
-        // TODO : fusionner les maps de positions nettes
-        ???
-      })
-      .timeoutFail(new RuntimeException("Timeout !"))(timeout)
+  private val awb = BankCode.unsafe("AWB")
+  private val cih = BankCode.unsafe("CIH")
+
+  private val sampleTransactions = List(
+    Transaction(TransactionId.unsafe("tx-1"), awb, cih, Money(BigDecimal("100.00"))),
+    Transaction(TransactionId.unsafe("tx-2"), cih, awb, Money(BigDecimal("40.00")))
+  )
+
+  private val knownBanks = Set(awb, cih)
+
+  val program: ZIO[ValidationService & NettingService, ClearingError, Map[BankCode, Money]] =
+    for
+      validator <- ZIO.service[ValidationService]
+      netting   <- ZIO.service[NettingService]
+      valid     <- ZIO.foreach(sampleTransactions)(validator.validate)
+      positions <- netting.calculate(valid)
+    yield positions
+
+  private def show(positions: Map[BankCode, Money]): String =
+    positions.toList
+      .sortBy { case (bank, _) => bank.value }
+      .map { case (bank, amount) => s"${bank.value}: ${amount.format}" }
+      .mkString("\n")
+
+  def run =
+    program
+      .foldZIO(
+        error => Console.printLine(s"Erreur métier : ${error.code} - ${error.message}").orDie,
+        positions => Console.printLine(show(positions)).orDie
+      )
+      .provide(
+        ValidationService.live(knownBanks),
+        NettingService.live
+      )
 ```
+
+**À observer :**
+
+- `program` demande `ValidationService & NettingService`.
+- `provide` fournit les couches à la fin.
+- Retirer `cih` de `knownBanks` affiche une erreur métier courte.
+- Retirer une couche produit une erreur de compilation utile.
 
 ---
 
-## Kit 14.5 — Retry & Circuit Breaker
+## Kit 14.3 - Ressource fermée par `Scope`
+
+**Fichier à créer :** `src/main/scala/distributed/zio/ResourceObservation.scala`
 
 ```scala
 package distributed.zio
 
 import zio.*
+import zio.Console.*
+import java.io.{BufferedReader, StringReader}
 
-/**
- * STARTER KIT : Les politiques de retry sont pré-configurées.
- * Le stagiaire branche sa logique d'appel externe.
- */
-object ResilientCalls:
-  // Politique de retry : au plus 3 nouvelles tentatives, délai exponentiel
-  val retryPolicy: Schedule[Any, Throwable, Any] =
-    (Schedule.exponential(100.millis) && Schedule.recurs(3)).jittered
+object ResourceObservation extends ZIOAppDefault:
 
-  def callExchangeRate(currency: String): ZIO[Any, Throwable, BigDecimal] =
-    ZIO.attempt {
-      // === ZONE STAGIAIRE ===
-      // TODO : Appeler le service de taux de change
-      // Le mock échouera 3 fois sur 4 pour tester le retry
-      ???
-    }.retry(retryPolicy)
-     .tapError(e => Console.printLine(s"Échec définitif pour $currency : ${e.getMessage}").orDie)
+  private val csv =
+    """tx-1,AWB,CIH,100
+      |tx-2,CIH,AWB,40
+      |tx-3,AWB,CIH,10
+      |""".stripMargin
+
+  private def openReader: ZIO[Scope, Nothing, BufferedReader] =
+    ZIO.acquireRelease(
+      printLine("acquire reader").orDie.as(new BufferedReader(new StringReader(csv)))
+    ) { reader =>
+      ZIO.attempt(reader.close()).orDie *> printLine("release reader").orDie
+    }
+
+  private def readLoop(
+      reader: BufferedReader,
+      acc: List[String],
+      failAfterFirst: Boolean
+  ): IO[String, List[String]] =
+    ZIO.attempt(reader.readLine()).mapError(_.getMessage).flatMap {
+      case null =>
+        ZIO.succeed(acc.reverse)
+      case line if failAfterFirst && acc.nonEmpty =>
+        printLine(s"read : $line").orDie *> ZIO.fail(s"ligne rejetée : $line")
+      case line =>
+        printLine(s"read : $line").orDie *> readLoop(reader, line :: acc, failAfterFirst)
+    }
+
+  def readAll(failAfterFirst: Boolean): IO[String, List[String]] =
+    ZIO.scoped {
+      for
+        reader <- openReader
+        lines  <- readLoop(reader, Nil, failAfterFirst)
+      yield lines
+    }
+
+  def run =
+    readAll(failAfterFirst = false).foldZIO(
+      error => printLine(s"erreur observée : $error").orDie,
+      lines => printLine(s"${lines.size} ligne(s) lue(s)").orDie
+    )
 ```
+
+**À observer :**
+
+- `acquire reader` apparaît avant la lecture.
+- `release reader` apparaît en succès et en échec.
+- Le stagiaire ne manipule pas encore de gros fichier CSV.
+
+---
+
+## Kit 14.4 - Concurrence bornée et timeout
+
+**Fichier à créer :** `src/main/scala/distributed/zio/ParallelObservation.scala`
+
+```scala
+package distributed.zio
+
+import zio.*
+import zio.Console.*
+
+object ParallelObservation extends ZIOAppDefault:
+
+  final case class Batch(name: String, delay: Duration)
+
+  private val batches = List(
+    Batch("A", 500.millis),
+    Batch("B", 500.millis),
+    Batch("C", 500.millis),
+    Batch("D", 500.millis)
+  )
+
+  private def process(batch: Batch): UIO[String] =
+    ZIO.sleep(batch.delay) *> ZIO.succeed(s"${batch.name} ok")
+
+  private def measure[A](label: String)(effect: UIO[A]): UIO[A] =
+    for
+      start <- Clock.nanoTime
+      value <- effect
+      end   <- Clock.nanoTime
+      _     <- printLine(s"$label : ${(end - start) / 1000000} ms").orDie
+    yield value
+
+  def run =
+    for
+      _       <- measure("séquentiel")(ZIO.foreach(batches)(process))
+      _       <- measure("parallèle x2")(ZIO.foreachPar(batches)(process).withParallelism(2))
+      timeout <- process(Batch("lent", 3.seconds)).timeout(1.second)
+      _       <- printLine(s"timeout : $timeout").orDie
+    yield ()
+```
+
+**À observer :**
+
+- Le parallèle x2 traite quatre batchs en deux vagues.
+- `timeout` retourne `None` quand l'effet ne finit pas à temps.
+- Le stagiaire change seulement `withParallelism` ou la durée du timeout.
+
+---
+
+## Kit 14.5 - Retry borné et appel court-circuité
+
+**Fichier à créer :** `src/main/scala/distributed/zio/RetryObservation.scala`
+
+```scala
+package distributed.zio
+
+import zio.*
+import zio.Console.*
+
+object RetryObservation extends ZIOAppDefault:
+
+  enum RateError:
+    case Temporary(message: String)
+    case InvalidCurrency(value: String)
+
+  private val temporaryOnly: Schedule[Any, RateError, Any] =
+    (Schedule.exponential(100.millis) && Schedule.recurs(3))
+      .whileInput {
+        case RateError.Temporary(_)    => true
+        case RateError.InvalidCurrency(_) => false
+      }
+
+  private def flaky(counter: Ref[Int], currency: String): IO[RateError, BigDecimal] =
+    if currency.length != 3 then
+      ZIO.fail(RateError.InvalidCurrency(currency))
+    else
+      for
+        attempt <- counter.updateAndGet(_ + 1)
+        _       <- printLine(s"appel distant #$attempt").orDie
+        rate    <-
+          if attempt < 4 then ZIO.fail(RateError.Temporary("service indisponible"))
+          else ZIO.succeed(BigDecimal("10.50"))
+      yield rate
+
+  private def guarded(counter: Ref[Int], circuitOpen: Ref[Boolean]): IO[RateError, BigDecimal] =
+    circuitOpen.get.flatMap {
+      case true =>
+        printLine("circuit ouvert : aucun appel distant").orDie *>
+          ZIO.fail(RateError.Temporary("circuit ouvert"))
+      case false =>
+        flaky(counter, "EUR").tapError {
+          case RateError.Temporary(_)     => circuitOpen.set(true)
+          case RateError.InvalidCurrency(_) => ZIO.unit
+        }
+    }
+
+  def run =
+    for
+      counter <- Ref.make(0)
+      ok      <- flaky(counter, "EUR").retry(temporaryOnly).either
+      _       <- printLine(s"retry EUR : $ok").orDie
+      invalid <- flaky(counter, "EURO").retry(temporaryOnly).either
+      _       <- printLine(s"retry EURO : $invalid").orDie
+      open    <- Ref.make(true)
+      blocked <- guarded(counter, open).either
+      _       <- printLine(s"circuit : $blocked").orDie
+    yield ()
+```
+
+**À observer :**
+
+- `EUR` réussit au quatrième appel.
+- `EURO` échoue sans retry, car l'erreur n'est pas temporaire.
+- Le circuit ouvert bloque avant l'appel distant.

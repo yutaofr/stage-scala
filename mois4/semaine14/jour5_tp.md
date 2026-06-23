@@ -1,47 +1,45 @@
-# TP Jour 5 : Le client HTTP résilient
+# TP Jour 5 : Observer retry et circuit ouvert
 
-**Durée :** ~4h | **Fil Rouge :** Finalisation de la couche asynchrone ZIO
+**Durée :** 30 min utiles | **Format :** 3 micro-exercices de 10 min maximum
 
 ---
 
 ## Point de départ
 
-- Copie le **Kit 14.5** de `starter_kit_s14.md`.
-- Le mock doit être déterministe : il échoue sur les trois premiers appels puis réussit.
-- Les erreurs de validation et d'authentification ne doivent pas être retentées.
+- Copie le **Kit 14.5** dans `src/main/scala/distributed/zio/RetryObservation.scala`.
+- Le mock est déterministe.
+- Le circuit breaker reste une observation simple, pas une implémentation industrielle.
 
-## Exercice 1 : Retry exponentiel borné (2h)
+Le but est de voir une politique de retry, une erreur non retentée, et un appel court-circuité.
 
-1. Implémente le mock déterministe avec un `Ref[Int]`.
-2. Modélise `TemporaryRateError` et `InvalidCurrency`.
-3. Applique un retry borné uniquement à `TemporaryRateError`.
-4. Journalise le numéro de tentative et le délai.
-5. Teste un succès après trois erreurs, puis une erreur non récupérable.
+## Exercice 1 : Compter les retries (10 min)
 
-**Validation :** le premier scénario réussit au quatrième appel ; le second échoue sans retry.
+1. Lance `sbt "runMain distributed.zio.RetryObservation"`.
+2. Compte les lignes `appel distant`.
+3. Repère le résultat de `retry EUR`.
+4. Explique pourquoi le succès arrive au quatrième appel.
 
----
-
-## Exercice 2 : Le Circuit Breaker (Simulation) (1h30)
-
-1. Utilise un `Ref` pour stocker l'état `Closed`, `Open(until)` ou `HalfOpen`.
-2. Ouvre le circuit après trois échecs consécutifs.
-3. Refuse les appels pendant la fenêtre d'ouverture sans appeler le service.
-4. Autorise un seul appel de test en état `HalfOpen`.
-5. Remets le circuit à zéro après un succès.
-
-**Validation :** un compteur séparé prouve qu'aucun appel distant n'a lieu lorsque le circuit est ouvert.
+**Validation :** `EUR` échoue trois fois, puis réussit.
 
 ---
 
-## Exercice 3 : Revue de Code ZIO (30 min)
+## Exercice 2 : Voir une erreur définitive (8 min)
 
-1. Analyse le moteur v2.4 avec une grille : dépendances, erreurs, ressources, concurrence, retry.
-2. Identifie trois risques avant Kafka : saturation, doublons et reprise après panne.
-3. Pour chaque risque, écris une preuve à produire pendant la S15.
+1. Repère la ligne `retry EURO`.
+2. Vérifie qu'elle ne produit pas de nouveaux appels distants.
+3. Relie ce comportement à `InvalidCurrency`.
 
-**Validation :** la revue contient trois risques, trois décisions et trois preuves observables.
+**Validation :** l'erreur définitive n'est pas retentée.
 
-**Bilan Semaine 14** : le Clearing Engine v2.4 possède une orchestration ZIO explicite. La maîtrise sera confirmée par les tests de la semaine suivante.
+---
 
-**Livrable** : Clearing Engine v2.4, tests des politiques de retry/circuit breaker et grille de revue avant Kafka.
+## Exercice 3 : Observer un circuit ouvert (10 min)
+
+1. Repère `open <- Ref.make(true)`.
+2. Relance et observe `circuit ouvert : aucun appel distant`.
+3. Remplace `true` par `false`.
+4. Relance et observe qu'un appel distant repart.
+
+**Validation :** le stagiaire sait dire : "un circuit ouvert protège le service distant."
+
+**Livrable court :** une sortie avec retry, une sortie sans retry, et une phrase sur le circuit ouvert.

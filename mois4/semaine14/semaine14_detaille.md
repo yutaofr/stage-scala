@@ -1,21 +1,33 @@
-# Semaine 14 : Orchestration des Effets — ZIO (5 jours)
+# Semaine 14 : Orchestration des Effets avec ZIO
 
-## Jour 1 — Fondations de ZIO
-**Cours (2h)** : `ZIO[R, E, A]` décrit un programme qui demande `R`, peut échouer avec `E` et produit `A`. Différence avec `Future` : un effet ZIO est une description paresseuse, exécutée par le runtime. `ZIO.succeed`, `ZIO.fail`, `ZIO.attempt`, erreurs typées et défauts.
-**TP (4h)** : Premiers programmes ZIO avec `Console`, `Random` et `Clock`. Encapsuler les appels existants du moteur sans masquer les erreurs métier.
+Cette semaine sert à observer ZIO sur le fil rouge. Les TPs ne sont pas des katas de reconstruction : chaque exercice dure 5 à 10 minutes et produit un constat visible.
 
-## Jour 2 — ZLayer & Dependency Injection
-**Cours (2h)** : Modulariser avec `ZLayer`. Graph de dépendances résolu à la compilation. Comparaison avec Spring DI : pas d'annotations, tout est dans les types.
-**TP (4h)** : Découper l'appli en couches : `RepoLayer`, `ValidationLayer`, `ClearingLayer`, `ReportLayer`. Injecter les implémentations Mock vs Réelles.
+## Jour 1 - Fondations de ZIO
 
-## Jour 3 — Gestion des Ressources
-**Cours (2h)** : `ZIO.acquireRelease` : garantir la fermeture des ressources (fichiers, connexions). Scoped : composition de ressources multiples.
-**TP (4h)** : Lire un fichier de 100 000 transactions avec garantie de fermeture, même en cas de crash au milieu du traitement.
+**Cours :** `ZIO[R, E, A]` décrit un programme qui demande `R`, peut échouer avec `E`, et produit `A`. Une valeur ZIO reste une description tant que le runtime ne l'exécute pas.
 
-## Jour 4 — Fibers & Concurrence ZIO
-**Cours (2h)** : Fibers : unités d'exécution légères gérées par le runtime ZIO. `fork`, `join`, `interrupt`, concurrence structurée et parallélisme borné.
-**TP (4h)** : Lancer plusieurs calculs de compensation avec une limite de parallélisme. Ajouter un timeout de 2 secondes par batch et vérifier l'interruption.
+**TP :** observer `Console`, une erreur typée, et `zipPar` dans un programme court.
 
-## Jour 5 — Retry & Circuit Breaker
-**Cours (2h)** : Retry borné, backoff exponentiel, jitter et distinction entre erreur transitoire et erreur définitive. Pattern Circuit Breaker pour les services instables.
-**TP (4h)** : Rendre les appels au service de taux de change résilients avec un retry borné. Tester avec un service déterministe qui échoue sur les premières tentatives.
+## Jour 2 - ZLayer et injection
+
+**Cours :** le canal `R` rend les dépendances explicites. `ZLayer` fournit ces dépendances au bord du programme.
+
+**TP :** lire les dépendances dans le type, retirer une couche, et observer l'erreur de compilation.
+
+## Jour 3 - Ressources et Scope
+
+**Cours :** `ZIO.acquireRelease` et `ZIO.scoped` bornent la durée de vie d'une ressource.
+
+**TP :** observer `acquire`, `release`, puis la fermeture en cas d'erreur contrôlée.
+
+## Jour 4 - Fibers et concurrence
+
+**Cours :** les fibers permettent de lancer des effets en parallèle, avec interruption et bornes de parallèle.
+
+**TP :** comparer `foreach` et `foreachPar`, changer `withParallelism`, puis observer `timeout`.
+
+## Jour 5 - Retry et résilience
+
+**Cours :** `Schedule` décrit une politique de retry. Un circuit ouvert évite d'appeler un service déjà en panne.
+
+**TP :** compter les retries, distinguer une erreur définitive, et observer un appel court-circuité.

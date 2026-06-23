@@ -1,50 +1,46 @@
-# TP Jour 2 : Architecturer avec ZLayer
+# TP Jour 2 : Observer `ZLayer`
 
-**Durée :** ~4h | **Fil Rouge :** Refactorisation du ClearingEngine en ZIO
+**Durée :** 30 min utiles | **Format :** 3 micro-exercices de 10 min maximum
 
 ---
 
 ## Point de départ
 
-- Pars du **Kit 14.0**, puis copie le **Kit 14.2** de `starter_kit_s14.md`.
-- Réutilise les types métier du cœur du Clearing Engine (inchangés depuis v2.3).
-- Commence avec les couches `mock`, puis branche les couches `live`.
+- Copie le **Kit 14.2** dans `src/main/scala/distributed/zio/ZLayerObservation.scala`.
+- Ne crée pas de nouvelle interface.
+- Ne recopie pas les types du domaine.
 
-## Exercice 1 : Modularisation du code (1h30)
+Le but est de voir le canal `R` et l'assemblage par `provide`, pas de concevoir une architecture complète.
 
-> [!TIP]
-> Le runner et les interfaces sont fournis. Concentre-toi sur les implémentations et sur l'assemblage.
+## Exercice 1 : Lire les dépendances dans le type (8 min)
 
-1. Ouvre `distributed/zio/ClearingLayers.scala`.
-2. Implémente `TransactionRepository.mock` avec deux transactions déterministes.
-3. Implémente `ValidationService.live` en déléguant au validateur pur de la S12.
-4. Implémente `NettingService.live` en déléguant au calcul de netting pur.
-5. Lance le programme uniquement avec des couches de test.
+1. Ouvre `program`.
+2. Repère son type : `ZIO[ValidationService & NettingService, ClearingError, Map[BankCode, Money]]`.
+3. Lance `sbt "runMain distributed.zio.ZLayerObservation"`.
+4. Note les deux services demandés par le programme.
 
-**Validation :** le rapport contient les deux banques attendues et la somme des positions vaut zéro.
+**Validation :** le rapport affiche `AWB` et `CIH`.
 
 ---
 
-## Exercice 2 : Injection dans le Moteur (1h30)
+## Exercice 2 : Observer une erreur métier (10 min)
 
-**Objectif :** rendre la dépendance au taux de change explicite.
+1. Dans `knownBanks`, retire `cih`.
+2. Relance le programme.
+3. Observe la ligne courte `Erreur métier : UNKNOWN_BANK - ...`.
+4. Remets `cih`.
 
-1. Ajoute l'interface `ExchangeRateService`.
-2. Crée un effet `convertToMad` de type `ZIO[ExchangeRateService, RateError, Transaction]`.
-3. Utilise `ZIO.serviceWithZIO` pour appeler le service.
-4. Ajoute la couche au `provide` sans modifier la logique de validation.
-
-**Validation :** supprimer la couche provoque une erreur de compilation ; la remettre permet l'exécution.
+**Validation :** le stagiaire relie l'erreur au canal `E`, pas à une exception cachée.
 
 ---
 
-## Exercice 3 : Switch vers le Mock (1h)
+## Exercice 3 : Observer l'injection (10 min)
 
-1. Crée `ExchangeRateService.fixed(BigDecimal("10.0"))`.
-2. Crée une seconde couche qui renvoie une erreur déterministe.
-3. Exécute le même programme avec les deux couches, sans modifier `convertToMad`.
-4. Ajoute un test ou une sortie qui compare le résultat et l'erreur attendus.
+1. Commente temporairement `NettingService.live` dans `provide`.
+2. Compile.
+3. Lis le message : quelle dépendance manque ?
+4. Rétablis la ligne.
 
-**Validation :** les deux scénarios utilisent le même programme métier et produisent des résultats reproductibles.
+**Validation :** l'erreur de compilation mentionne le service non fourni.
 
-**Livrable** : Code source structuré en couches ZIO avec démonstration de substitution de services.
+**Livrable court :** une sortie réussie, une erreur métier, et une erreur de compilation expliquée en une phrase.

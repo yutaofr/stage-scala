@@ -1,44 +1,46 @@
-# TP Jour 3 : Zéro Fuite de Ressources
+# TP Jour 3 : Observer `Scope` et la fermeture
 
-**Durée :** ~4h | **Fil Rouge :** Lecture de batchs CSV avec détection d'erreurs
+**Durée :** 30 min utiles | **Format :** 3 micro-exercices de 10 min maximum
 
 ---
 
 ## Point de départ
 
-- Copie le **Kit 14.3** de `starter_kit_s14.md`.
-- Prépare un CSV avec une ligne valide, une ligne invalide et une seconde ligne valide.
-- Le test doit prouver la fermeture ; il ne suffit pas de supposer qu'elle a eu lieu.
+- Copie le **Kit 14.3** dans `src/main/scala/distributed/zio/ResourceObservation.scala`.
+- Le CSV est intégré au snippet pour éviter les problèmes de chemin.
+- Ne remplace pas le kit par un gros parseur de fichier.
 
-## Exercice 1 : Le Lecteur Sécurisé (1h30)
+Le but est de voir que ZIO ferme la ressource en succès comme en échec.
 
-1. Implémente `openSource(path): ZIO[Scope, IOException, Source]`.
-2. Utilise `ZIO.acquireRelease` et convertis l'erreur d'ouverture en `IOException`.
-3. Consomme les lignes à l'intérieur du scope ; ne retourne pas un `Iterator` après fermeture.
-4. Ajoute un compteur ou un log dans le finaliseur.
+## Exercice 1 : Observer le chemin nominal (8 min)
 
-**Validation :** toutes les lignes sont lues et le finaliseur s'exécute une seule fois.
+1. Lance `sbt "runMain distributed.zio.ResourceObservation"`.
+2. Repère `acquire reader`.
+3. Repère `release reader`.
+4. Note l'ordre des messages.
 
----
-
-## Exercice 2 : Crash Test (1h30)
-
-1. Lis les lignes jusqu'à la première erreur de parsing.
-2. Retourne `ZIO.fail(ParseError(...))` sans lever volontairement une exception.
-3. Vérifie que le finaliseur s'exécute aussi sur ce chemin.
-4. Répète le test en interrompant la Fiber de lecture.
-
-**Validation :** succès, échec typé et interruption ferment tous la ressource.
+**Validation :** `release reader` apparaît une seule fois après la lecture.
 
 ---
 
-## Exercice 3 : Ressources Multiples (1h)
+## Exercice 2 : Observer la fermeture en erreur (10 min)
 
-1. Crée un programme qui copie un fichier source vers une destination temporaire.
-2. Acquiers le lecteur puis le writer dans le même scope.
-3. Provoque une erreur après quelques lignes.
-4. Vérifie la fermeture des deux ressources et supprime le fichier temporaire.
+1. Dans `run`, remplace `failAfterFirst = false` par `failAfterFirst = true`.
+2. Relance.
+3. Observe le message d'erreur.
+4. Vérifie que `release reader` apparaît quand même.
 
-**Validation :** aucun descripteur ne reste ouvert et le fichier temporaire est nettoyé.
+**Validation :** l'erreur est contrôlée et la ressource est fermée.
 
-**Livrable** : Code source montrant l'usage de `Scope` pour la manipulation de fichiers, avec preuve de fermeture en cas d'erreur.
+---
+
+## Exercice 3 : Lire le rôle de `ZIO.scoped` (10 min)
+
+1. Ouvre `readAll`.
+2. Entoure mentalement la zone couverte par `ZIO.scoped`.
+3. Explique pourquoi le `reader` ne sort pas de cette zone.
+4. Remets `failAfterFirst = false`.
+
+**Validation :** le stagiaire sait dire : "le scope borne la durée de vie de la ressource."
+
+**Livrable court :** deux sorties console et une phrase sur `Scope`.
