@@ -1,315 +1,243 @@
-# Starter Kit Semaine 14 : observer ZIO dans le fil rouge
+# Starter Kit Semaine 14 : observer ZIO dans votre fil rouge
 
-La semaine 14 ne remplace pas le moteur construit de S1 à S13. Elle ajoute un seul petit module d'observation dans `distributed.zio` pour voir ce que ZIO apporte autour du cœur Scala déjà stabilisé.
+La semaine 14 part d'une hypothèse simple : chaque stagiaire possède **sa propre version** du moteur fil rouge, construite en suivant les TPs des semaines 1 à 13. Le support ne fournit donc pas un projet prêt à utiliser, ni un module complet à copier. Il donne une trame pour ajouter un seul petit module d'observation dans le projet du stagiaire.
 
 ## Contrat pédagogique
 
-- Le stagiaire continue le **même Clearing Engine**.
-- Le domaine `clearing.model` reste intact.
-- Le cœur `clearing.core` reste en Scala de base : `Either`, validation pure, netting pur.
-- Le nouveau code ZIO se limite à `src/main/scala/distributed/zio/ZioClearingModule.scala`.
-- Le fichier contient un seul objet Scala : `ZioClearingModule`.
-- Chaque TP observe une partie du même module et dure 5 à 10 minutes.
-- Aucun exercice ne demande de créer une nouvelle architecture, un vrai client HTTP, un vrai repository, ou un circuit breaker complet.
+- Le stagiaire travaille dans **son** projet fil rouge.
+- Les types et fonctions des semaines 1 à 13 restent la source de vérité.
+- Le cœur Scala de base reste intact : validation, `Either`, types opaques, netting pur, tests.
+- La semaine 14 ajoute un seul fichier d'observation, par exemple `ZioEffectObservation.scala`.
+- Ce fichier observe le système d'effet ZIO. Il ne devient pas une nouvelle architecture.
+- Chaque exercice dure 5 à 10 minutes.
+- Si l'adaptation des noms prend plus de 10 minutes, le tuteur donne le mapping et passe à l'observation.
 
-## Lien avec les semaines précédentes
+## Fiche de correspondance à remplir
 
-| Déjà construit | Ce que S14 observe avec ZIO |
+Avant d'écrire ZIO, le stagiaire identifie ce qu'il a déjà construit.
+
+| Élément attendu depuis S1-S13 | Dans mon projet |
 |---|---|
-| `TransactionId`, `BankCode`, `Money` | ZIO importe ces types, il ne les recrée pas |
-| `TransactionValidator` | `ValidationService` enveloppe cette validation pure |
-| `PureNettingCalculator` | `NettingService` enveloppe ce calcul pur |
-| `ClearingError` | ZIO garde les erreurs métier dans le canal `E` |
-| Concurrence S13 | `foreachPar`, `withParallelism` et `timeout` rendent le parallèle local et observable |
+| Type transaction | `...` |
+| Type banque | `...` |
+| Type montant | `...` |
+| Type erreur métier, souvent un ADT | `...` |
+| Fonction de validation pure | `... => Either[Erreur, Transaction]` |
+| Fonction de netting pur | `List[Transaction] => PositionsNettes` |
+| Petit batch de test déjà utilisé | `...` |
+| Erreur technique ou infrastructure, si elle existe | `...` |
 
-## Préparation
+Cette table remplace l'idée d'un projet fourni par le support. Le starter kit s'appuie sur ce que le stagiaire a produit.
 
-```bash
-cd fil-rouge
-sbt test
-```
+## Module d'observation, non productif
 
-Le projet doit compiler avant d'ajouter le module. Si cette commande échoue, on corrige le fil rouge avant de parler de ZIO.
-
-## Module unique à copier
-
-**Fichier à créer :** `fil-rouge/src/main/scala/distributed/zio/ZioClearingModule.scala`
+Nom conseillé : `ZioEffectObservation`. Le package dépend du projet du stagiaire.
 
 ```scala
-package distributed.zio
+// Exemple de chemin, à adapter :
+// src/main/scala/<votre/package>/zio/ZioEffectObservation.scala
 
-import clearing.core.*
-import clearing.model.*
 import zio.*
 
-import java.io.{BufferedReader, StringReader}
+object ZioEffectObservation extends ZIOAppDefault:
 
-/**
- * Petit module ZIO ajouté au moteur fil rouge.
- *
- * Il ne change pas le domaine et ne remplace pas le cœur Scala de base.
- * Son rôle est d'observer comment ZIO décrit :
- *   - les dépendances avec R;
- *   - les erreurs attendues avec E;
- *   - la valeur produite avec A;
- *   - les ressources, le parallèle et le retry.
- */
-object ZioClearingModule extends ZIOAppDefault:
+  // Zone d'adaptation : remplacer ces alias par les types du projet S1-S13.
+  type Tx = VotreTypeTransaction
+  type Err = VotreTypeErreur
+  type Positions = VotreTypePositionsNettes
 
-  // Données du langage métier construit avant S14.
-  // On utilise les types opaques existants pour éviter un deuxième mini-domaine.
-  private val awb = BankCode.unsafe("AWB")
-  private val cih = BankCode.unsafe("CIH")
+  // Reprendre un batch minuscule déjà connu du stagiaire.
+  // Deux transactions suffisent : le but est d'observer ZIO, pas de tester le métier.
+  val sampleBatch: List[Tx] =
+    votreBatchDeReference
 
-  val knownBanks: Set[BankCode] = Set(awb, cih)
+  // Brancher les fonctions pures déjà écrites.
+  // Scala de base reste responsable de la validation et du netting.
+  def validateBase(tx: Tx): Either[Err, Tx] =
+    votreValidationExistante(tx)
 
-  val sampleBatch: List[Transaction] =
-    List(
-      Transaction(TransactionId.unsafe("tx-zio-1"), awb, cih, Money(BigDecimal("100.00"))),
-      Transaction(TransactionId.unsafe("tx-zio-2"), cih, awb, Money(BigDecimal("40.00")))
-    )
+  def nettingBase(txs: List[Tx]): Positions =
+    votreNettingExistant(txs)
 
-  /**
-   * Version Scala de base.
-   *
-   * Intérêt pédagogique :
-   *   - montrer que le cœur existant fonctionne déjà;
-   *   - garder un point de comparaison clair avec ZIO;
-   *   - rappeler que ZIO n'est pas nécessaire pour le calcul pur.
-   */
-  def baseScalaNetting(txs: List[Transaction]): Either[ClearingError, Map[BankCode, Money]] =
-    val validator = TransactionValidator(knownBanks)
-    val validated: Either[ClearingError, List[Transaction]] =
-      txs.foldRight(Right(Nil): Either[ClearingError, List[Transaction]]) { (tx, acc) =>
+  // Petit affichage local au module d'observation.
+  // Il évite de modifier le reporting déjà construit.
+  def showPositions(positions: Positions): String =
+    positions.toString
+```
+
+Ce bloc n'est pas une solution prête à compiler. Il force le stagiaire à relier ZIO à **son** moteur.
+
+## Jour 1 : effet et comparaison Scala de base
+
+```scala
+  // Scala de base : le pipeline existe déjà avec Either.
+  // def garde le calcul réexécutable pour l'observation.
+  def basePipeline: Either[Err, Positions] =
+    for
+      valid <- sampleBatch.foldRight(Right(Nil): Either[Err, List[Tx]]) { (tx, acc) =>
         for
-          valid <- validator.validate(tx)
-          rest  <- acc
-        yield valid :: rest
+          checked <- validateBase(tx)
+          rest    <- acc
+        yield checked :: rest
+      }
+    yield nettingBase(valid)
+
+  // ZIO : on suspend le pipeline Scala de base dans une description.
+  // Intérêt : le travail ne se lance pas quand la valeur est déclarée.
+  val zioPipeline: IO[Err, Positions] =
+    ZIO.suspendSucceed(basePipeline).flatMap(result => ZIO.fromEither(result))
+```
+
+Observation attendue : le résultat métier est le même. ZIO ne remplace pas la logique; il décrit son exécution.
+
+## Jour 2 : dépendance locale avec `R`
+
+```scala
+  final case class ObservationConfig(parallelism: Int, failAuditAfterFirstLine: Boolean)
+
+  val defaultConfig: ObservationConfig =
+    ObservationConfig(parallelism = 2, failAuditAfterFirstLine = false)
+
+  // Le programme demande maintenant une configuration.
+  // R vaut ObservationConfig; ce n'est pas un nouveau service métier.
+  val configuredPipeline: ZIO[ObservationConfig, Err, Positions] =
+    for
+      config    <- ZIO.service[ObservationConfig]
+      positions <- zioPipeline
+      _         <- ZIO.succeed(println(s"parallélisme observé = ${config.parallelism}"))
+    yield positions
+```
+
+Observation attendue : sans `.provide(ZLayer.succeed(defaultConfig))`, le programme ne peut pas être lancé. Le canal `R` rend la dépendance visible.
+
+## Jour 3 : ressource courte avec `Scope`
+
+```scala
+  import java.io.{BufferedReader, StringReader}
+
+  val auditText: String =
+    sampleBatch.map(_.toString).mkString("\n")
+
+  def openAuditReader: ZIO[Scope, Nothing, BufferedReader] =
+    ZIO.acquireRelease(
+      ZIO.succeed {
+        println("audit acquire")
+        new BufferedReader(new StringReader(auditText))
+      }
+    ) { reader =>
+      ZIO.succeed {
+        reader.close()
+        println("audit release")
+      }.orDie
+    }
+
+  def readAuditLines(failAfterFirstLine: Boolean): IO[String, List[String]] =
+    def loop(reader: BufferedReader, acc: List[String]): IO[String, List[String]] =
+      ZIO.attempt(reader.readLine()).mapError(_.getMessage).flatMap {
+        case null =>
+          ZIO.succeed(acc.reverse)
+        case line if failAfterFirstLine && acc.nonEmpty =>
+          ZIO.fail(s"lecture arrêtée volontairement: $line")
+        case line =>
+          ZIO.succeed(println(s"audit read: $line")) *> loop(reader, line :: acc)
       }
 
-    validated.map(PureNettingCalculator.calculateNetPositions)
+    ZIO.scoped {
+      for
+        reader <- openAuditReader
+        lines  <- loop(reader, Nil)
+      yield lines
+    }
+```
 
-  /**
-   * Version ZIO du même enchaînement.
-   *
-   * À lire comme : ce programme a besoin de ValidationService et NettingService,
-   * peut échouer avec ClearingError, et produit une Map de positions nettes.
-   */
-  val validateAndNetting: ZIO[ValidationService & NettingService, ClearingError, Map[BankCode, Money]] =
-    for
-      validator <- ZIO.service[ValidationService]
-      netting   <- ZIO.service[NettingService]
-      valid     <- ZIO.foreach(sampleBatch)(validator.validate)
-      positions <- netting.calculate(valid)
-    yield positions
+Observation attendue : `audit release` apparaît en succès et en erreur. On observe `Scope`, pas un parseur CSV complet.
 
-  def report(positions: Map[BankCode, Money]): String =
-    positions.toList
-      .sortBy { case (bank, _) => bank.value }
-      .map { case (bank, amount) => s"${bank.value}: ${amount.format}" }
-      .mkString("\n")
+## Jour 4 : parallèle borné
 
-  final case class Batch(name: String, delay: Duration)
-
-  private val batches: List[Batch] =
-    List(
-      Batch("validation-A", 400.millis),
-      Batch("validation-B", 400.millis),
-      Batch("validation-C", 400.millis),
-      Batch("validation-D", 400.millis)
-    )
-
-  // Simulation courte d'une validation distante.
-  // ZIO.sleep ne bloque pas un thread pendant l'attente.
-  private def process(batch: Batch): UIO[String] =
-    ZIO.sleep(batch.delay) *> ZIO.succeed(s"${batch.name} ok")
-
-  private def measure[A](label: String)(effect: UIO[A]): UIO[String] =
+```scala
+  def timed[E, A](label: String)(effect: ZIO[Any, E, A]): ZIO[Any, E, String] =
     for
       start <- Clock.nanoTime
       value <- effect
       end   <- Clock.nanoTime
     yield s"$label: $value en ${(end - start) / 1000000} ms"
 
-  /**
-   * Scala Future démarre souvent des calculs dès leur création.
-   * Ici, foreachPar reste une description; withParallelism(2) rend la borne locale.
-   */
-  val parallelPreview: UIO[String] =
+  def validateSlow(tx: Tx): IO[Err, Tx] =
+    ZIO.sleep(300.millis) *> ZIO.fromEither(validateBase(tx))
+
+  val parallelPreview: ZIO[ObservationConfig, Err, String] =
     for
-      sequential <- measure("séquentiel")(ZIO.foreach(batches)(process))
-      parallel   <- measure("parallèle x2")(ZIO.foreachPar(batches)(process).withParallelism(2))
+      config     <- ZIO.service[ObservationConfig]
+      sequential <- timed("séquentiel")(ZIO.foreach(sampleBatch)(validateSlow))
+      parallel   <- timed("parallèle")(ZIO.foreachPar(sampleBatch)(validateSlow).withParallelism(config.parallelism))
     yield s"$sequential\n$parallel"
+```
 
-  val timeoutPreview: UIO[Option[String]] =
-    process(Batch("validation-lente", 3.seconds)).timeout(1.second)
+Observation attendue : le stagiaire voit la différence entre composition séquentielle et parallèle sans créer de `Thread`.
 
-  private val auditCsv =
-    """tx-zio-1,AWB,CIH,100.00
-      |tx-zio-2,CIH,AWB,40.00
-      |""".stripMargin
+## Jour 5 : retry borné, sans nouveau domaine
 
-  /**
-   * Scala de base utiliserait try/finally autour d'un BufferedReader.
-   * ZIO.acquireRelease garde l'acquisition et la libération dans la description.
-   */
-  private def openAuditReader: ZIO[Scope, Nothing, BufferedReader] =
-    ZIO.acquireRelease(
-      Console.printLine("audit acquire").orDie.as(new BufferedReader(new StringReader(auditCsv)))
-    ) { reader =>
-      ZIO.attempt(reader.close()).orDie *> Console.printLine("audit release").orDie
-    }
+```scala
+  // Adapter ces deux fonctions au type d'erreur du projet.
+  // Si le projet possède déjà une erreur technique, l'utiliser.
+  def isTemporary(error: Err): Boolean =
+    votrePredicatErreurTemporaire(error)
 
-  private def readLoop(
-      reader: BufferedReader,
-      acc: List[String],
-      failAfterFirst: Boolean
-  ): IO[String, List[String]] =
-    ZIO.attempt(reader.readLine()).mapError(_.getMessage).flatMap {
-      case null =>
-        ZIO.succeed(acc.reverse)
-      case line if failAfterFirst && acc.nonEmpty =>
-        Console.printLine(s"audit read: $line").orDie *>
-          ZIO.fail(s"ligne audit rejetée: $line")
-      case line =>
-        Console.printLine(s"audit read: $line").orDie *>
-          readLoop(reader, line :: acc, failAfterFirst)
-    }
+  def temporaryFailure(message: String): Err =
+    votreErreurTechnique(message)
 
-  def readAuditLines(failAfterFirst: Boolean): IO[String, List[String]] =
-    ZIO.scoped {
-      for
-        reader <- openAuditReader
-        lines  <- readLoop(reader, Nil, failAfterFirst)
-      yield lines
-    }
+  val retryTemporaryOnly: Schedule[Any, Err, Any] =
+    (Schedule.exponential(100.millis) && Schedule.recurs(3)).whileInput(isTemporary)
 
-  /**
-   * Retry lié au fil rouge : on retente seulement une panne d'infrastructure.
-   * Une erreur métier comme UNKNOWN_BANK ne doit pas être retentée.
-   */
-  val infrastructureOnly: Schedule[Any, ClearingError, Any] =
-    (Schedule.exponential(100.millis) && Schedule.recurs(3)).whileInput {
-      case ClearingError.InfrastructureFailure(_) => true
-      case _                                      => false
-    }
-
-  def publishPositions(counter: Ref[Int], positions: Map[BankCode, Money]): IO[ClearingError, String] =
+  def publishObservation(counter: Ref[Int], positions: Positions): IO[Err, String] =
     for
       attempt <- counter.updateAndGet(_ + 1)
-      _       <- Console.printLine(s"publication clearing #$attempt").orDie
-      receipt <-
-        if attempt < 3 then ZIO.fail(ClearingError.InfrastructureFailure("journal indisponible"))
-        else ZIO.succeed(s"publication OK (${positions.size} positions)")
-    yield receipt
+      _       <- ZIO.succeed(println(s"publication observée #$attempt"))
+      result  <-
+        if attempt < 3 then ZIO.fail(temporaryFailure("journal temporairement indisponible"))
+        else ZIO.succeed(s"publication observée: ${showPositions(positions)}")
+    yield result
 
-  val unknownBankPreview: UIO[Either[ClearingError, Map[BankCode, Money]]] =
-    validateAndNetting
-      .tapError(error => Console.printLine(s"erreur métier: ${error.code}").orDie)
-      .retry(infrastructureOnly)
-      .provide(ValidationService.live(Set(awb)) ++ NettingService.live)
-      .either
+  // Construire une erreur métier de référence à partir du domaine du stagiaire.
+  // Exemple : une banque inconnue, un montant négatif, ou une transaction mal formée.
+  def businessFailureObservation: IO[Err, Unit] =
+    val businessError: Either[Err, Unit] =
+      votreErreurMetierDeReference
 
+    ZIO.fromEither(businessError)
+```
+
+Observation attendue : une panne technique temporaire est retentée. Une erreur métier issue du domaine est passée dans la même politique de retry, mais elle n'est pas retentée. Le module ne crée pas de client HTTP, pas de circuit breaker, pas de nouvelle couche métier.
+
+## Programme `run` minimal
+
+```scala
   def run =
-    // Les couches branchent les services ZIO existants sur le cœur Scala.
-    // Le cœur n'est pas modifié; on ajoute seulement un adaptateur observable.
-    val services = ValidationService.live(knownBanks) ++ NettingService.live
-
-    val demo: ZIO[ValidationService & NettingService, ClearingError, Unit] =
+    val program =
       for
-        baseResult <- ZIO.fromEither(baseScalaNetting(sampleBatch))
-        _          <- Console.printLine("Scala base:\n" + report(baseResult)).orDie
-        positions  <- validateAndNetting
-        _          <- Console.printLine("ZIO module:\n" + report(positions)).orDie
-        preview    <- parallelPreview
-        _          <- Console.printLine(preview).orDie
-        auditLines <- readAuditLines(failAfterFirst = false).mapError(ClearingError.InfrastructureFailure.apply)
-        _          <- Console.printLine(s"audit lines: ${auditLines.size}").orDie
-        timeout    <- timeoutPreview
-        _          <- Console.printLine(s"timeout: $timeout").orDie
-        business   <- unknownBankPreview
-        _          <- Console.printLine(s"retry UNKNOWN_BANK: $business").orDie
-        counter    <- Ref.make(0)
-        published  <- publishPositions(counter, positions).retry(infrastructureOnly).either
-        _          <- Console.printLine(s"retry publication: $published").orDie
+        positions <- configuredPipeline
+        _         <- ZIO.succeed(println(showPositions(positions)))
+        _         <- readAuditLines(failAfterFirstLine = false).either
+        preview   <- parallelPreview
+        _         <- ZIO.succeed(println(preview))
+        business  <- businessFailureObservation.retry(retryTemporaryOnly).either
+        _         <- ZIO.succeed(println(s"erreur métier non retentée: $business"))
+        counter   <- Ref.make(0)
+        publish   <- publishObservation(counter, positions).retry(retryTemporaryOnly).either
+        _         <- ZIO.succeed(println(publish))
       yield ()
 
-    demo
-      .foldZIO(
-        error => Console.printLine(s"Erreur contrôlée: ${error.code} - ${error.message}").orDie,
-        _ => ZIO.unit
-      )
-      .provide(services)
+    program.provide(ZLayer.succeed(defaultConfig))
 ```
 
-## Sortie attendue
+Le `run` sert à observer. Il n'est pas une nouvelle entrée officielle du moteur.
 
-```text
-Scala base:
-AWB: -60.00 DH
-CIH: 60.00 DH
-ZIO module:
-AWB: -60.00 DH
-CIH: 60.00 DH
-séquentiel: ...
-parallèle x2: ...
-audit acquire
-audit read: tx-zio-1,AWB,CIH,100.00
-audit read: tx-zio-2,CIH,AWB,40.00
-audit release
-audit lines: 2
-timeout: None
-erreur métier: UNKNOWN_BANK
-retry UNKNOWN_BANK: Left(UnknownBank(CIH))
-publication clearing #1
-publication clearing #2
-publication clearing #3
-retry publication: Right(publication OK (2 positions))
-```
+## Ce que le tuteur doit refuser
 
-## Lecture par jour
+- Importer un projet fil rouge prêt à l'emploi depuis le support.
+- Coller un module complet sans l'adapter aux noms du stagiaire.
+- Réécrire la validation, le netting, ou les types métier en ZIO.
+- Ajouter un vrai client HTTP, une base de données, un repository, ou un circuit breaker.
+- Transformer la semaine 14 en migration ZIO du moteur.
 
-### Jour 1 - Effet et comparaison Scala de base
-
-Observe `baseScalaNetting` puis `validateAndNetting`.
-
-```scala
-def baseScalaNetting(...): Either[ClearingError, Map[BankCode, Money]]
-val validateAndNetting: ZIO[ValidationService & NettingService, ClearingError, Map[BankCode, Money]]
-```
-
-La logique métier reste la même. ZIO ajoute la description d'exécution et le canal des dépendances.
-
-### Jour 2 - Services et ZLayer
-
-Observe :
-
-```scala
-val services = ValidationService.live(knownBanks) ++ NettingService.live
-...
-.provide(services)
-```
-
-Le programme déclare ses besoins dans `R`; les couches sont fournies au bord du programme.
-
-### Jour 3 - Ressource et Scope
-
-Observe `openAuditReader` et `readAuditLines`.
-
-Le code équivaut à un `try/finally`, mais la fermeture reste garantie dans la composition ZIO.
-
-### Jour 4 - Parallèle borné et timeout
-
-Observe `parallelPreview` et `timeoutPreview`.
-
-Le stagiaire change seulement `withParallelism(2)` ou `timeout(1.second)`. Il n'ajoute pas de pool, pas de thread manuel.
-
-### Jour 5 - Retry borné
-
-Observe `infrastructureOnly`, `unknownBankPreview` et `publishPositions`.
-
-La publication est retentée car elle échoue avec `InfrastructureFailure`. L'erreur `UNKNOWN_BANK` n'est pas retentée, car c'est une erreur métier définitive.
-
-## Rappel tuteur
-
-Si un stagiaire commence à modifier `clearing.core`, `clearing.model`, ou à créer un vrai client HTTP, il sort du cadre de la semaine 14. Le bon recadrage est : "on observe ZIO autour du moteur existant; on ne migre pas encore le moteur".
+La bonne phrase de recadrage : **"On observe ZIO autour de ton moteur existant; on ne remplace pas ton moteur."**

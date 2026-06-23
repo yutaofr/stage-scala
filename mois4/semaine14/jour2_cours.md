@@ -9,15 +9,15 @@ footer: "Jour 2 — ZLayer & Dependency Injection"
 # ZLayer
 ## L'injection de dépendances réinventée
 
-**Durée :** ~2h | **Fil Rouge :** Brancher les services ZIO existants
+**Durée :** ~2h | **Fil Rouge :** Fournir une configuration locale d'observation
 
 ---
 
 # 📋 Objectifs du Jour
 
 - Comprendre le rôle du canal **R** dans ZIO.
-- Observer le concept de **ZLayer** pour fournir des services.
-- Assembler un graphe de dépendances explicite.
+- Observer le concept de **ZLayer** pour fournir une dépendance.
+- Assembler une dépendance explicite sans créer d'architecture.
 - Comparer l'injection ZIO avec un conteneur d'injection classique.
 
 ---
@@ -65,9 +65,9 @@ val fullApp = myProgram.provide(
 
 ---
 
-# 🏗️ Application : Le module d'observation
+# 🏗️ Application : La configuration d'observation
 
-Nous allons utiliser les couches déjà fournies : `ValidationService.live(knownBanks)` et `NettingService.live`. Le TP ne crée pas de repository, ne crée pas de client HTTP, et ne modifie pas le cœur `clearing.core`.
+Nous allons fournir une petite `ObservationConfig` avec `ZLayer.succeed`. Le TP ne crée pas de repository, ne crée pas de client HTTP, et ne modifie pas le cœur Scala du stagiaire.
 
 ---
 
@@ -83,7 +83,7 @@ Nous allons utiliser les couches déjà fournies : `ValidationService.live(known
 
 - Le canal **R** rend les dépendances de ton code explicites et vérifiables au moment de la compilation.
 - `ZLayer` construit et partage les services nécessaires à un effet.
-- Ton application est maintenant un assemblage de composants interchangeables et testables.
-- Tu commences à voir la puissance du "Graphe de Dépendances" de ZIO.
+- Ton module d'observation montre qu'une dépendance peut rester explicite.
+- Tu vois le rôle de `provide` sans introduire une nouvelle architecture.
 
 **Prochaine étape** : Observer le même module unique dans le TP du Jour 2.

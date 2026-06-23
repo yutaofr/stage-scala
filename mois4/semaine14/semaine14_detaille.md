@@ -1,32 +1,33 @@
-# Semaine 14 : Observer ZIO autour du moteur fil rouge
+# Semaine 14 : Observer ZIO autour du fil rouge personnel
 
-Cette semaine prolonge le Clearing Engine construit de S1 à S13. Elle n'est pas une migration du moteur vers ZIO. Le stagiaire ajoute un seul petit module `distributed.zio.ZioClearingModule`, puis observe les effets, les dépendances, les ressources, le parallèle et le retry.
+Cette semaine prolonge le Clearing Engine que chaque stagiaire a construit de S1 à S13. Il n'existe pas de projet fil rouge prêt à importer depuis le support. Le stagiaire ajoute un seul module d'observation dans son propre projet, puis observe ZIO autour de son domaine, de sa validation, de son `Either`, et de son netting.
 
 ## Fil conducteur
 
-- Le domaine `clearing.model` reste la source de vérité.
-- Le cœur `clearing.core` reste en Scala de base.
-- `ValidationService` et `NettingService` enveloppent le cœur existant.
+- Le projet du stagiaire reste la source de vérité.
+- Le cœur Scala de base reste intact.
+- Le module S14 ne contient pas de logique métier nouvelle.
 - Les TPs modifient seulement le module d'observation ZIO.
 - Chaque exercice dure 5 à 10 minutes et se termine par une sortie console, une erreur contrôlée, ou une erreur de compilation lisible.
+- Si un mapping de noms bloque, le tuteur donne le mapping et revient à l'observation.
 
 ## Jour 1 - Effet et comparaison Scala de base
 
 **Cours :** `ZIO[R, E, A]` décrit un programme qui demande `R`, peut échouer avec `E`, et produit `A`. La description n'est exécutée qu'au bord du programme.
 
-**TP :** copier `ZioClearingModule`, comparer `baseScalaNetting` et `validateAndNetting`, puis vérifier que les résultats restent cohérents.
+**TP :** remplir la fiche de correspondance, créer `ZioEffectObservation`, puis comparer un pipeline `Either` existant avec `ZIO.fromEither`.
 
-## Jour 2 - ZLayer et injection
+## Jour 2 - Canal `R` et configuration locale
 
-**Cours :** le canal `R` rend les dépendances explicites. `ZLayer` fournit les services au bord du programme.
+**Cours :** le canal `R` rend les dépendances explicites. Ici, on utilise une petite `ObservationConfig`, pas un nouveau service métier.
 
-**TP :** lire `ValidationService & NettingService`, retirer temporairement une couche, puis observer une erreur métier issue du cœur existant.
+**TP :** fournir la configuration avec `ZLayer.succeed`, retirer temporairement `provide`, puis observer l'erreur de compilation.
 
 ## Jour 3 - Ressources et Scope
 
 **Cours :** `ZIO.acquireRelease` et `ZIO.scoped` bornent la durée de vie d'une ressource.
 
-**TP :** observer `audit acquire`, `audit release`, puis la fermeture en cas d'erreur contrôlée.
+**TP :** lire un audit en mémoire depuis le batch de référence, observer `audit acquire`, `audit release`, puis la fermeture en cas d'erreur volontaire.
 
 ## Jour 4 - Parallèle borné et timeout
 
@@ -38,8 +39,8 @@ Cette semaine prolonge le Clearing Engine construit de S1 à S13. Elle n'est pas
 
 **Cours :** `Schedule` décrit une politique de retry. On retente seulement les erreurs temporaires.
 
-**TP :** compter les retries sur une publication de clearing, observer que `UNKNOWN_BANK` n'est pas retenté, puis raccourcir la politique.
+**TP :** brancher `Schedule` sur le type d'erreur du stagiaire, compter les retries, puis vérifier qu'une erreur métier n'est pas retentée.
 
 ## Limite volontaire
 
-Pas de vrai client HTTP, pas de repository, pas de circuit breaker industriel, pas de refonte du moteur. Ces sujets pourront venir plus tard; la semaine 14 sert d'abord à observer ZIO sur un terrain connu.
+Pas de projet prêt à copier, pas de vrai client HTTP, pas de repository, pas de circuit breaker industriel, pas de refonte du moteur. La semaine 14 sert à observer ZIO autour d'un terrain déjà connu.

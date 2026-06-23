@@ -1,4 +1,4 @@
-# TP Jour 2 : Observer `ZLayer` sans reconstruire l'architecture
+# TP Jour 2 : Observer le canal `R` sans nouvelle architecture
 
 **Durée :** 30 min utiles | **Format :** 3 micro-exercices de 10 min maximum
 
@@ -6,43 +6,43 @@
 
 ## Point de départ
 
-- Garde le même fichier `src/main/scala/distributed/zio/ZioClearingModule.scala`.
-- Ne crée pas de nouveau service.
-- Ne recopie pas les types du domaine.
-- Lance `sbt "runMain distributed.zio.ZioClearingModule"` avant toute modification.
+- Garde le même fichier `ZioEffectObservation.scala`.
+- N'ajoute pas de service métier.
+- N'ajoute pas de repository.
+- Utilise seulement une petite configuration locale d'observation.
 
-Le but est de voir le canal `R` et l'assemblage par `provide`.
+Le but est de voir le canal `R` de `ZIO[R, E, A]`.
 
-## Exercice 1 : Lire les dépendances dans le type (8 min)
+## Exercice 1 : Ajouter `ObservationConfig` (8 min)
 
-1. Ouvre `validateAndNetting`.
-2. Repère `ZIO[ValidationService & NettingService, ClearingError, Map[BankCode, Money]]`.
-3. Repère `ZIO.service[ValidationService]` et `ZIO.service[NettingService]`.
-4. Note les deux services demandés par le programme.
+1. Ajoute `ObservationConfig(parallelism, failAuditAfterFirstLine)`.
+2. Ajoute `defaultConfig`.
+3. Lis le type `ZIO[ObservationConfig, Err, Positions]`.
+4. Note ce que représente `R`.
 
-**Validation :** le stagiaire relie le canal `R` aux services ZIO existants.
-
----
-
-## Exercice 2 : Observer l'injection au bord du programme (10 min)
-
-1. Repère `val services = ValidationService.live(knownBanks) ++ NettingService.live`.
-2. Commente temporairement `++ NettingService.live`.
-3. Compile.
-4. Lis l'erreur : quelle dépendance manque ?
-5. Rétablis la ligne.
-
-**Validation :** l'erreur de compilation montre qu'une dépendance du canal `R` n'a pas été fournie.
+**Validation :** le stagiaire relie `R` à une dépendance explicite, pas à un conteneur magique.
 
 ---
 
-## Exercice 3 : Observer une erreur métier contrôlée (10 min)
+## Exercice 2 : Observer `provide` (10 min)
 
-1. Dans `knownBanks`, retire `cih`.
+1. Ajoute `.provide(ZLayer.succeed(defaultConfig))` dans `run`.
+2. Lance le programme.
+3. Retire temporairement `.provide(...)`.
+4. Compile et lis l'erreur.
+5. Remets `.provide(...)`.
+
+**Validation :** l'erreur de compilation indique qu'une dépendance reste à fournir.
+
+---
+
+## Exercice 3 : Changer une configuration, pas le métier (10 min)
+
+1. Change `parallelism = 2` en `parallelism = 1`.
 2. Relance le programme.
-3. Observe `Erreur contrôlée: UNKNOWN_BANK - ...`.
-4. Remets `cih`.
+3. Vérifie que le résultat métier reste identique.
+4. Remets `2`.
 
-**Validation :** l'erreur vient de `ClearingError`, donc du domaine existant, pas d'une exception cachée.
+**Validation :** seule l'observation change; validation et netting restent intacts.
 
-**Livrable court :** une sortie réussie, une erreur de compilation expliquée, et une erreur métier expliquée.
+**Livrable court :** une sortie avec configuration fournie et une phrase sur le canal `R`.

@@ -1,4 +1,4 @@
-# TP Jour 4 : Observer le parallèle borne dans le module fil rouge
+# TP Jour 4 : Observer le parallèle borné
 
 **Durée :** 30 min utiles | **Format :** 3 micro-exercices de 10 min maximum
 
@@ -6,42 +6,42 @@
 
 ## Point de départ
 
-- Garde le même module `ZioClearingModule.scala`.
+- Garde le même module `ZioEffectObservation.scala`.
+- Réutilise ton `sampleBatch`.
 - Ne crée pas de pool de threads.
 - Ne cherche pas une mesure exacte : observe l'ordre de grandeur.
 
-Le but est de voir `foreachPar`, `withParallelism` et `timeout` sur une simulation courte de validations.
+Le but est de voir `foreach`, `foreachPar`, et `withParallelism`.
 
 ## Exercice 1 : Comparer séquentiel et parallèle (8 min)
 
-1. Lance `sbt "runMain distributed.zio.ZioClearingModule"`.
-2. Note la durée `séquentiel`.
-3. Note la durée `parallèle x2`.
-4. Explique pourquoi quatre validations de 400 ms prennent environ deux vagues avec `withParallelism(2)`.
+1. Ajoute `validateSlow`.
+2. Ajoute `parallelPreview`.
+3. Lance le programme.
+4. Compare les durées `séquentiel` et `parallèle`.
 
-**Validation :** la version parallèle est plus courte que la version séquentielle.
+**Validation :** la version parallèle est plus courte si le batch contient plusieurs éléments.
 
 ---
 
-## Exercice 2 : Changer la borne sans changer l'architecture (10 min)
+## Exercice 2 : Changer la borne (10 min)
 
-1. Remplace `withParallelism(2)` par `withParallelism(4)`.
+1. Passe `parallelism` de `2` à `1`.
 2. Relance le programme.
-3. Compare avec la mesure précédente.
-4. Remets `2`.
+3. Remets `2`, puis relance.
+4. Compare les deux sorties.
 
-**Validation :** la durée baisse car les quatre validations peuvent partir ensemble.
+**Validation :** `withParallelism` change l'orchestration, pas le résultat métier.
 
 ---
 
-## Exercice 3 : Observer un timeout (10 min)
+## Exercice 3 : Ajouter un timeout court (10 min)
 
-1. Repère `timeoutPreview`.
-2. Observe `timeout: None`.
-3. Remplace `timeout(1.second)` par `timeout(4.seconds)`.
-4. Relance et observe `Some(validation-lente ok)`.
-5. Remets `1.second`.
+1. Ajoute un effet lent avec `ZIO.sleep(3.seconds)`.
+2. Applique `.timeout(1.second)`.
+3. Observe `None`.
+4. Passe le timeout à `4.seconds` et observe `Some(...)`.
 
 **Validation :** le stagiaire sait dire : "`timeout` transforme un effet trop lent en absence de résultat."
 
-**Livrable court :** trois mesures et une phrase sur le parallèle borne.
+**Livrable court :** deux mesures et une phrase sur le parallèle borné.

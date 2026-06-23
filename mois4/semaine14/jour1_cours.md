@@ -9,7 +9,7 @@ footer: "Jour 1 — Qu'est-ce qu'un Effet ? ZIO[R, E, A]"
 # Introduction à ZIO
 ## Dompter les effets de bord avec élégance
 
-**Durée :** ~2h | **Fil Rouge :** Un module ZIO d'observation dans le Clearing Engine
+**Durée :** ~2h | **Fil Rouge :** Un module ZIO d'observation dans le projet du stagiaire
 
 ---
 
@@ -37,8 +37,8 @@ On peut composer, tester, répéter ou interrompre la description avant son exé
 
 C'est "l'équation de la vie" en Scala moderne :
 - **R** (Environment) : De quoi le programme a besoin pour tourner ? (ex: Database).
-- **E** (Error) : Quel type d'erreur peut-il renvoyer ? (ex: ClearingError).
-- **A** (Value) : Quel résultat il produit en cas de succès ? (ex: Transaction).
+- **E** (Error) : Quel type d'erreur peut-il renvoyer ? (ex: ton ADT d'erreur métier).
+- **A** (Value) : Quel résultat il produit en cas de succès ? (ex: ta transaction ou tes positions nettes).
 
 ```scala
 val program: ZIO[Any, IOException, Unit] = Console.printLine("Hello ATH")
@@ -56,9 +56,9 @@ Les erreurs prévues apparaissent dans le canal **E**. ZIO distingue aussi les d
 
 ---
 
-# 🏗️ Application : Premier module ZIO du fil rouge
+# 🏗️ Application : Premier module ZIO personnel
 
-Nous allons comparer `baseScalaNetting` et `validateAndNetting`. Le calcul métier reste le même; ZIO rend visibles l'exécution différée, l'erreur typée et les dépendances.
+Chaque stagiaire branche ZIO sur les fonctions qu'il a déjà écrites : validation `Either`, netting pur, et petit batch de référence. Le calcul métier reste le même; ZIO rend visibles l'exécution différée, l'erreur typée et les dépendances.
 
 ---
 
@@ -76,4 +76,4 @@ Nous allons comparer `baseScalaNetting` et `validateAndNetting`. Le calcul méti
 - Le typage `[R, E, A]` documente les dépendances, les erreurs attendues et le résultat.
 - Le runtime exécute l'effet et gère les Fibers, l'interruption et les ressources.
 
-**Prochaine étape** : Copier le module unique du starter kit dans le TP du Jour 1.
+**Prochaine étape** : Adapter la trame du starter kit dans le TP du Jour 1.

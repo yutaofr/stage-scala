@@ -69,7 +69,7 @@ yield ()
 
 # 🏗️ Application : Validation parallèle observable
 
-Nous allons simuler quatre validations courtes dans `ZioClearingModule`. Le stagiaire observe `foreachPar`, `withParallelism` et `timeout` sans gérer de threads à la main.
+Nous allons ralentir artificiellement la validation déjà écrite par le stagiaire. Il observe `foreachPar`, `withParallelism` et `timeout` sans gérer de threads à la main.
 
 ---
 

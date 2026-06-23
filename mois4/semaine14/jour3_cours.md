@@ -59,9 +59,9 @@ def processFile: ZIO[Scope, IOException, Unit] =
 
 ---
 
-# 🏗️ Application : L'audit de batch
+# 🏗️ Application : L'audit du batch personnel
 
-Nous allons lire un petit CSV en mémoire dans `ZioClearingModule`. Le but est de voir `acquireRelease` et `ZIO.scoped`, pas de construire un batch reader complet.
+Nous allons lire en mémoire quelques lignes construites depuis le batch de référence du stagiaire. Le but est de voir `acquireRelease` et `ZIO.scoped`, pas de construire un batch reader complet.
 
 ---
 

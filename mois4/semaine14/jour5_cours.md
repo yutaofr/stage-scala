@@ -9,7 +9,7 @@ footer: "Jour 5 — Retry borné"
 # Retry borné
 ## Retenter une panne temporaire sans exagérer le module
 
-**Durée :** ~2h | **Fil Rouge :** Publication de clearing dans le module ZIO
+**Durée :** ~2h | **Fil Rouge :** Retry d'observation dans le module personnel
 
 ---
 
@@ -27,7 +27,7 @@ footer: "Jour 5 — Retry borné"
 Si une publication technique échoue temporairement, il est souvent utile de réessayer quelques millisecondes plus tard.
 
 ```scala
-val publish: ZIO[Any, ClearingError, String] = ...
+val publish: ZIO[Any, MonErreur, String] = ...
 
 val resilientPublish = publish.retry(Schedule.recurs(3)) // Retente au plus 3 fois
 ```
@@ -47,18 +47,18 @@ Ajoute du jitter pour éviter que toutes les instances ne retentent au même ins
 
 # 3. Erreur temporaire ou définitive
 
-Un retry ne doit pas tout retenter. Dans le module, `InfrastructureFailure` simule une panne temporaire, alors que `UNKNOWN_BANK` est une erreur métier définitive.
+Un retry ne doit pas tout retenter. Dans le module, une erreur technique du projet simule une panne temporaire, alors qu'une erreur métier issue de la validation reste définitive.
 
 ### Le principe du TP
-1. `InfrastructureFailure` : retry autorisé.
-2. `UNKNOWN_BANK` : retry refusé.
+1. Erreur technique temporaire : retry autorisé.
+2. Erreur métier de validation : retry refusé.
 3. `Schedule.recurs(3)` : borne courte et visible.
 
 ---
 
 # 🏗️ Application : La publication de clearing
 
-Nous allons observer `publishPositions(counter, positions).retry(infrastructureOnly)`. Le TP ne crée pas de vrai client HTTP et ne code pas de circuit breaker.
+Nous allons observer `publishObservation(counter, positions).retry(retryTemporaryOnly)`. Le TP ne crée pas de vrai client HTTP et ne code pas de circuit breaker.
 
 ---
 
@@ -66,7 +66,7 @@ Nous allons observer `publishPositions(counter, positions).retry(infrastructureO
 
 1. Quelle est la différence entre `retry` et `repeat` ? (`retry` retente après un échec, `repeat` après un succès).
 2. Pourquoi utiliser une attente exponentielle ? (Pour éviter de saturer un serveur qui est déjà en difficulté).
-3. Faut-il retenter `UNKNOWN_BANK` ? (Non, ce n'est pas une panne d'infrastructure).
+3. Faut-il retenter une erreur métier de validation ? (Non, ce n'est pas une panne temporaire).
 
 ---
 
