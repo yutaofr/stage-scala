@@ -1,4 +1,4 @@
-# TP Jour 1 : Observer un premier programme ZIO
+# TP Jour 1 : Reprendre le fil rouge avec un petit module ZIO
 
 **Durée :** 30 min utiles | **Format :** 3 micro-exercices de 10 min maximum
 
@@ -6,42 +6,42 @@
 
 ## Point de départ
 
-- Valide d'abord le **Kit 14.0**.
-- Copie le **Kit 14.1** dans `src/main/scala/distributed/zio/ZioStarter.scala`.
-- Lance le programme avant de modifier quoi que ce soit.
+- Pars du projet `fil-rouge`.
+- Vérifie que `clearing.model`, `clearing.core` et `distributed.zio.ClearingServices` existent déjà.
+- Copie le module du starter kit dans `src/main/scala/distributed/zio/ZioClearingModule.scala`.
+- Lance `sbt "runMain distributed.zio.ZioClearingModule"`.
 
-Le but n'est pas de construire une application interactive. Le but est de voir où ZIO place l'I/O, les erreurs, et le parallèle.
+Le but du jour n'est pas d'écrire une application ZIO complète. Le but est de voir que ZIO se branche autour du moteur existant.
 
-## Exercice 1 : La description n'exécute rien (8 min)
+## Exercice 1 : Vérifier que le cœur n'a pas changé (8 min)
 
-1. Lance `sbt "runMain distributed.zio.ZioStarter"`.
-2. Observe les valeurs `rawBank = "AWB"` et `rawCount = "2"`.
-3. Repère dans le code `askRequest`, `clearingLogic`, et `run`.
-4. Écris une phrase : quelle valeur de code décrit le programme, et quelle valeur le lance ?
+1. Ouvre `ZioClearingModule.scala`.
+2. Repère les imports `clearing.core.*` et `clearing.model.*`.
+3. Repère `baseScalaNetting`.
+4. Lance le programme et compare les blocs `Scala base` et `ZIO module`.
 
-**Validation :** la sortie contient la banque, le nombre, une ligne `zip`, et une ligne `zipPar`.
-
----
-
-## Exercice 2 : Lire une erreur typée (10 min)
-
-1. Relance le programme.
-2. Remplace `rawBank = "AWB"` par `rawBank = ""`.
-3. Relance, puis remets `AWB` et remplace `rawCount = "2"` par `rawCount = "abc"`.
-4. Relie chaque sortie à un cas de `InputError`.
-
-**Validation :** l'erreur est affichée par `catchAll`; le programme ne montre pas de stack trace.
+**Validation :** les positions nettes affichées sont identiques dans les deux blocs.
 
 ---
 
-## Exercice 3 : Voir `zipPar` sans parler de threads (10 min)
+## Exercice 2 : Lire le type `ZIO[R, E, A]` (10 min)
 
-1. Observe les durées imprimées pour `zip` et `zipPar`.
-2. Relance avec `rawBank = "AWB"` et `rawCount = "2"`.
-3. Dans `batchA` et `batchB`, remplace `300.millis` par `700.millis`.
-4. Relance et compare : `zip` additionne les délais, `zipPar` garde environ le plus long.
-5. Remets `300.millis` si le tuteur veut garder le kit initial.
+1. Repère `validateAndNetting`.
+2. Lis son type complet.
+3. Note ce que représentent `R`, `E` et `A`.
+4. Explique pourquoi `ValidationService & NettingService` n'est pas dans la version Scala de base.
 
-**Validation :** le stagiaire sait dire : "`zipPar` compose deux effets en parallèle, donc la durée baisse."
+**Validation :** le stagiaire sait dire : "ZIO ajoute les dépendances explicites; il ne change pas le calcul pur."
 
-**Livrable court :** trois sorties console et trois phrases de constat.
+---
+
+## Exercice 3 : Modifier seulement les données d'exemple (10 min)
+
+1. Dans `sampleBatch`, remplace `40.00` par `70.00`.
+2. Relance le programme.
+3. Vérifie que `Scala base` et `ZIO module` changent de la même façon.
+4. Remets `40.00`.
+
+**Validation :** le changement reste local au batch d'exemple; aucun fichier `clearing.*` n'est modifié.
+
+**Livrable court :** une sortie console et trois phrases : cœur intact, type ZIO lu, résultat Scala/ZIO cohérent.

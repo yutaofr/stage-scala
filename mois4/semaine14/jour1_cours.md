@@ -9,7 +9,7 @@ footer: "Jour 1 — Qu'est-ce qu'un Effet ? ZIO[R, E, A]"
 # Introduction à ZIO
 ## Dompter les effets de bord avec élégance
 
-**Durée :** ~2h | **Fil Rouge :** Un mini-moteur de clearing ZIO
+**Durée :** ~2h | **Fil Rouge :** Un module ZIO d'observation dans le Clearing Engine
 
 ---
 
@@ -18,7 +18,7 @@ footer: "Jour 1 — Qu'est-ce qu'un Effet ? ZIO[R, E, A]"
 - Comprendre le concept de **Programmation Orientée Effets**.
 - Découvrir la structure de type `ZIO[R, E, A]`.
 - Isoler les I/O et rendre leurs erreurs explicites.
-- Écrire son premier programme "Bonjour le Monde" avec ZIO.
+- Lire un petit module ZIO qui enveloppe le cœur Scala existant.
 
 ---
 
@@ -56,9 +56,9 @@ Les erreurs prévues apparaissent dans le canal **E**. ZIO distingue aussi les d
 
 ---
 
-# 🏗️ Application : Premier Hello ZIO
+# 🏗️ Application : Premier module ZIO du fil rouge
 
-Nous allons créer un programme ZIO qui demande le nom d'une banque à l'utilisateur et l'affiche. C'est simple, mais c'est la base de tout ce qui suit.
+Nous allons comparer `baseScalaNetting` et `validateAndNetting`. Le calcul métier reste le même; ZIO rend visibles l'exécution différée, l'erreur typée et les dépendances.
 
 ---
 
@@ -76,4 +76,4 @@ Nous allons créer un programme ZIO qui demande le nom d'une banque à l'utilisa
 - Le typage `[R, E, A]` documente les dépendances, les erreurs attendues et le résultat.
 - Le runtime exécute l'effet et gère les Fibers, l'interruption et les ressources.
 
-**Prochaine étape** : Utiliser le Kit 14.1 dans le TP du Jour 1.
+**Prochaine étape** : Copier le module unique du starter kit dans le TP du Jour 1.

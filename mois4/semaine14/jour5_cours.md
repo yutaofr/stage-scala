@@ -3,13 +3,13 @@ marp: true
 theme: default
 paginate: true
 header: "Stage ATH — Mois 4, Semaine 14"
-footer: "Jour 5 — Retry & Circuit Breaker"
+footer: "Jour 5 — Retry borné"
 ---
 
-# Résilience Avancée
-## Réagir sans aggraver une panne réseau
+# Retry borné
+## Retenter une panne temporaire sans exagérer le module
 
-**Durée :** ~2h | **Fil Rouge :** Un client HTTP résilient
+**Durée :** ~2h | **Fil Rouge :** Publication de clearing dans le module ZIO
 
 ---
 
@@ -18,18 +18,18 @@ footer: "Jour 5 — Retry & Circuit Breaker"
 - Gérer les pannes temporaires (Réseau instable).
 - Utiliser la fonction `.retry` de ZIO.
 - Comprendre et implémenter un **Schedule** (Planificateur).
-- Découvrir le concept de **Circuit Breaker** pour protéger son système.
+- Distinguer une erreur temporaire d'une erreur définitive.
 
 ---
 
 # 1. La Retentative (Retry)
 
-Si un appel API échoue (ex: timeout passager), il est souvent utile de réessayer quelques secondes plus tard.
+Si une publication technique échoue temporairement, il est souvent utile de réessayer quelques millisecondes plus tard.
 
 ```scala
-val callApi: ZIO[Any, String, Data] = ...
+val publish: ZIO[Any, ClearingError, String] = ...
 
-val resilientCall = callApi.retry(Schedule.recurs(3)) // Retente au plus 3 fois
+val resilientPublish = publish.retry(Schedule.recurs(3)) // Retente au plus 3 fois
 ```
 
 ---
@@ -45,20 +45,20 @@ Ajoute du jitter pour éviter que toutes les instances ne retentent au même ins
 
 ---
 
-# 3. Circuit Breaker : Protéger les autres
+# 3. Erreur temporaire ou définitive
 
-Si un service externe est totalement KO, continuer de l'appeler ne sert à rien et peut aggraver la situation (ou ralentir votre application).
+Un retry ne doit pas tout retenter. Dans le module, `InfrastructureFailure` simule une panne temporaire, alors que `UNKNOWN_BANK` est une erreur métier définitive.
 
-### Le principe
-1. **Fermé** (Normal) : Les appels passent.
-2. **Ouvert** (Alerte) : Le service est KO. ZIO bloque immédiatement les appels pour ne pas perdre de temps.
-3. **Demi-Ouvert** : On teste un appel pour voir si c'est réparé.
+### Le principe du TP
+1. `InfrastructureFailure` : retry autorisé.
+2. `UNKNOWN_BANK` : retry refusé.
+3. `Schedule.recurs(3)` : borne courte et visible.
 
 ---
 
-# 🏗️ Application : Le Gateway de Change
+# 🏗️ Application : La publication de clearing
 
-Nous allons équiper notre client de taux de change d'une stratégie de nouvelle tentative avec backoff exponentiel. Si l'API est temporairement instable, le moteur espace ses appels avant de retourner une erreur.
+Nous allons observer `publishPositions(counter, positions).retry(infrastructureOnly)`. Le TP ne crée pas de vrai client HTTP et ne code pas de circuit breaker.
 
 ---
 
@@ -66,7 +66,7 @@ Nous allons équiper notre client de taux de change d'une stratégie de nouvelle
 
 1. Quelle est la différence entre `retry` et `repeat` ? (`retry` retente après un échec, `repeat` après un succès).
 2. Pourquoi utiliser une attente exponentielle ? (Pour éviter de saturer un serveur qui est déjà en difficulté).
-3. À quel moment un Circuit Breaker passe-t-il en mode "Ouvert" ? (Après un certain nombre d'échecs consécutifs).
+3. Faut-il retenter `UNKNOWN_BANK` ? (Non, ce n'est pas une panne d'infrastructure).
 
 ---
 
@@ -74,6 +74,6 @@ Nous allons équiper notre client de taux de change d'une stratégie de nouvelle
 
 - **Semaine 13** : Tu as appris à gérer le matériel (Threads, Acteurs).
 - **Semaine 14** : Tu as appris à gérer la logique asynchrone pure (ZIO).
-- Tu sais construire des effets composables et traiter plusieurs classes de panne sans promettre l'absence totale d'incident.
+- Tu sais construire des effets composables et traiter une panne temporaire sans promettre l'absence totale d'incident.
 
-**Prochaine étape** : Utiliser le Kit 14.5 dans le TP du Jour 5.
+**Prochaine étape** : Observer le même module unique dans le TP du Jour 5.

@@ -9,7 +9,7 @@ footer: "Jour 3 — Gestion des Ressources (Scope)"
 # ZIO Scope
 ## Sécuriser l'ouverture et la fermeture des fichiers
 
-**Durée :** ~2h | **Fil Rouge :** Lecture sécurisée des batchs CSV
+**Durée :** ~2h | **Fil Rouge :** Audit en mémoire d'un batch de clearing
 
 ---
 
@@ -18,7 +18,7 @@ footer: "Jour 3 — Gestion des Ressources (Scope)"
 - Comprendre le problème des fuites de ressources.
 - Utiliser le type `Scope`.
 - Apprendre à utiliser `ZIO.acquireRelease` pour garantir le nettoyage.
-- Gérer les fichiers et les connexions réseau sans peur.
+- Observer une ressource courte sans construire un vrai parseur de fichier.
 
 ---
 
@@ -59,9 +59,9 @@ def processFile: ZIO[Scope, IOException, Unit] =
 
 ---
 
-# 🏗️ Application : Le Batch Reader
+# 🏗️ Application : L'audit de batch
 
-Nous allons créer un service qui lit un batch CSV volumineux. Nous utiliserons `Scope` pour garantir que le descripteur de fichier est libéré, même si une erreur de parsing survient au milieu du fichier.
+Nous allons lire un petit CSV en mémoire dans `ZioClearingModule`. Le but est de voir `acquireRelease` et `ZIO.scoped`, pas de construire un batch reader complet.
 
 ---
 
@@ -77,7 +77,7 @@ Nous allons créer un service qui lit un batch CSV volumineux. Nous utiliserons 
 
 - La gestion des ressources est cruciale pour la stabilité des serveurs (Uptime).
 - ZIO `Scope` automatise cette gestion pénible.
-- Ton moteur de clearing est maintenant "propre" : il ne laisse aucune trace derrière lui.
-- Tu as acquis une compétence de développeur système senior.
+- Le module d'observation montre comment borner proprement une ressource.
+- Le cœur Scala de base reste inchangé.
 
-**Prochaine étape** : Utiliser le Kit 14.3 dans le TP du Jour 3.
+**Prochaine étape** : Observer le même module unique dans le TP du Jour 3.

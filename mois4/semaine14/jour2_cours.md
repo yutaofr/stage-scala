@@ -9,14 +9,14 @@ footer: "Jour 2 — ZLayer & Dependency Injection"
 # ZLayer
 ## L'injection de dépendances réinventée
 
-**Durée :** ~2h | **Fil Rouge :** Modulariser le ClearingService
+**Durée :** ~2h | **Fil Rouge :** Brancher les services ZIO existants
 
 ---
 
 # 📋 Objectifs du Jour
 
 - Comprendre le rôle du canal **R** dans ZIO.
-- Maîtriser le concept de **ZLayer** pour construire des services.
+- Observer le concept de **ZLayer** pour fournir des services.
 - Assembler un graphe de dépendances explicite.
 - Comparer l'injection ZIO avec un conteneur d'injection classique.
 
@@ -65,9 +65,9 @@ val fullApp = myProgram.provide(
 
 ---
 
-# 🏗️ Application : Le Moteur Modulaire
+# 🏗️ Application : Le module d'observation
 
-Nous allons transformer notre `ClearingService` en un service ZIO. Il dépendra de deux couches : `TransactionRepo` (I/O) et `ExchangeRateService` (HTTP).
+Nous allons utiliser les couches déjà fournies : `ValidationService.live(knownBanks)` et `NettingService.live`. Le TP ne crée pas de repository, ne crée pas de client HTTP, et ne modifie pas le cœur `clearing.core`.
 
 ---
 
@@ -86,4 +86,4 @@ Nous allons transformer notre `ClearingService` en un service ZIO. Il dépendra 
 - Ton application est maintenant un assemblage de composants interchangeables et testables.
 - Tu commences à voir la puissance du "Graphe de Dépendances" de ZIO.
 
-**Prochaine étape** : Utiliser le Kit 14.2 dans le TP du Jour 2.
+**Prochaine étape** : Observer le même module unique dans le TP du Jour 2.

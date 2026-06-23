@@ -9,7 +9,7 @@ footer: "Jour 4 — Fibers & Concurrence ZIO"
 # ZIO Fibers
 ## Les threads ultra-légers
 
-**Durée :** ~2h | **Fil Rouge :** Traitement massif en parallèle
+**Durée :** ~2h | **Fil Rouge :** Validation parallèle bornée
 
 ---
 
@@ -67,9 +67,9 @@ yield ()
 
 ---
 
-# 🏗️ Application : Validation Parallèle v2
+# 🏗️ Application : Validation parallèle observable
 
-Nous allons valider les lignes d'un batch avec un parallélisme borné. Le gain dépendra du type de travail : CPU, réseau ou stockage.
+Nous allons simuler quatre validations courtes dans `ZioClearingModule`. Le stagiaire observe `foreachPar`, `withParallelism` et `timeout` sans gérer de threads à la main.
 
 ---
 
@@ -86,6 +86,6 @@ Nous allons valider les lignes d'un batch avec un parallélisme borné. Le gain 
 - Les Fibers sont l'unité de base de la concurrence moderne.
 - Elles sont extrêmement économes en ressources.
 - L'interruption sûre est la clé de la résilience.
-- Ton moteur de clearing est maintenant prêt pour le "Big Data".
+- Le module d'observation montre comment borner un parallèle local.
 
-**Prochaine étape** : Utiliser le Kit 14.4 dans le TP du Jour 4.
+**Prochaine étape** : Observer le même module unique dans le TP du Jour 4.
