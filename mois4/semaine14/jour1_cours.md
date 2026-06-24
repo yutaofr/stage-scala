@@ -75,6 +75,6 @@ Chaque stagiaire branche ZIO sur les fonctions qu'il a déjà écrites : validat
 - ZIO transforme les opérations avec effets en descriptions composables.
 - Le typage `[R, E, A]` documente les dépendances, les erreurs attendues et le résultat.
 - Le runtime exécute l'effet et gère les Fibers, l'interruption et les ressources.
-- https://animation-zio-semaine-14-6a6164de-5dv7uie1u-yutaofrs-projects.vercel.app/
+- https://animation-zio-semaine-14-6a6164de.vercel.app/
 
 **Prochaine étape** : Adapter la trame du starter kit dans le TP du Jour 1.
