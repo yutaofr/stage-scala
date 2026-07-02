@@ -18,16 +18,22 @@ Le stagiaire ne sérialise jamais directement les types opaques. Il convertit `T
 **Fichier fourni :** `docker/docker-compose-kafka.yml`
 
 ```yaml
+networks:
+  app-network:
+    driver: bridge
+
 services:
   kafka:
     image: apache/kafka:4.3.0
     ports:
       - "9092:9092"
+    networks:
+      - app-network
     environment:
       KAFKA_NODE_ID: 1
       KAFKA_PROCESS_ROLES: broker,controller
       KAFKA_LISTENERS: PLAINTEXT://:9092,CONTROLLER://:9093
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
       KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
       KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
@@ -40,7 +46,7 @@ services:
       KAFKA_LOG_DIRS: /tmp/kraft-combined-logs
       KAFKA_AUTO_CREATE_TOPICS_ENABLE: "false"
     healthcheck:
-      test: [CMD-SHELL, "/opt/kafka/bin/kafka-topics.sh --bootstrap-server localhost:9092 --list >/dev/null 2>&1"]
+      test: [CMD-SHELL, "/opt/kafka/bin/kafka-topics.sh --bootstrap-server kafka:9092 --list >/dev/null 2>&1"]
       interval: 5s
       timeout: 5s
       retries: 20
@@ -50,6 +56,8 @@ services:
     depends_on:
       kafka:
         condition: service_healthy
+    networks:
+      - app-network
     entrypoint:
       - /bin/sh
       - -ec
@@ -64,8 +72,8 @@ services:
 **Usage :**
 
 ```bash
-docker compose -f docker/docker-compose-kafka.yml up -d --wait
-docker compose -f docker/docker-compose-kafka.yml run --rm kafka-init
+docker-compose -f docker/docker-compose-kafka.yml up -d --wait
+docker-compose -f docker/docker-compose-kafka.yml run --rm kafka-init
 ```
 
 ---
