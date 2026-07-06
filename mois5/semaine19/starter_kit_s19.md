@@ -91,7 +91,7 @@ La CI :
 
 ---
 
-## Kit 19.4 — API Tapir et serveur ZIO HTTP
+## Kit 19.4 — API HTTP avec HttpServer du JDK
 
 **Fichier fourni :** `fil-rouge/src/main/scala/distributed/http/Api.scala`
 
@@ -102,30 +102,25 @@ Routes stables :
 | GET | `/health` | healthcheck |
 | POST | `/api/v1/transactions` | ingestion du contrat `TransactionSubmittedV1` |
 | GET | `/api/v1/banks/{bankId}/positions?date=...` | consultation d’une projection |
-| GET | `/docs` | Swagger UI |
 
-Chaque endpoint définit une sortie d’erreur JSON :
+Chaque handler hérite de `com.sun.net.httpserver.HttpHandler` et traite les requêtes :
 
 ```scala
-final case class ApiError(code: String, message: String) derives JsonCodec
-
-endpoint.post
-  .in("api" / "v1" / "transactions")
-  .in(jsonBody[TransactionSubmittedV1])
-  .errorOut(statusCode.and(jsonBody[ApiError]))
-  .out(statusCode)
-  .out(jsonBody[Accepted])
+final class IngestionHandler(settings: KafkaSettings) extends HttpHandler:
+  def handle(exchange: HttpExchange): Unit =
+    if exchange.getRequestMethod != "POST" then
+      respond(exchange, 405, ApiError("METHOD_NOT_ALLOWED", "POST only").asJson.noSpaces)
+    else
+      // lecture corps, décodage JSON et validation...
 ```
 
 Les erreurs de contrat retournent `400`. Une indisponibilité Kafka retourne `503` après un timeout borné.
 
-Le starter fournit aussi les `ZServerEndpoint`, le `SwaggerInterpreter`, le `ZioHttpInterpreter` et `Server.serve`.
-
 **Zone stagiaire :**
 
-1. Injecter un producer Kafka partagé et scoped au lieu de le créer par requête.
-2. Brancher les positions sur le repository Cassandra S16.
-3. Ajouter l’historique par date.
+1. Injecter un producer Kafka partagé au lieu de le recréer par requête dans les handlers.
+2. Brancher les positions sur le repository Cassandra de la semaine 16.
+3. Ajouter la lecture de l'historique par date.
 4. Tester une erreur `400`, une acceptation `202` et une lecture `200`.
 
 ---
@@ -147,6 +142,6 @@ Le starter fournit aussi les `ZServerEndpoint`, le `SwaggerInterpreter`, le `Zio
 [ ] scénario doublon et reprise
 [ ] scénario dépendance indisponible
 [ ] dashboard provisionné
-[ ] OpenAPI et Swagger UI accessibles
+[ ] Endpoints de l'API accessibles (health, transactions, positions)
 [ ] README rejoué par une autre personne
 ```

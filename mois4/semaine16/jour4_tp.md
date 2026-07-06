@@ -36,9 +36,9 @@
 ## Exercice 3 : Simulation Dashboard (1h)
 
 1. Rafraîchis toutes les cinq secondes les positions d'une liste bornée de banques.
-2. Utilise `Schedule.fixed`.
+2. Utilise un pool d'exécution planifié (`ScheduledExecutorService`).
 3. Affiche l'heure, la date de clearing et l'âge des données.
-4. Interromps proprement la Fiber après trois rafraîchissements dans le test.
+4. Arrête proprement la tâche planifiée après trois rafraîchissements dans le test.
 
 **Validation :** le programme s'arrête proprement et ne lance pas plusieurs rafraîchissements concurrents.
 

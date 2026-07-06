@@ -36,7 +36,7 @@
 ## Exercice 3 : Rédaction des Points Forts (1h30)
 
 1. Liste cinq décisions avec contexte, compromis et preuve.
-2. Prépare la comparaison ZIO/Future/threads sans présenter ZIO comme une solution universelle.
+2. Prépare la comparaison entre les approches concurrentes étudiées (Futures, Virtual Threads, Threads classiques).
 3. Prépare deux limites connues et leur suite proposée.
 
 **Validation :** chaque point fort s'appuie sur un artefact visible.

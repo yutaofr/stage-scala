@@ -43,7 +43,7 @@ Qu'est-ce que ton successeur doit savoir pour maintenir ton code ?
 
 Ce stage n'était qu'un début. Tu as maintenant :
 - Une méthodologie de travail rigoureuse.
-- Une expérience concrète de Scala, ZIO et systèmes distribués.
+- Une expérience concrète de Scala 3, de la concurrence JVM et des systèmes distribués.
 - Un réseau professionnel chez ATH.
 
 ---

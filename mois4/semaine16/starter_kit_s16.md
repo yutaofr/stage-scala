@@ -114,37 +114,38 @@ Le nombre `16` reste fixe pour cette version du schéma. Le modifier exige une m
 
 ```scala
 trait ClearingRepository:
-  def stage(txId: TransactionId): Task[Option[ProcessingStage]]
-  def markStage(txId: TransactionId, stage: ProcessingStage, source: RecordEnvelope): Task[Unit]
-  def saveHistory(tx: Transaction, date: LocalDate, bucket: Short, occurredAt: Instant): Task[Unit]
-  def saveTransactionByBank(tx: Transaction, date: LocalDate, occurredAt: Instant): Task[Unit]
-  def saveNetPositions(txId: TransactionId, date: LocalDate, occurredAt: Instant, values: List[NetPositionProjection]): Task[Unit]
-  def savePairActivity(tx: Transaction, date: LocalDate): Task[Unit]
-  def getPositionsByBank(bank: BankCode, date: LocalDate, limit: Int): Task[List[Position]]
-  def getHistoryByDate(date: LocalDate, buckets: Range = 0 until 16): Task[List[HistoryRow]]
+  def stage(txId: TransactionId): Option[ProcessingStage]
+  def markStage(txId: TransactionId, stage: ProcessingStage, source: RecordEnvelope): Unit
+  def saveHistory(tx: Transaction, date: LocalDate, bucket: Short, occurredAt: Instant): Unit
+  def saveTransactionByBank(tx: Transaction, date: LocalDate, occurredAt: Instant): Unit
+  def saveNetPositions(txId: TransactionId, date: LocalDate, occurredAt: Instant, values: List[NetPositionProjection]): Unit
+  def savePairActivity(tx: Transaction, date: LocalDate): Unit
+  def getPositionsByBank(bank: BankCode, date: LocalDate, limit: Int): List[Position]
+  def getHistoryByDate(date: LocalDate, buckets: Range = 0 until 16): List[HistoryRow]
 ```
 
 La couche `live` prépare les statements une fois à l’acquisition de la session :
 
 ```scala
-for
-  session <- acquireSession
-  selectStage <- ZIO.attempt(session.prepare(
-    "SELECT stage FROM processing_state WHERE tx_id = ?"
-  ))
-  markStage <- ZIO.attempt(session.prepare(
-    """INSERT INTO processing_state
-      |(tx_id, stage, source_topic, source_partition, source_offset, updated_at)
-      |VALUES (?, ?, ?, ?, ?, ?)""".stripMargin
-  ))
-  // Préparer aussi les quatre projections et les deux lectures.
-yield new LiveClearingRepository(session, selectStage, markStage, ...)
+object PreparedStatements:
+  def apply(session: CqlSession): PreparedStatements =
+    PreparedStatements(
+      selectStage = session.prepare(
+        "SELECT stage FROM processing_state WHERE tx_id = ?"
+      ),
+      markStage = session.prepare(
+        """INSERT INTO processing_state
+          |(tx_id, stage, source_topic, source_partition, source_offset, updated_at)
+          |VALUES (?, ?, ?, ?, ?, ?)""".stripMargin
+      ),
+      // Préparer aussi les autres requêtes...
+    )
 ```
 
 **Zone stagiaire :**
 
 1. Lier chaque type opaque avec `.value`.
-2. Utiliser `executeAsync` via `ZIO.fromCompletionStage`.
+2. Utiliser `executeAsync` et synchroniser ou chaîner via les futures de la JVM (`CompletableFuture`).
 3. Alimenter toutes les tables exposées par l’interface.
 4. Tester la lecture des 16 buckets.
 5. Vérifier les requêtes avec `TRACING ON` dans `cqlsh`.

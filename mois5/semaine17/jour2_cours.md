@@ -44,16 +44,21 @@ C'est une base de données optimisée pour les chiffres qui changent au cours du
 
 ---
 
-# 3. Instrumenter avec ZIO
+# 3. Instrumenter avec Micrometer
 
-ZIO possède une bibliothèque `zio-metrics-connectors` qui rend l'instrumentation très simple.
+Micrometer est la bibliothèque de référence de la JVM pour collecter et exposer des métriques vers Prometheus.
 
 ```scala
-val txCounter = Metric.counter("clearing_transactions_processed_total")
-  .tagged(MetricLabel("app", "clearing-engine"))
+import io.micrometer.core.instrument.Metrics
+
+// Déclaration d'un compteur
+val txCounter = Metrics.counter(
+  "clearing_transactions_processed_total",
+  "app", "clearing-engine"
+)
 
 // Dans le code
-txCounter.increment
+txCounter.increment()
 ```
 
 ---

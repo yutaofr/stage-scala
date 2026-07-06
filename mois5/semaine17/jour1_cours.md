@@ -59,7 +59,7 @@ Un log texte libre est difficile à filtrer. Un log JSON est un événement stru
 
 # 🏗️ Application : Logback & SLF4J
 
-Nous allons produire des logs JSON avec un contexte compatible avec les Fibers. Un `MDC` basé uniquement sur le thread peut perdre la corrélation quand une Fiber change de thread ; ZIO Logging fournit un contexte fondé sur `FiberRef`.
+Nous allons produire des logs JSON avec un contexte propagé. Avec les Virtual Threads (Java 21), chaque tâche s'exécute sur son propre thread virtuel du début à la fin. Par conséquent, le mécanisme standard de MDC (Mapped Diagnostic Context) basé sur `ThreadLocal` fonctionne parfaitement sans perte de contexte ni besoin de propagation complexe (contrairement au modèle asynchrone classique par callbacks ou monades).
 
 ---
 

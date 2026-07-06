@@ -22,7 +22,7 @@
 
 ## Exercice 2 : Instrumentation OTel (1h30)
 
-1. Ajoute ZIO OpenTelemetry et l'exporter OTLP.
+1. Ajoute le SDK Java d'OpenTelemetry et l'exporter OTLP.
 2. Configure le service name `clearing-engine`.
 3. Crée des spans `parse`, `validate`, `netting` et `persist`.
 4. Ajoute `tx.id` comme attribut de span, jamais comme nom de span.

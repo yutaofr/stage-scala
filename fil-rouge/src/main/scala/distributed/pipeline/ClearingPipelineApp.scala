@@ -7,15 +7,14 @@ import distributed.persistence.*
 import org.apache.kafka.clients.consumer.{ConsumerRecord, KafkaConsumer, OffsetAndMetadata}
 import org.apache.kafka.clients.producer.KafkaProducer
 import org.apache.kafka.common.TopicPartition
-import zio.*
 
 import java.time.{Duration, Instant}
 import java.util.concurrent.TimeUnit
 import scala.jdk.CollectionConverters.*
+import scala.util.control.NonFatal
 
-object ClearingPipelineApp extends ZIOAppDefault:
+object ClearingPipelineApp:
   private val knownBanks = Set("AWB", "CIH", "BCP", "BMCE").map(BankCode.unsafe)
-  private val durableProcessor = new DurableProcessor(knownBanks)
   private val recordProcessor = new RecordProcessor(knownBanks)
 
   private def envelope(record: ConsumerRecord[String, String]): RecordEnvelope =
@@ -30,94 +29,97 @@ object ClearingPipelineApp extends ZIOAppDefault:
 
   private def processRecord(
     record: ConsumerRecord[String, String],
-    publisher: ResultPublisher
-  ): ZIO[ClearingRepository, Throwable, Unit] =
+    publisher: ResultPublisher,
+    repository: ClearingRepository,
+    durableProcessor: DurableProcessor
+  ): Unit =
     val source = envelope(record)
     val decision = recordProcessor.process(source)
 
     decision match
       case rejected: ProcessingDecision.Rejected =>
-        ZIO.attemptBlocking(
-          publisher.publish(rejected).get(5, TimeUnit.SECONDS)
-        ).unit
+        publisher.publish(rejected).get(5, TimeUnit.SECONDS)
 
       case validated: ProcessingDecision.Validated =>
-        for
-          event <- ZIO
-            .fromEither(ContractCodec.decode(source.payload))
-            .mapError(new IllegalArgumentException(_))
-          _ <- durableProcessor
-            .process(source, event)
-            .mapError {
-              case error: clearing.core.ClearingError =>
-                new IllegalStateException(error.message)
-              case error: Throwable => error
-            }
-          _ <- ZIO.attemptBlocking(
-            publisher.publish(validated).get(5, TimeUnit.SECONDS)
-          )
-        yield ()
+        ContractCodec.decode(source.payload) match
+          case Left(error) =>
+            throw new IllegalArgumentException(error)
+          case Right(event) =>
+            durableProcessor.process(source, event) match
+              case Left(error) =>
+                throw new IllegalStateException(error.message)
+              case Right(_) =>
+                publisher.publish(validated).get(5, TimeUnit.SECONDS)
 
   private def processPartition(
     partition: TopicPartition,
     records: List[ConsumerRecord[String, String]],
-    publisher: ResultPublisher
-  ): ZIO[ClearingRepository, Nothing, Option[(TopicPartition, OffsetAndMetadata)]] =
-    ZIO
-      .foldLeft(records)(Option.empty[Long]) { (_, record) =>
-        processRecord(record, publisher).as(Some(record.offset()))
+    publisher: ResultPublisher,
+    repository: ClearingRepository,
+    durableProcessor: DurableProcessor
+  ): Option[(TopicPartition, OffsetAndMetadata)] =
+    try
+      var lastOffset: Option[Long] = None
+      records.foreach { record =>
+        processRecord(record, publisher, repository, durableProcessor)
+        lastOffset = Some(record.offset())
       }
-      .map(_.map(offset => partition -> new OffsetAndMetadata(offset + 1)))
-      .catchAll { error =>
-        ZIO.logError(
+      lastOffset.map(offset => partition -> new OffsetAndMetadata(offset + 1))
+    catch
+      case NonFatal(error) =>
+        System.err.println(
           s"partition.failed topic=${partition.topic()} partition=${partition.partition()} error=${error.getMessage}"
-        ).as(None)
-      }
+        )
+        None
 
-  private def loop(
+  def loop(
     consumer: KafkaConsumer[String, String],
-    publisher: ResultPublisher
-  ): ZIO[ClearingRepository, Nothing, Nothing] =
-    val iteration =
-      for
-        records <- ZIO.attemptBlocking(consumer.poll(Duration.ofMillis(500)))
-        offsets <- ZIO.foreach(records.partitions().asScala.toList) { partition =>
+    publisher: ResultPublisher,
+    repository: ClearingRepository,
+    durableProcessor: DurableProcessor
+  ): Nothing =
+    while true do
+      try
+        val records = consumer.poll(Duration.ofMillis(500))
+        val offsets = records.partitions().asScala.toList.flatMap { partition =>
           processPartition(
             partition,
             records.records(partition).asScala.toList,
-            publisher
+            publisher,
+            repository,
+            durableProcessor
           )
         }
-        committed = offsets.flatten.toMap
-        _ <- ZIO.when(committed.nonEmpty)(
-          ZIO.attemptBlocking(consumer.commitSync(committed.asJava))
-        )
-      yield ()
+        val committed = offsets.toMap
+        if committed.nonEmpty then consumer.commitSync(committed.asJava)
+      catch
+        case NonFatal(error) =>
+          System.err.println(s"poll.failed: ${error.getMessage}")
+          Thread.sleep(1000)
+    throw new AssertionError("unreachable")
 
-    iteration
-      .catchAll(error => ZIO.logError(s"poll.failed: ${error.getMessage}") *> ZIO.sleep(1.second))
-      .forever
-
-  private def program: ZIO[ClearingRepository, Throwable, Nothing] =
-    val settings = KafkaSettings.fromEnvironment()
-
-    ZIO.scoped {
-      for
-        consumer <- ZIO.acquireRelease(
-          ZIO.attempt(KafkaClients.consumer(settings))
-        )(consumer => ZIO.attempt(consumer.close()).orDie)
-        producer <- ZIO.acquireRelease(
-          ZIO.attempt(KafkaClients.producer(settings))
-        )(producer => ZIO.attempt(producer.close()).orDie)
-        _ <- ZIO.attempt(consumer.subscribe(java.util.List.of(settings.inputTopic)))
-        result <- loop(consumer, new ResultPublisher(producer, settings))
-      yield result
-    }
-
-  def run =
-    program.provide(
-      ZLayer.succeed(CassandraSettings.fromEnvironment()),
-      CassandraSession.live,
-      PreparedStatements.live,
-      LiveClearingRepository.layer
+@main def runClearingPipeline(): Unit =
+  val kafkaSettings = KafkaSettings.fromEnvironment()
+  val cassandraSettings = CassandraSettings.fromEnvironment()
+  val session = CassandraSession.connect(cassandraSettings)
+  try
+    val statements = PreparedStatements(session)
+    val repository = new LiveClearingRepository(session, statements)
+    val durableProcessor = new DurableProcessor(
+      Set("AWB", "CIH", "BCP", "BMCE").map(BankCode.unsafe),
+      repository
     )
+    val consumer = KafkaClients.consumer(kafkaSettings)
+    val producer = KafkaClients.producer(kafkaSettings)
+    try
+      consumer.subscribe(java.util.List.of(kafkaSettings.inputTopic))
+      ClearingPipelineApp.loop(
+        consumer,
+        new ResultPublisher(producer, kafkaSettings),
+        repository,
+        durableProcessor
+      )
+    finally
+      consumer.close()
+      producer.close()
+  finally session.close()

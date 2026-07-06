@@ -57,18 +57,25 @@ while (true) {
 
 ---
 
-# 3. Intégration ZIO
+# 3. La boucle de lecture synchrone et Threads Virtuels
 
-Une version ultérieure pourra utiliser **zio-kafka**. Le TP conserve d'abord le client Java pour rendre visibles le poll, le traitement et le commit.
+Le client Java utilise une boucle de poll synchrone qu'on exécute dans un thread dédié (ou un Virtual Thread de Java 21) pour ne pas bloquer l'application.
 
 ```scala
-Consumer
-  .plainStream(Subscription.topics("clearing-input"), Serde.string, Serde.string)
-  .mapZIO(record => process(record.value))
-  .runDrain
+// Exemple d'exécution dans un thread virtuel (Thread Virtuel JVM)
+Thread.ofVirtual().start(() => {
+  try {
+    while (running) {
+      val records = consumer.poll(Duration.ofMillis(500))
+      // traitement et commit...
+    }
+  } finally {
+    consumer.close()
+  }
+})
 ```
 
-> 💡 Une bibliothèque facilite le câblage, mais l'application doit encore choisir quand un offset peut être validé et comment traiter un record invalide.
+> 💡 Les threads virtuels (Virtual Threads) permettent de rendre cette boucle synchrone extrêmement légère, sans bloquer les autres threads système.
 
 ---
 

@@ -43,7 +43,7 @@ Dans un système distribué, une erreur peut venir de n'importe quel service.
 Kafka permet d'ajouter des headers. Un propagateur injecte le contexte W3C, notamment `traceparent`, puis le consumer l'extrait avant de créer son span enfant. Un Trace ID seul ne contient ni Span ID, ni flags, ni format de propagation.
 
 > [!TIP]
-> ZIO Telemetry facilite la création des spans. La propagation Kafka doit néanmoins être configurée ou instrumentée explicitement.
+> Le SDK Java d'OpenTelemetry facilite la création des spans. La propagation Kafka doit néanmoins être configurée ou instrumentée explicitement.
 
 ---
 

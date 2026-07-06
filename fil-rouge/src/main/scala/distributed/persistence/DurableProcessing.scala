@@ -4,7 +4,6 @@ import clearing.contract.TransactionSubmittedV1
 import clearing.core.*
 import clearing.model.*
 import distributed.kafka.RecordEnvelope
-import zio.*
 
 import java.time.ZoneOffset
 
@@ -18,30 +17,31 @@ final case class NetPositionProjection(
 )
 
 trait ProcessingRepository:
-  def stage(id: TransactionId): Task[Option[ProcessingStage]]
+  def stage(id: TransactionId): Option[ProcessingStage]
   def markStage(
     id: TransactionId,
     stage: ProcessingStage,
     record: RecordEnvelope
-  ): Task[Unit]
+  ): Unit
 
 enum DurableResult:
   case AlreadyCompleted(id: TransactionId)
   case Completed(id: TransactionId, positions: List[NetPositionProjection])
 
-final class DurableProcessor(knownBanks: Set[BankCode]):
+final class DurableProcessor(
+  knownBanks: Set[BankCode],
+  repository: ClearingRepository
+):
   def process(
     record: RecordEnvelope,
     event: TransactionSubmittedV1
-  ): ZIO[ClearingRepository, ClearingError | Throwable, DurableResult] =
+  ): Either[ClearingError, DurableResult] =
     for
-      tx <- ZIO.fromEither(event.toDomain(knownBanks))
-      repository <- ZIO.service[ClearingRepository]
-      current <- repository.stage(tx.id)
-      result <- current match
+      tx <- event.toDomain(knownBanks)
+      result <- repository.stage(tx.id) match
         case Some(ProcessingStage.Completed) =>
-          ZIO.succeed(DurableResult.AlreadyCompleted(tx.id))
-        case _ =>
+          Right(DurableResult.AlreadyCompleted(tx.id))
+        case current =>
           val date = record.occurredAt.atZone(ZoneOffset.UTC).toLocalDate
           val bucket = ClearingRepository.historyBucket(tx.id)
           val positions = PureNettingCalculator
@@ -49,24 +49,17 @@ final class DurableProcessor(knownBanks: Set[BankCode]):
             .map((bank, amount) => NetPositionProjection(bank, amount, 1))
             .toList
 
-          for
-            _ <- ZIO.when(current.isEmpty)(
-              repository.markStage(tx.id, ProcessingStage.Received, record)
-            )
-            // Toutes les clés incluent l'ID et le timestamp Kafka stables.
-            // Une reprise peut rejouer ces upserts sans créer de nouvelle opération.
-            _ <- repository.saveHistory(tx, date, bucket, record.occurredAt)
-            _ <- repository.saveTransactionByBank(tx, date, record.occurredAt)
-            _ <- repository.saveNetPositions(
-              tx.id,
-              date,
-              record.occurredAt,
-              positions
-            )
-            _ <- repository.savePairActivity(tx, date)
-            _ <- repository.markStage(tx.id, ProcessingStage.Projected, record)
-            _ <- repository.markStage(tx.id, ProcessingStage.Completed, record)
-          yield DurableResult.Completed(tx.id, positions)
+          if current.isEmpty then
+            repository.markStage(tx.id, ProcessingStage.Received, record)
+          // Toutes les clés incluent l'ID et le timestamp Kafka stables.
+          // Une reprise peut rejouer ces upserts sans créer de nouvelle opération.
+          repository.saveHistory(tx, date, bucket, record.occurredAt)
+          repository.saveTransactionByBank(tx, date, record.occurredAt)
+          repository.saveNetPositions(tx.id, date, record.occurredAt, positions)
+          repository.savePairActivity(tx, date)
+          repository.markStage(tx.id, ProcessingStage.Projected, record)
+          repository.markStage(tx.id, ProcessingStage.Completed, record)
+          Right(DurableResult.Completed(tx.id, positions))
     yield result
 
 final case class CassandraSettings(

@@ -3,7 +3,9 @@ package clearing.contract
 import clearing.core.*
 import clearing.core.ClearingError.InvalidContract
 import clearing.model.*
-import zio.json.*
+import io.circe.*
+import io.circe.syntax.*
+import io.circe.parser.{decode as circeDecode}
 
 final case class TransactionSubmittedV1(
   id: String,
@@ -12,7 +14,7 @@ final case class TransactionSubmittedV1(
   amount: BigDecimal,
   status: String = "Pending",
   transactionType: String = "Transfer"
-) derives JsonCodec:
+) derives Encoder, Decoder:
 
   def toDomain(knownBanks: Set[BankCode]): Either[ClearingError, Transaction] =
     for
@@ -53,7 +55,7 @@ final case class TransactionValidatedV1(
   receiver: String,
   amount: BigDecimal,
   status: String = "Validated"
-) derives JsonCodec
+) derives Encoder, Decoder
 
 object TransactionValidatedV1:
   def fromDomain(tx: Transaction): TransactionValidatedV1 =
@@ -69,10 +71,10 @@ final case class TransactionRejectedV1(
   errorCode: String,
   message: String,
   originalPayload: String
-) derives JsonCodec
+) derives Encoder, Decoder
 
 object ContractCodec:
-  def encode(event: TransactionSubmittedV1): String = event.toJson
+  def encode(event: TransactionSubmittedV1): String = event.asJson.noSpaces
 
   def decode(payload: String): Either[String, TransactionSubmittedV1] =
-    payload.fromJson[TransactionSubmittedV1]
+    circeDecode[TransactionSubmittedV1](payload).left.map(_.getMessage)

@@ -2,76 +2,79 @@
 
 Le kit ajoute les signaux d'observabilité sans mélanger leur transport avec la logique de clearing.
 
-## Kit 17.1 — Contexte de log Fiber-safe
+## Kit 17.1 — Contexte de log thread-safe
 
 **Fichier fourni :** `fil-rouge/src/main/scala/observability/ObservedProcessing.scala`
 
 ```scala
 package observability
 
-import zio.*
-import zio.metrics.*
 import distributed.kafka.RecordEnvelope
+import org.slf4j.MDC
 
 object ObservedProcessing:
-  def withTransactionContext[R, E, A](
+  def withTransactionContext[A](
     txId: String,
     record: RecordEnvelope
-  )(effect: ZIO[R, E, A]): ZIO[R, E, A] =
-    ZIO.logAnnotate("txId", txId) {
-      ZIO.logAnnotate("topic", record.topic) {
-        ZIO.logAnnotate("partition", record.partition.toString) {
-          ZIO.logAnnotate("offset", record.offset.toString)(effect)
-        }
-      }
-    }
+  )(block: => A): A =
+    MDC.put("txId", txId)
+    MDC.put("topic", record.topic)
+    MDC.put("partition", record.partition.toString)
+    MDC.put("offset", record.offset.toString)
+    try block
+    finally MDC.clear()
 
-  def process[R, E, A](
+  def process[A](
     txId: String,
     record: RecordEnvelope
-  )(durableProcessing: ZIO[R, E, A]): ZIO[R, E, A] =
+  )(durableProcessing: => A): A =
     withTransactionContext(txId, record) {
-      ZIO.logInfo("transaction.started") *>
-        durableProcessing.tapBoth(
-          error => ZIO.logError(s"transaction.failed: $error"),
-          _ => ZIO.logInfo("transaction.completed")
-        )
+      val logger = org.slf4j.LoggerFactory.getLogger("ObservedProcessing")
+      logger.info("transaction.started")
+      try {
+        val res = durableProcessing
+        logger.info("transaction.completed")
+        res
+      } catch {
+        case error: Throwable =>
+          logger.error(s"transaction.failed: ${error.getMessage}")
+          throw error
+      }
     }
 ```
 
-**Critère :** deux Fibers concurrentes gardent des annotations distinctes.
+**Critère :** deux threads concurrents (ou threads virtuels) gardent des annotations distinctes grâce à la ThreadLocal de MDC.
 
 ## Kit 17.2 — Métriques du pipeline
 
 ```scala
 package observability
 
-import zio.*
+import io.micrometer.core.instrument.{Metrics, Timer}
 
 object ClearingMetrics:
-  val processed = Metric.counter("clearing_transactions_processed_total")
-  val duration  = Metric.histogram(
-    "clearing_processing_duration_seconds",
-    MetricKeyType.Histogram.Boundaries.linear(0.0, 0.1, 25)
-  )
+  val processedSuccess = Metrics.counter("clearing_transactions_processed_total", "status", "success")
+  val processedFailure = Metrics.counter("clearing_transactions_processed_total", "status", "failure")
+  val timer = Timer.builder("clearing_processing_duration_seconds")
+    .description("Temps passé dans la logique de netting")
+    .register(Metrics.globalRegistry)
 
-  def observe[R, E, A](effect: ZIO[R, E, A]): ZIO[R, E, A] =
-    for
-      start <- Clock.nanoTime
-      result <- effect
-        .tapBoth(
-          _ => processed.tagged("status", "failure").increment,
-          _ => processed.tagged("status", "success").increment
-        )
-        .ensuring(
-          Clock.nanoTime.flatMap { end =>
-            duration.update((end - start).toDouble / 1_000_000_000d)
-          }
-        )
-    yield result
+  def observe[A](block: => A): A =
+    val sample = Timer.start(Metrics.globalRegistry)
+    try {
+      val result = block
+      processedSuccess.increment()
+      result
+    } catch {
+      case error: Throwable =>
+        processedFailure.increment()
+        throw error
+    } finally {
+      sample.stop(timer)
+    }
 ```
 
-`ensuring` mesure aussi les échecs et les interruptions. Ajuste ensuite les buckets à partir des mesures réelles ; la version initiale couvre 0 à 2,5 secondes par pas de 100 ms.
+`timer` mesure aussi les échecs et les interruptions. Ajuste ensuite les buckets de votre exportateur Prometheus à partir des mesures réelles.
 
 ## Kit 17.3 — Stack OpenTelemetry
 

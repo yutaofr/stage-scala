@@ -43,7 +43,7 @@ Une fuite arrive quand vous gardez une référence vers un objet dont vous n'ave
 - **Exemple** : Ajouter des données dans une `Mutable Map` globale et oublier de les supprimer.
 
 > [!TIP]
-> L'immutabilité empêche certaines corruptions d'état, pas la rétention mémoire. Un cache sans limite, une Fiber non interrompue ou une queue non bornée peuvent retenir des objets.
+> L'immutabilité empêche certaines corruptions d'état, pas la rétention mémoire. Un cache sans limite, un thread non arrêté ou une queue non bornée peuvent retenir des objets.
 
 ---
 

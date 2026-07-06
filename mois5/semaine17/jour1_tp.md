@@ -34,12 +34,12 @@
 
 ## Exercice 3 : Mapped Diagnostic Context (MDC) (1h30)
 
-1. Utilise `ZIO.logAnnotate` ou le contexte ZIO Logging fourni.
-2. Forke deux traitements avec deux `txId` différents.
-3. Produis plusieurs logs après des suspensions.
-4. Vérifie qu'aucun ID ne fuit vers l'autre Fiber.
+1. Utilise MDC (Mapped Diagnostic Context) via `MDC.put(...)` et `MDC.clear()`.
+2. Lance deux traitements concurrents avec deux `txId` différents sur des threads virtuels distincts.
+3. Produis plusieurs logs durant le traitement.
+4. Vérifie qu'aucun ID ne fuit vers l'autre thread.
 5. Enveloppe le `DurableProcessor` de la S16 ; ne crée pas un pipeline factice réservé aux logs.
 
-**Validation :** chaque ligne garde le bon `txId`, même quand les Fibers s'entrelacent.
+**Validation :** chaque ligne garde le bon `txId`, même quand les threads virtuels s'entrelacent.
 
 **Livrable** : Fichier `logback.xml` configuré et un extrait de log JSON généré par le moteur.

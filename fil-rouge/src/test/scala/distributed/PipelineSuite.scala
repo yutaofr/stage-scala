@@ -5,7 +5,6 @@ import clearing.model.BankCode
 import distributed.kafka.*
 import distributed.persistence.*
 import munit.FunSuite
-import zio.*
 
 import java.time.Instant
 
@@ -39,24 +38,14 @@ final class PipelineSuite extends FunSuite:
 
   test("DurableProcessor reprend puis reconnaît Completed"):
     val event = TransactionSubmittedV1("tx-42", "AWB", "CIH", BigDecimal(100))
-    val processor = new DurableProcessor(knownBanks)
-    val program =
-      for
-        first <- processor.process(record, event)
-        second <- processor.process(record, event)
-      yield first -> second
+    val repository = ClearingRepository.inMemory()
+    val processor = new DurableProcessor(knownBanks, repository)
 
-    val result = _root_.zio.Unsafe.unsafe { implicit unsafe =>
-      _root_.zio.Runtime.default.unsafe
-        .run(program.provide(ClearingRepository.inMemory))
-        .getOrThrowFiberFailure()
-    }
+    val first = processor.process(record, event)
+    val second = processor.process(record, event)
 
-    assert(result._1.isInstanceOf[DurableResult.Completed], s"premier résultat: ${result._1}")
-    assert(
-      result._2.isInstanceOf[DurableResult.AlreadyCompleted],
-      s"second résultat: ${result._2}"
-    )
+    assert(first.exists(_.isInstanceOf[DurableResult.Completed]), s"premier résultat: $first")
+    assert(second.exists(_.isInstanceOf[DurableResult.AlreadyCompleted]), s"second résultat: $second")
 
   test("configuration Kafka lit le listener interne"):
     val settings = KafkaSettings.fromEnvironment(

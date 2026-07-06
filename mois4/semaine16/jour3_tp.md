@@ -1,6 +1,6 @@
 # TP Jour 3 : Le Grand Assemblage
 
-**Durée :** ~4h | **Fil Rouge :** Intégration Kafka + ZIO + Cassandra
+**Durée :** ~4h | **Fil Rouge :** Intégration Kafka + Cassandra
 
 ---
 

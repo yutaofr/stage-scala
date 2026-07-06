@@ -12,7 +12,7 @@
 
 ## Exercice 1 : Installation du Connecteur (1h)
 
-1. Ajoute les dépendances `zio-metrics-connectors`.
+1. Ajoute les dépendances de Micrometer et son registre Prometheus (`micrometer-registry-prometheus`) dans le build.
 2. Configure ton application pour exposer un serveur HTTP sur le port `8080`.
 3. Vérifie que l'URL `http://localhost:8080/metrics` renvoie du texte au format Prometheus.
 

@@ -4,15 +4,15 @@
 
 ---
 
-## Exercice 1 : Connexion Réactive (Starter Kit)
+## Exercice 1 : Connexion Asynchrone (Starter Kit)
 
 > [!TIP]
 > **Starter Kit fourni :** utilise le **Kit 16.2**, fichier `distributed/persistence/ClearingRepository.scala`.
 
 1. Vérifie les dépendances du driver dans le build.
-2. Lance le programme avec la couche `CqlSession` scoped.
-3. Inspecte le helper `executeAsync`.
-4. Coupe Cassandra et vérifie que l'erreur reste dans le canal `Task`.
+2. Lance le programme avec une seule instance de `CqlSession` partagée.
+3. Inspecte le helper `executeAsync` (qui retourne un CompletionStage/CompletableFuture).
+4. Coupe Cassandra et vérifie comment l'exception est levée et propagée.
 
 **Validation :** la session s'ouvre une fois, se partage et se ferme à l'arrêt.
 
@@ -33,7 +33,7 @@
 ## Exercice 3 : Test de Performance (1h)
 
 1. Génère cent transactions déterministes.
-2. Compare `ZIO.foreach` avec `ZIO.foreachPar(...).withParallelism(8)`.
+2. Compare une exécution séquentielle simple avec une exécution parallèle utilisant un pool de threads (par exemple avec `CompletableFuture.allOf` et un `ExecutorService` de 8 threads).
 3. Répète chaque mesure au moins trois fois après un warm-up.
 4. Compare débit, latence et erreurs ; ne conserve pas seulement la meilleure valeur.
 

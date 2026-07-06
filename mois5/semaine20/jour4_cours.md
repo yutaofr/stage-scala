@@ -33,7 +33,7 @@ footer: "Jour 4 — GRANDE DÉMONSTRATION COMPLÈTE"
 - **La Pureté Fonctionnelle** : Comment Scala a évité les bugs financiers.
 - **Le Temps Réel** : Comment Kafka a supprimé les délais de traitement.
 - **L'Observabilité** : Comment on pilote le système avec Grafana.
-- **Ton Autonomie** : Ta capacité à apprendre ZIO, Kafka et Cassandra en solo.
+- **Ton Autonomie** : Ta capacité à apprendre Kafka et Cassandra en solo.
 
 ---
 
@@ -48,7 +48,7 @@ footer: "Jour 4 — GRANDE DÉMONSTRATION COMPLÈTE"
 - **Mois 1** : Fondations Scala.
 - **Mois 2** : Modélisation Métier.
 - **Mois 3** : Programmation Fonctionnelle Avancée.
-- **Mois 4** : Systèmes Distribués (ZIO/Kafka/Cassandra).
+- **Mois 4** : Systèmes Distribués (Kafka/Cassandra).
 - **Mois 5** : Industrialisation & Observabilité.
 - **Aujourd'hui** : tu sais présenter un projet backend Scala avec rigueur.
 

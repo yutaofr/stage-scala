@@ -67,6 +67,78 @@ object ZioEffectObservation extends ZIOAppDefault:
 
 Ce bloc n'est pas une solution prête à compiler. Il force le stagiaire à relier ZIO à **son** moteur.
 
+## Guide de lecture des API ZIO utilisées
+
+Garder cette section sous les yeux pendant les exercices. Elle explique les API présentes dans ce starter kit, dans leur contexte local. Le but n'est pas de tout apprendre sur ZIO, mais de savoir lire le code S14 sans deviner.
+
+### Types et point d'entrée
+
+| API | Dans le starter kit | À retenir |
+|---|---|---|
+| `import zio.*` | Importe `ZIO`, `IO`, `ZLayer`, `Schedule`, `Ref`, `Scope`, `Clock`, et la syntaxe comme `300.millis`. | Un seul import donne accès aux types principaux et aux petites extensions de durée. |
+| `ZIOAppDefault` | `object ZioEffectObservation extends ZIOAppDefault` | Déclare une petite application ZIO. ZIO exécutera l'effet retourné par `run`. |
+| `def run` | Point de départ du module d'observation. | On ne met pas le métier dans `main`; on décrit un programme ZIO dans `run`. |
+| `ZIO[R, E, A]` | Exemple : `ZIO[ObservationConfig, Err, Positions]`. | `R` est ce que le programme demande, `E` est l'erreur prévue, `A` est le résultat produit. |
+| `IO[E, A]` | Exemple : `IO[Err, Positions]`. | Raccourci pour `ZIO[Any, E, A]`. L'effet ne demande aucune dépendance. |
+| `Any` dans `ZIO[Any, E, A]` | Utilisé dans `timed` et dans `Schedule[Any, Err, Any]`. | `Any` dans le canal `R` signifie : aucune dépendance à fournir. |
+| `Nothing` dans `ZIO[Scope, Nothing, BufferedReader]` | Utilisé pour `openAuditReader`. | `Nothing` dans le canal `E` signifie : aucune erreur typée ne peut sortir de cet effet. |
+
+### Créer, convertir et enchaîner des effets
+
+| API | Dans le starter kit | À retenir |
+|---|---|---|
+| `ZIO.suspendSucceed(basePipeline)` | Suspend le pipeline Scala de base avant `fromEither`. | Le calcul n'est pas lancé au moment où la valeur est déclarée. On l'exécute plus tard, dans ZIO. |
+| `ZIO.fromEither(...)` | Transforme `Either[Err, A]` en `IO[Err, A]`. | `Left(err)` devient un échec ZIO typé; `Right(value)` devient une réussite ZIO. |
+| `ZIO.succeed(...)` | Retourne une valeur sûre; dans ce starter minimal, il sert aussi aux `println` d'observation. | Ne pas l'utiliser pour une opération qui peut échouer de façon prévue. Dans ce cas, préférer `ZIO.attempt`. |
+| `ZIO.attempt(...)` | Encadre `reader.readLine()` et la fermeture du reader. | Capture une exception Java/Scala dans le canal d'erreur typé de ZIO. |
+| `.mapError(_.getMessage)` | Convertit une exception de lecture en `String`. | Change le type d'erreur sans toucher au succès. |
+| `ZIO.fail(...)` | Crée l'erreur volontaire de lecture ou l'échec temporaire de publication. | Produit un échec attendu dans le canal `E`, pas une exception cachée. |
+| `.flatMap(...)` | Enchaîne `suspendSucceed` puis `fromEither`; enchaîne aussi la boucle de lecture. | Lance le second effet seulement après le premier, avec son résultat. Une `for`-comprehension compile souvent vers `flatMap`. |
+| `*>` | Affiche une ligne puis continue la boucle : `ZIO.succeed(...) *> loop(...)`. | Exécute deux effets dans l'ordre et ignore le résultat du premier. |
+| `.either` | Utilisé dans `run` pour `readAuditLines`, `businessFailureObservation`, et `publishObservation`. | Transforme un échec ZIO en valeur `Left(error)`, ce qui permet de continuer l'observation au lieu d'arrêter le programme. |
+
+### Dépendances locales avec `R`
+
+| API | Dans le starter kit | À retenir |
+|---|---|---|
+| `ZIO.service[ObservationConfig]` | Lit `parallelism` et `failAuditAfterFirstLine`. | Demande une dépendance présente dans le canal `R`. Ici, la dépendance est une simple configuration locale. |
+| `ZLayer.succeed(defaultConfig)` | Fournit la configuration au programme final. | Crée une couche très simple à partir d'une valeur déjà disponible. |
+| `.provide(...)` | `program.provide(ZLayer.succeed(defaultConfig))`. | Branche les dépendances demandées par `R`. Après ce branchement, le programme peut être exécuté. |
+
+### Ressources et fermeture garantie
+
+| API | Dans le starter kit | À retenir |
+|---|---|---|
+| `Scope` | Requis par `openAuditReader`. | Représente la zone dans laquelle une ressource reste ouverte. Quand le `Scope` se ferme, ZIO lance les finalizers. |
+| `ZIO.acquireRelease(acquire)(release)` | Ouvre puis ferme le `BufferedReader`. | Si l'acquisition réussit, la libération sera appelée en succès, en échec, ou en interruption. |
+| `.orDie` | Utilisé dans le finalizer de fermeture. | Convertit une erreur de fermeture non récupérable en défaut ZIO. Le finalizer ne doit pas ajouter une nouvelle erreur métier au TP. |
+| `ZIO.scoped { ... }` | Encadre l'ouverture et la lecture de l'audit. | Crée un `Scope`, exécute le bloc, puis ferme les ressources acquises dans ce bloc. |
+
+### Temps, parallèle et état d'observation
+
+| API | Dans le starter kit | À retenir |
+|---|---|---|
+| `Clock.nanoTime` | Mesure le début et la fin dans `timed`. | Mesure un temps monotone dans un effet ZIO. C'est adapté pour une durée, pas pour afficher une date métier. |
+| `100.millis`, `300.millis` | Durées pour `sleep` et `Schedule.exponential`. | Syntaxe de durée fournie par `zio.*`. |
+| `ZIO.sleep(...)` | Ralentit volontairement `validateSlow`. | Suspend la fiber sans bloquer un thread comme `Thread.sleep`. |
+| `ZIO.foreach(list)(f)` | Valide le batch séquentiellement. | Traite les éléments dans l'ordre, un effet après l'autre. |
+| `ZIO.foreachPar(list)(f)` | Valide le batch en parallèle. | Lance plusieurs effets en parallèle avec des fibers ZIO. |
+| `.withParallelism(config.parallelism)` | Limite `foreachPar`. | Garde le parallélisme borné. Le stagiaire voit l'effet de la configuration sans créer de threads à la main. |
+| `Ref[Int]` | Type du compteur passé à `publishObservation`. | Une `Ref` garde un état mutable contrôlé par ZIO. Ici, elle compte les tentatives. |
+| `Ref.make(0)` | Crée le compteur de tentatives. | `Ref` est une petite référence mutable sûre pour les fibers. Elle sert ici à observer les retries. |
+| `counter.updateAndGet(_ + 1)` | Incrémente et retourne le compteur. | La mise à jour est atomique du point de vue des fibers ZIO. |
+
+### Retry et politique d'erreur
+
+| API | Dans le starter kit | À retenir |
+|---|---|---|
+| `Schedule[Any, Err, Any]` | Type de `retryTemporaryOnly`. | Décrit une politique de répétition qui ne demande pas de dépendance, lit des erreurs `Err`, et ignore sa sortie. |
+| `Schedule.exponential(100.millis)` | Attend de plus en plus longtemps entre les essais. | Évite de relancer immédiatement une opération temporairement indisponible. |
+| `Schedule.recurs(3)` | Borne le nombre de reprises. | Empêche une boucle de retry infinie. |
+| `schedule1 && schedule2` | Combine backoff exponentiel et nombre maximal de reprises. | Les deux règles s'appliquent ensemble : délai progressif et limite de tentatives. |
+| `.whileInput(isTemporary)` | Filtre les erreurs retentables. | La politique continue seulement pour les erreurs considérées temporaires. |
+| `.retry(retryTemporaryOnly)` | Retente la publication, mais pas l'erreur métier. | ZIO relance l'effet seulement quand il échoue et que le `Schedule` accepte l'erreur. |
+
 ## Jour 1 : effet et comparaison Scala de base
 
 ```scala
@@ -125,7 +197,7 @@ Observation attendue : sans `.provide(ZLayer.succeed(defaultConfig))`, le progra
         new BufferedReader(new StringReader(auditText))
       }
     ) { reader =>
-      ZIO.succeed {
+      ZIO.attempt {
         reader.close()
         println("audit release")
       }.orDie

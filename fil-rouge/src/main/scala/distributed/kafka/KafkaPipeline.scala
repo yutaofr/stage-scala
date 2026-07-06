@@ -2,6 +2,8 @@ package distributed.kafka
 
 import clearing.contract.*
 import clearing.model.*
+import io.circe.*
+import io.circe.syntax.*
 import org.apache.kafka.clients.consumer.*
 import org.apache.kafka.clients.producer.*
 import org.apache.kafka.common.TopicPartition
@@ -15,7 +17,6 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.TimeUnit
 import scala.jdk.CollectionConverters.*
 import scala.util.control.NonFatal
-import zio.json.*
 
 final case class KafkaSettings(
   bootstrapServers: String,
@@ -84,9 +85,9 @@ final class ResultPublisher(
   def publish(decision: ProcessingDecision): java.util.concurrent.Future[RecordMetadata] =
     val record = decision match
       case ProcessingDecision.Validated(key, event) =>
-        new ProducerRecord[String, String](settings.outputTopic, key, event.toJson)
+        new ProducerRecord[String, String](settings.outputTopic, key, event.asJson.noSpaces)
       case ProcessingDecision.Rejected(key, event) =>
-        new ProducerRecord[String, String](settings.dlqTopic, key.orNull, event.toJson)
+        new ProducerRecord[String, String](settings.dlqTopic, key.orNull, event.asJson.noSpaces)
 
     val transactionId = decision match
       case ProcessingDecision.Validated(_, event) => Some(event.id)
@@ -172,7 +173,7 @@ object TransactionProducer:
     val record = new ProducerRecord[String, String](
       settings.inputTopic,
       tx.sender.value,
-      event.toJson
+      event.asJson.noSpaces
     )
     record.headers.add(
       RecordHeader("transaction-id", tx.id.value.getBytes(StandardCharsets.UTF_8))

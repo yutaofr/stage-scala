@@ -15,7 +15,7 @@ footer: "Jour 5 — Demo Mois 4 (Clearing Engine v3.1)"
 
 # 📋 Objectifs du Jour
 
-- Récapituler l'aventure du Mois 4 (Concurrence, ZIO, Kafka, Cassandra).
+- Récapituler l'aventure du Mois 4 (Concurrence, Kafka, Cassandra).
 - Comprendre pourquoi "l'Orchestration" est le cœur du métier de Lead Dev.
 - Visualiser la montée en compétence : d'un script `main` à un écosystème Dockerisé.
 - Découvrir le programme du Mois 5 : Industrialisation (CI/CD, Kubernetes).
@@ -25,8 +25,8 @@ footer: "Jour 5 — Demo Mois 4 (Clearing Engine v3.1)"
 # 1. Rétrospective du Mois 4
 
 ### Semaine 13 & 14 : Le Moteur Asynchrone
-- Maîtrise des Threads et des Acteurs.
-- Passage à ZIO pour une gestion parfaite des effets et des ressources.
+- Maîtrise des Threads et de la concurrence JVM.
+- Modélisation fonctionnelle pour une gestion claire des effets et des ressources.
 
 ### Semaine 15 & 16 : L'Infrastructure de Données
 - Kafka pour le transport asynchrone et le dédoublonnage.
@@ -38,9 +38,9 @@ footer: "Jour 5 — Demo Mois 4 (Clearing Engine v3.1)"
 
 Votre application est désormais une véritable **Plateforme** :
 - **Temps Réel** : Traitement instantané via Kafka.
-- **Résilience** : Auto-réparatrice via les Acteurs et les Retries ZIO.
+- **Résilience** : Auto-réparatrice via la gestion d'erreurs et les retries applicatifs.
 - **Persistance** : archivage répliquable dans Cassandra, avec garanties dépendantes du cluster et du niveau de cohérence.
-- **Modularité** : Entièrement configurable via ZLayer.
+- **Modularité** : Entièrement configurable par injection de dépendances simple.
 
 ---
 
@@ -57,7 +57,7 @@ On quitte le monde du développement pour celui de la **Production** :
 
 # 🧠 Grand Quiz du Mois 4
 
-1. Pourquoi ZIO est-il préférable aux Futures Java pour un projet de longue durée ?
+1. Pourquoi la programmation fonctionnelle pure permet-elle d'écrire du code financier plus sûr ?
 2. Quel est l'avantage majeur de Kafka sur une file d'attente classique (RabbitMQ) ?
 3. Pourquoi avoir choisi Cassandra plutôt que MySQL pour l'archivage ?
 4. Comment as-tu géré la back-pressure (si la base est plus lente que le flux) ?

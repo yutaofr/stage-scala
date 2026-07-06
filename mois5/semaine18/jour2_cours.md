@@ -18,7 +18,7 @@ footer: "Jour 2 — Chaos Engineering"
 - Comprendre la philosophie du Chaos Engineering (L'héritage de Netflix).
 - Apprendre à tester la résilience **réellement**.
 - Injecter des fautes : Réseau lent, crash de serveur, disque plein.
-- Vérifier que le système se comporte comme prévu (grâce à la supervision S13 et ZIO S14).
+- Vérifier que le système se comporte comme prévu (grâce aux mécanismes de supervision et de retries applicatifs).
 
 ---
 

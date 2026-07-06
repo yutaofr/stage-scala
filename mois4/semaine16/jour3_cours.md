@@ -3,7 +3,7 @@ marp: true
 theme: default
 paginate: true
 header: "Stage ATH — Mois 4, Semaine 16"
-footer: "Jour 3 — Pipeline Complet (Kafka → ZIO → Cassandra)"
+footer: "Jour 3 — Pipeline Complet (Kafka → Cassandra)"
 ---
 
 # L'Architecture de Données
@@ -16,7 +16,7 @@ footer: "Jour 3 — Pipeline Complet (Kafka → ZIO → Cassandra)"
 # 📋 Objectifs du Jour
 
 - Réunir toutes les briques du Mois 4.
-- Créer un flux ZIO de bout en bout (End-to-End).
+- Créer un flux de données de bout en bout (End-to-End).
 - Apprendre à orchestrer le passage des données entre Kafka et Cassandra.
 - Gérer les erreurs sur toute la chaîne.
 
@@ -27,28 +27,32 @@ footer: "Jour 3 — Pipeline Complet (Kafka → ZIO → Cassandra)"
 Le cycle de vie complet d'une transaction est maintenant :
 1. **Source** : Un Producer Kafka (Banque).
 2. **Buffer** : Un Topic Kafka (Transport).
-3. **Moteur** : Un Consumer ZIO (Validation & Clearing).
+3. **Moteur** : Un Consumer Scala (Validation & Clearing).
 4. **Archive** : Une table Cassandra (Persistance).
 
 ---
 
-# 2. Orchestration ZIO
+# 2. Orchestration de la boucle
 
-Grâce à ZIO, l'assemblage est un simple bloc `for`.
+L'assemblage se fait dans une boucle de poll qui traite les messages et engage l'offset uniquement après succès :
 
 ```scala
-for
-  record <- KafkaConsumer.poll
-  tx     <- validate(decodeTransaction(record))
-  _      <- TransactionRepo.save(tx)
-  _      <- KafkaConsumer.commit
-yield ()
+while (true) {
+  val records = consumer.poll(Duration.ofMillis(500))
+  for (record <- records) {
+    try {
+      val tx = decode(record.value)
+      repository.save(tx) // Sauvegarde Cassandra
+      // validation et publication Kafka...
+    } catch {
+      case NonFatal(err) => log.error("erreur de traitement", err)
+    }
+  }
+  consumer.commitSync() // Commit manuel des offsets validés
+}
 ```
 
-- Si le `save` échoue, le commit n'est pas fait : le record sera relu.
-- Tout est asynchrone et non-bloquant.
-
-La relecture implique une sémantique at-least-once. La persistance doit donc reconnaître un ID déjà vu et reconstruire les projections manquantes.
+- Si le `save` échoue, une exception est levée, le message n'est pas commité : il sera relu au redémarrage (At-Least-Once).
 
 ---
 
@@ -59,7 +63,7 @@ Dans un système distribué, il faut trouver l'équilibre :
 - **Débit** : nombre de transactions terminées par seconde.
 
 > [!TIP]
-> Les Fibers réduisent le coût d'orchestration ; Kafka, Cassandra, le réseau et le modèle de données déterminent souvent la limite réelle.
+> L'utilisation de pools de threads dédiés ou de threads virtuels permet d'optimiser le débit sans bloquer l'ingestion principale de Kafka.
 
 ---
 
@@ -80,7 +84,7 @@ Nous allons assembler les TP de la S15 (Kafka) et de la S16 (Cassandra). Le rés
 # 📝 Résumé du Jour
 
 - Tu as construit un pipeline de données complet.
-- ZIO sert de "colle" intelligente entre les systèmes.
+- L'intégration manuelle des clients Kafka et Cassandra permet un contrôle fin de la gestion d'erreurs.
 - Ton application est maintenant une pièce maîtresse du système d'information.
 - Tu maîtrises le cycle de vie complet de l'information financière.
 

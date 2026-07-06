@@ -2,7 +2,7 @@
 
 ## Jour 1 — Signaux d'observabilité et logs structurés
 **Cours (2h)** : Pourquoi les `println` ne suffisent plus. Logs, métriques et traces sont des signaux complémentaires ; leur corrélation repose sur un contexte propagé.
-**TP (4h)** : Configurer des logs JSON et ajouter `txId`, partition et offset avec des annotations compatibles avec les Fibers.
+**TP (4h)** : Configurer des logs JSON et ajouter `txId`, partition et offset avec des annotations compatibles avec des threads concurrents (MDC).
 
 ## Jour 2 — Métriques Prometheus
 **Cours (2h)** : Counter, Gauge et Histogram, cardinalité des labels et endpoint `/metrics`. Définir des SLI mesurables avant de choisir les objectifs.

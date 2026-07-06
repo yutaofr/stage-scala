@@ -4,14 +4,12 @@ import clearing.contract.ContractCodec
 import clearing.model.BankCode
 import com.sun.net.httpserver.{HttpExchange, HttpHandler, HttpServer}
 import distributed.kafka.{KafkaClients, KafkaSettings, TransactionProducer}
-import zio.*
 
 import java.net.InetSocketAddress
 import java.nio.charset.StandardCharsets
-import java.util.concurrent.{ExecutorService, Executors}
-import java.util.concurrent.TimeUnit
+import java.util.concurrent.{ExecutorService, Executors, TimeUnit}
 
-object LoadAdapter extends ZIOAppDefault:
+object LoadAdapter:
   private val knownBanks = Set("AWB", "CIH", "BCP", "BMCE").map(BankCode.unsafe)
 
   private def respond(exchange: HttpExchange, status: Int, body: String): Unit =
@@ -22,7 +20,7 @@ object LoadAdapter extends ZIOAppDefault:
     try output.write(bytes)
     finally output.close()
 
-  private final class IngestionHandler(settings: KafkaSettings) extends HttpHandler:
+  final class IngestionHandler(settings: KafkaSettings) extends HttpHandler:
     def handle(exchange: HttpExchange): Unit =
       if exchange.getRequestMethod != "POST" then
         respond(exchange, 405, """{"code":"METHOD_NOT_ALLOWED"}""")
@@ -58,29 +56,18 @@ object LoadAdapter extends ZIOAppDefault:
                 )
             finally producer.close()
 
-  private final case class ServerResources(
-    server: HttpServer,
-    executor: ExecutorService
-  )
+@main def runLoadAdapter(): Unit =
+  val settings = KafkaSettings.fromEnvironment()
+  val port = sys.env.get("HTTP_PORT").flatMap(_.toIntOption).getOrElse(8080)
+  val server = HttpServer.create(new InetSocketAddress(port), 0)
+  val executor = Executors.newCachedThreadPool()
 
-  private val acquire =
-    ZIO.attempt {
-      val settings = KafkaSettings.fromEnvironment()
-      val port = sys.env.get("HTTP_PORT").flatMap(_.toIntOption).getOrElse(8080)
-      val server = HttpServer.create(new InetSocketAddress(port), 0)
-      val executor = Executors.newCachedThreadPool()
-      server.createContext("/api/v1/transactions", new IngestionHandler(settings))
-      server.setExecutor(executor)
-      server.start()
-      ServerResources(server, executor)
-    }
+  server.createContext("/api/v1/transactions", new LoadAdapter.IngestionHandler(settings))
+  server.setExecutor(executor)
+  server.start()
+  println(s"LoadAdapter started on port $port")
 
-  def run =
-    ZIO
-      .acquireRelease(acquire) { resources =>
-        ZIO.succeed {
-          resources.server.stop(0)
-          resources.executor.shutdown()
-        }
-      }
-      .flatMap(_ => ZIO.never)
+  try Thread.currentThread().join()
+  finally
+    server.stop(0)
+    executor.shutdown()

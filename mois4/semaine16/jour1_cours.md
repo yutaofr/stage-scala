@@ -80,6 +80,6 @@ Nous allons ajouter un nœud Cassandra à notre `docker-compose.yml` et créer l
 - Cassandra est le champion de l'écriture massive.
 - On modélise pour les lectures futures, pas pour la propreté théorique.
 - La dénormalisation est ton amie.
-- Demain, nous allons y écrire depuis Scala via ZIO.
+- Demain, nous allons y écrire depuis Scala via le driver Datastax.
 
 **Prochaine étape** : Utiliser les Kits 16.0 et 16.1 dans le TP du Jour 1.

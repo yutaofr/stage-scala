@@ -17,7 +17,7 @@ footer: "Jour 2 — Préparation des Slides de Soutenance"
 
 - Structurer son récit (Storytelling).
 - Préparer des slides visuels et impactants (Mois 1 à 5).
-- Savoir expliquer des concepts complexes (Monades, Kafka, ZIO) simplement.
+- Savoir expliquer des concepts complexes (Monades, Kafka, programmation concurrente) simplement.
 - Anticiper les questions du jury.
 
 ---
@@ -26,7 +26,7 @@ footer: "Jour 2 — Préparation des Slides de Soutenance"
 
 1. **Introduction** : Le problème (Le clearing complexe).
 2. **Le Voyage** : L'évolution de l'architecture (Mois 1 -> Mois 4).
-3. **Les Piliers** : Technologie (Scala/ZIO) et Robustesse (Kafka/Cassandra).
+3. **Les Piliers** : Technologie (Scala 3) et Robustesse (Kafka/Cassandra).
 4. **La Qualité** : Observabilité et Industrialisation.
 5. **Conclusion** : Ce que j'ai appris et les perspectives.
 
@@ -44,7 +44,7 @@ Le jury ne veut pas lire tes slides, il veut t'écouter.
 # 3. Pitcher la Valeur Métier
 
 N'oublie pas que tu travailles pour une banque.
-- "ZIO rend les erreurs et les dépendances explicites."
+- "Either et la modélisation fonctionnelle rendent les erreurs explicites."
 - "Kafka découple ingestion et traitement et permet la reprise."
 - "Cassandra sert des lectures prévues à partir de données persistées."
 

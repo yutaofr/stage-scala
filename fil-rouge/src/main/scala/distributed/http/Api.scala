@@ -1,106 +1,122 @@
 package distributed.http
 
-import clearing.contract.TransactionSubmittedV1
+import clearing.contract.ContractCodec
 import clearing.model.BankCode
 import distributed.kafka.{KafkaClients, KafkaSettings, TransactionProducer}
-import sttp.model.StatusCode
-import sttp.tapir.PublicEndpoint
-import sttp.tapir.generic.auto.*
-import sttp.tapir.json.zio.*
-import sttp.tapir.server.ziohttp.ZioHttpInterpreter
-import sttp.tapir.swagger.bundle.SwaggerInterpreter
-import sttp.tapir.ztapir.*
-import zio.*
-import zio.http.Server
-import zio.json.*
+import io.circe.*
+import io.circe.syntax.*
 
-final case class ApiError(code: String, message: String) derives JsonCodec
-final case class Accepted(transactionId: String, status: String) derives JsonCodec
-final case class Position(bankId: String, date: String, amount: BigDecimal) derives JsonCodec
+import com.sun.net.httpserver.{HttpExchange, HttpHandler, HttpServer}
+import java.net.InetSocketAddress
+import java.nio.charset.StandardCharsets
+import java.util.concurrent.{ExecutorService, Executors, TimeUnit}
+
+final case class ApiError(code: String, message: String) derives Encoder, Decoder
+final case class Accepted(transactionId: String, status: String) derives Encoder, Decoder
+final case class Position(bankId: String, date: String, amount: BigDecimal) derives Encoder, Decoder
 
 object ClearingApi:
   private val knownBanks = Set("AWB", "CIH", "BCP", "BMCE").map(BankCode.unsafe)
 
-  val healthEndpoint: PublicEndpoint[Unit, Unit, String, Any] =
-    endpoint.get
-      .in("health")
-      .out(stringBody)
+  private def respond(exchange: HttpExchange, status: Int, body: String): Unit =
+    val bytes = body.getBytes(StandardCharsets.UTF_8)
+    exchange.getResponseHeaders.set("Content-Type", "application/json")
+    exchange.sendResponseHeaders(status, bytes.length)
+    val output = exchange.getResponseBody
+    try output.write(bytes)
+    finally output.close()
 
-  val ingestEndpoint
-    : PublicEndpoint[
-        TransactionSubmittedV1,
-        (StatusCode, ApiError),
-        (StatusCode, Accepted),
-        Any
-      ] =
-    endpoint.post
-      .in("api" / "v1" / "transactions")
-      .in(jsonBody[TransactionSubmittedV1])
-      .errorOut(statusCode.and(jsonBody[ApiError]))
-      .out(statusCode)
-      .out(jsonBody[Accepted])
+  final class HealthHandler extends HttpHandler:
+    def handle(exchange: HttpExchange): Unit =
+      if exchange.getRequestMethod == "GET" then
+        respond(exchange, 200, """{"status":"UP"}""")
+      else
+        respond(exchange, 405, ApiError("METHOD_NOT_ALLOWED", "GET only").asJson.noSpaces)
 
-  val positionEndpoint
-    : PublicEndpoint[(String, String), ApiError, Position, Any] =
-    endpoint.get
-      .in("api" / "v1" / "banks" / path[String]("bankId") / "positions")
-      .in(query[String]("date"))
-      .errorOut(jsonBody[ApiError])
-      .out(jsonBody[Position])
+  final class IngestionHandler(settings: KafkaSettings) extends HttpHandler:
+    def handle(exchange: HttpExchange): Unit =
+      if exchange.getRequestMethod != "POST" then
+        respond(exchange, 405, ApiError("METHOD_NOT_ALLOWED", "POST only").asJson.noSpaces)
+      else
+        val payload = String(
+          exchange.getRequestBody.readAllBytes(),
+          StandardCharsets.UTF_8
+        )
+        val result =
+          for
+            event <- ContractCodec.decode(payload)
+            tx <- event.toDomain(knownBanks).left.map(_.message)
+          yield tx
 
-  private val healthServer: ZServerEndpoint[Any, Any] =
-    healthEndpoint.zServerLogic[Any](_ => ZIO.succeed("UP"))
-
-  private val ingestServer: ZServerEndpoint[Any, Any] =
-    ingestEndpoint.zServerLogic[Any] { event =>
-      for
-        tx <- ZIO
-          .fromEither(event.toDomain(knownBanks))
-          .mapError(error => StatusCode.BadRequest -> ApiError(error.code, error.message))
-        settings = KafkaSettings.fromEnvironment()
-        _ <- ZIO
-          .acquireReleaseWith(ZIO.attempt(KafkaClients.producer(settings)))(
-            producer => ZIO.succeed(producer.close())
-          ) { producer =>
-            ZIO.attemptBlocking(
-              TransactionProducer
-                .send(producer, settings, tx)
-                .get(5, java.util.concurrent.TimeUnit.SECONDS)
+        result match
+          case Left(error) =>
+            respond(
+              exchange,
+              400,
+              ApiError("INVALID_TRANSACTION", error).asJson.noSpaces
             )
-          }
-          .mapError(error =>
-            StatusCode.ServiceUnavailable ->
-              ApiError("KAFKA_UNAVAILABLE", Option(error.getMessage).getOrElse(error.toString))
-          )
-      yield StatusCode.Accepted -> Accepted(tx.id.value, "accepted")
-    }
+          case Right(tx) =>
+            val producer = KafkaClients.producer(settings)
+            try
+              TransactionProducer.send(producer, settings, tx).get(5, TimeUnit.SECONDS)
+              respond(
+                exchange,
+                202,
+                Accepted(tx.id.value, "accepted").asJson.noSpaces
+              )
+            catch
+              case error: Throwable =>
+                respond(
+                  exchange,
+                  503,
+                  ApiError("KAFKA_UNAVAILABLE", Option(error.getMessage).getOrElse(error.toString)).asJson.noSpaces
+                )
+            finally producer.close()
 
-  private val positionServer: ZServerEndpoint[Any, Any] =
-    positionEndpoint.zServerLogic[Any] { case (bankId, date) =>
-      BankCode.from(bankId) match
-        case Left(error) => ZIO.fail(ApiError("INVALID_BANK", error))
-        case Right(_) =>
-          // TODO S19 : déléguer la lecture au repository Cassandra.
-          ZIO.succeed(Position(bankId.toUpperCase, date, BigDecimal(0)))
-    }
+  final class PositionHandler extends HttpHandler:
+    def handle(exchange: HttpExchange): Unit =
+      if exchange.getRequestMethod != "GET" then
+        respond(exchange, 405, ApiError("METHOD_NOT_ALLOWED", "GET only").asJson.noSpaces)
+      else
+        val path = exchange.getRequestURI.getPath
+        val segments = path.split("/").filter(_.nonEmpty)
+        // Expected: api/v1/banks/{bankId}/positions
+        if segments.length >= 5 && segments(3) != "" then
+          val bankId = segments(3)
+          val query = Option(exchange.getRequestURI.getQuery).getOrElse("")
+          val date = query.split("&").flatMap { param =>
+            val parts = param.split("=", 2)
+            if parts.length == 2 && parts(0) == "date" then Some(parts(1))
+            else None
+          }.headOption.getOrElse("")
 
-  val applicationEndpoints: List[ZServerEndpoint[Any, Any]] =
-    List(healthServer, ingestServer, positionServer)
+          BankCode.from(bankId) match
+            case Left(error) =>
+              respond(exchange, 400, ApiError("INVALID_BANK", error).asJson.noSpaces)
+            case Right(_) =>
+              // TODO S19 : déléguer la lecture au repository Cassandra.
+              respond(
+                exchange,
+                200,
+                Position(bankId.toUpperCase, date, BigDecimal(0)).asJson.noSpaces
+              )
+        else
+          respond(exchange, 400, ApiError("INVALID_PATH", "expected /api/v1/banks/{bankId}/positions").asJson.noSpaces)
 
-  val documentationEndpoints =
-    SwaggerInterpreter()
-      .fromServerEndpoints[Task](applicationEndpoints, "Clearing API", "4.0.0-rc1")
+@main def runClearingServer(): Unit =
+  val settings = KafkaSettings.fromEnvironment()
+  val port = sys.env.get("HTTP_PORT").flatMap(_.toIntOption).getOrElse(8080)
+  val server = HttpServer.create(new InetSocketAddress(port), 0)
+  val executor = Executors.newCachedThreadPool()
 
-object ClearingServer extends ZIOAppDefault:
-  private val port =
-    sys.env.get("HTTP_PORT").flatMap(_.toIntOption).getOrElse(8080)
+  server.createContext("/health", new ClearingApi.HealthHandler)
+  server.createContext("/api/v1/transactions", new ClearingApi.IngestionHandler(settings))
+  server.createContext("/api/v1/banks", new ClearingApi.PositionHandler)
+  server.setExecutor(executor)
+  server.start()
+  println(s"ClearingServer started on port $port")
 
-  private val routes =
-    ZioHttpInterpreter().toHttp(
-      ClearingApi.applicationEndpoints ++ ClearingApi.documentationEndpoints
-    )
-
-  def run =
-    Server
-      .serve(routes)
-      .provide(Server.defaultWithPort(port))
+  try Thread.currentThread().join()
+  finally
+    server.stop(0)
+    executor.shutdown()

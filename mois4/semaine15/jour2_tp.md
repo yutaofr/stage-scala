@@ -25,7 +25,7 @@
 
 1. Génère cinquante transactions avec une seed fixe.
 2. Envoie-les vers `clearing-input`.
-3. Limite le rythme à dix transactions par seconde sans bloquer le thread principal si tu utilises ZIO.
+3. Limite le rythme à dix transactions par seconde sans bloquer le thread principal.
 4. Compte les accusés de réception réussis et échoués.
 
 **Validation :** le nombre d'accusés de réception réussis correspond au nombre de records visibles.

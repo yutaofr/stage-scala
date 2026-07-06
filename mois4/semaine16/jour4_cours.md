@@ -38,8 +38,8 @@ Si on veut voir l'historique par **Banque** ET l'historique par **Date**, on cr�
 Cassandra n'est pas conçu pour des agrégations ad hoc sur tout le cluster. On prépare une projection adaptée, on agrège une partition bornée, ou on utilise un moteur analytique.
 
 ```scala
-val allTxs: ZIO[Any, Throwable, List[Transaction]] = repo.findAllByBank(bankId)
-val total = allTxs.map(_.map(_.amount).sum)
+val allTxs: List[Transaction] = repo.findAllByBank(bankId)
+val total = allTxs.map(_.amount).sum
 ```
 
 ---

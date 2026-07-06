@@ -50,9 +50,9 @@
 | v2.2 | S11 | Types opaques + sérialisation polymorphe |
 | v2.3 | S12 | Cœur fonctionnel, types opaques et propriétés de netting |
 | v2.3.1 | S13 | Première orchestration concurrente sans changement du domaine |
-| v2.4 | S14 | Effets ZIO, ressources et concurrence bornée |
+| v2.4 | S14 | Programmation fonctionnelle, ressources et concurrence bornée |
 | v3.0 | S15 | Streaming Kafka temps réel |
-| v3.1 | S16 | Pipeline complet Kafka → ZIO → Cassandra |
+| v3.1 | S16 | Pipeline complet Kafka → Cassandra |
 | v3.2 | S17 | Logs, métriques, traces et alertes |
 | v3.3 | S18 | Limites mesurées et continuité multi-instance |
 | v4.0.0-rc1 | S19 | Image, CI et API documentée |
