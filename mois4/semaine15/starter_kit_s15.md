@@ -1,11 +1,11 @@
 # Starter Kit Semaine 15 : Kafka Streaming
 
-Le kit prolonge le projet `fil-rouge/`. Il fournit le contrat Kafka v1, les trois topics, le producer, la sortie, la DLQ et la validation manuelle des offsets.
+Le kit fournit un projet autonome et auto-contenu sous le dossier `starter_kit/`. Il fournit le contrat Kafka v1, les trois topics, le producer, la sortie, la DLQ et la validation manuelle des offsets.
 
 ## Préflight
 
 ```bash
-cd fil-rouge
+cd mois4/semaine15/starter_kit
 sbt test
 ```
 
@@ -46,7 +46,7 @@ services:
       KAFKA_LOG_DIRS: /tmp/kraft-combined-logs
       KAFKA_AUTO_CREATE_TOPICS_ENABLE: "false"
     healthcheck:
-      test: [CMD-SHELL, "/opt/kafka/bin/kafka-topics.sh --bootstrap-server kafka:9092 --list >/dev/null 2>&1"]
+      test: ["CMD-SHELL", "/opt/kafka/bin/kafka-topics.sh --bootstrap-server kafka:9092 --list >/dev/null 2>&1"]
       interval: 5s
       timeout: 5s
       retries: 20
@@ -72,8 +72,8 @@ services:
 **Usage :**
 
 ```bash
-docker-compose -f docker/docker-compose-kafka.yml up -d --wait
-docker-compose -f docker/docker-compose-kafka.yml run --rm kafka-init
+cd mois4/semaine15/starter_kit
+docker compose -f docker/docker-compose-kafka.yml up -d --wait
 ```
 
 ---
@@ -82,8 +82,8 @@ docker-compose -f docker/docker-compose-kafka.yml run --rm kafka-init
 
 **Fichiers fournis :**
 
-- `fil-rouge/src/main/scala/clearing/contract/Events.scala`
-- `fil-rouge/src/main/scala/distributed/kafka/KafkaPipeline.scala`
+- `mois4/semaine15/starter_kit/src/main/scala/clearing/contract/Events.scala`
+- `mois4/semaine15/starter_kit/src/main/scala/distributed/kafka/KafkaPipeline.scala`
 
 Contrat stable :
 
@@ -147,7 +147,7 @@ Le `ResultPublisher` applique la politique suivante :
 
 ## Kit 15.3 — Consumer et commit par partition
 
-**Fichier fourni :** `fil-rouge/src/main/scala/distributed/kafka/KafkaPipeline.scala`
+**Fichier fourni :** `mois4/semaine15/starter_kit/src/main/scala/distributed/kafka/KafkaPipeline.scala`
 
 Le consumer :
 
@@ -176,9 +176,9 @@ Le `+ 1` représente le prochain offset à lire.
 #!/usr/bin/env bash
 set -euo pipefail
 
+cd mois4/semaine15/starter_kit
 docker compose -f docker/docker-compose-kafka.yml down -v --remove-orphans
 docker compose -f docker/docker-compose-kafka.yml up -d --wait
-docker compose -f docker/docker-compose-kafka.yml run --rm kafka-init
 
 sbt "runMain distributed.kafka.runKafkaConsumer" &
 CONSUMER_PID=$!
@@ -197,3 +197,4 @@ test "$INPUT_COUNT" -eq "$((OUTPUT_COUNT + DLQ_COUNT))"
 - JSON invalide visible dans la DLQ ;
 - partition non validée lorsque la publication échoue ;
 - `input = output + dlq` pour le jeu déterministe.
+

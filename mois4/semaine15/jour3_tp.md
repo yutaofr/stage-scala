@@ -7,7 +7,7 @@
 ## Exercice 1 : Le Consumer Simple (Starter Kit)
 
 > [!TIP]
-> **Starter Kit fourni :** utilise le **Kit 15.2** et le **Kit 15.3**, fichier `distributed/kafka/KafkaPipeline.scala`.
+> **Starter Kit fourni :** utilise le **Kit 15.2** et le **Kit 15.3**, dans le projet autonome `mois4/semaine15/starter_kit/src/main/scala/distributed/kafka/KafkaPipeline.scala`.
 
 1. Ouvre le squelette et repère `subscribe`, `poll`, traitement, publication, commit et fermeture.
 2. Complète les tests du `RecordProcessor`.

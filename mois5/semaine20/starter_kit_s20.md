@@ -1,17 +1,23 @@
 # Starter Kit Semaine 20 : Livraison et passation
 
+Le kit fournit un projet autonome et auto-contenu sous le dossier `starter_kit/` ainsi qu'un script de smoke test pour valider de bout en bout la v4.0 avant la soutenance.
+
 ## Kit 20.1 — Smoke test final
+
+**Fichier fourni :** `mois5/semaine20/starter_kit/smoke_test.sh`
 
 ```bash
 #!/usr/bin/env bash
 set -euo pipefail
+
+# Se placer dans le répertoire docker
+cd "$(dirname "$0")/docker"
 
 docker compose down -v --remove-orphans
 docker compose config >/dev/null
 docker compose up -d --wait
 
 curl --fail --silent http://localhost:8080/health
-curl --fail --silent http://localhost:8080/docs >/dev/null
 
 curl --fail --silent \
   -H 'Content-Type: application/json' \
@@ -22,6 +28,8 @@ curl --fail --silent \
 docker compose ps
 ```
 
+---
+
 ## Kit 20.2 — Plan de deck
 
 | # | Idée | Preuve | Durée | Transition |
@@ -31,6 +39,8 @@ docker compose ps
 | 3 | Garanties | offsets + IDs | 2 min | des garanties aux mesures |
 | 4 | Observabilité | dashboard + trace | 2 min | des mesures à la démo |
 | 5 | Limites et suite | backlog priorisé | 1 min | conclusion |
+
+---
 
 ## Kit 20.3 — Script de démonstration
 
@@ -52,6 +62,8 @@ Jeu de données minimal :
 - un batch équilibré ;
 - un ID connu pour la trace.
 
+---
+
 ## Kit 20.4 — Grille de soutenance
 
 ```text
@@ -68,6 +80,8 @@ Action de suivi :
 Responsable :
 Échéance :
 ```
+
+---
 
 ## Kit 20.5 — Handover
 

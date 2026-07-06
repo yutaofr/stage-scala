@@ -7,7 +7,7 @@
 ## Exercice 1 : Connexion Asynchrone (Starter Kit)
 
 > [!TIP]
-> **Starter Kit fourni :** utilise le **Kit 16.2**, fichier `distributed/persistence/ClearingRepository.scala`.
+> **Starter Kit fourni :** utilise le **Kit 16.2**, dans le projet autonome `mois4/semaine16/starter_kit/src/main/scala/distributed/persistence/ClearingRepository.scala`.
 
 1. Vérifie les dépendances du driver dans le build.
 2. Lance le programme avec une seule instance de `CqlSession` partagée.

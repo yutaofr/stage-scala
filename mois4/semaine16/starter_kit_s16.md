@@ -1,6 +1,15 @@
 # Starter Kit Semaine 16 : Cassandra et reprise durable
 
-Le kit rend le pipeline S15 réparable. Un record n’est plus considéré comme « traité » dès que son ID existe : son état progresse de `Received` à `Projected`, puis à `Completed`.
+Le kit fournit un projet autonome et auto-contenu sous le dossier `starter_kit/`. Il fournit les scripts de schéma Cassandra, les repositories d'accès et le processeur d'état durable.
+
+## Préflight
+
+```bash
+cd mois4/semaine16/starter_kit
+sbt test
+```
+
+---
 
 ## Kit 16.0 — Compose Kafka + Cassandra
 
@@ -27,7 +36,7 @@ services:
       KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
       KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
     healthcheck:
-      test: [CMD-SHELL, "/opt/kafka/bin/kafka-topics.sh --bootstrap-server localhost:9092 --list >/dev/null 2>&1"]
+      test: ["CMD-SHELL", "/opt/kafka/bin/kafka-topics.sh --bootstrap-server localhost:9092 --list >/dev/null 2>&1"]
       interval: 5s
       timeout: 5s
       retries: 20
@@ -64,7 +73,7 @@ services:
       cassandra:
         condition: service_healthy
     volumes:
-      - ../../fil-rouge/docker/init-cassandra.cql:/init-cassandra.cql:ro
+      - ./init-cassandra.cql:/init-cassandra.cql:ro
     entrypoint:
       - /bin/sh
       - -ec
@@ -87,7 +96,7 @@ L’application lit `KAFKA_BOOTSTRAP_SERVERS`, `CASSANDRA_HOST` et `CASSANDRA_PO
 
 ## Kit 16.1 — Schéma orienté reprise et requêtes
 
-**Fichier fourni :** `fil-rouge/docker/init-cassandra.cql`
+**Fichier fourni :** `mois4/semaine16/starter_kit/docker/init-cassandra.cql`
 
 Tables :
 
@@ -154,9 +163,10 @@ object PreparedStatements:
 
 ## Kit 16.3 — DurableProcessor
 
-**Fichier fourni :** `fil-rouge/src/main/scala/distributed/persistence/DurableProcessing.scala`
+**Fichiers fournis :**
 
-**Worker fourni :** `fil-rouge/src/main/scala/distributed/pipeline/ClearingPipelineApp.scala`
+- `mois4/semaine16/starter_kit/src/main/scala/distributed/persistence/DurableProcessing.scala`
+- `mois4/semaine16/starter_kit/src/main/scala/distributed/pipeline/ClearingPipelineApp.scala`
 
 Algorithme :
 
@@ -192,10 +202,9 @@ Le worker suit l’ordre `poll → durable processing → output/DLQ → accusé
 #!/usr/bin/env bash
 set -euo pipefail
 
+cd mois4/semaine16/starter_kit
 docker compose -f docker/docker-compose-full.yml down -v --remove-orphans
 docker compose -f docker/docker-compose-full.yml up -d --wait kafka cassandra
-docker compose -f docker/docker-compose-full.yml run --rm kafka-init
-docker compose -f docker/docker-compose-full.yml run --rm cassandra-init
 
 export KAFKA_BOOTSTRAP_SERVERS=localhost:9092
 export CASSANDRA_HOST=localhost
@@ -209,7 +218,7 @@ docker compose -f docker/docker-compose-full.yml exec -T cassandra cqlsh -e \
   "SELECT tx_id, stage FROM clearing.processing_state;"
 ```
 
-**Invariants à prouver :**
+**Invariants à pouver :**
 
 - aucun ID `Completed` sans ses projections ;
 - aucune projection métier dupliquée après reprise ;

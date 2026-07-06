@@ -1,11 +1,23 @@
 # Starter Kit Semaine 18 : Robustesse et performance
 
+Le kit fournit un projet autonome et auto-contenu sous le dossier `starter_kit/`. Il permet de tester la robustesse et la performance du pipeline de clearing sous forte charge et dans des conditions de panne réseau simulées.
+
+## Préflight
+
+```bash
+cd mois5/semaine18/starter_kit
+sbt test
+```
+
+---
+
 ## Kit 18.1 — Adaptateur HTTP et simulation Gatling
 
-Gatling cible l’API stable `POST /api/v1/transactions`. L’adaptateur sans Tapir est fourni dans `fil-rouge/src/main/scala/distributed/http/LoadAdapter.scala`. Il transforme chaque requête acceptée en record Kafka et retourne `202` seulement après l’accusé du broker. La S19 refactorise ensuite cette même route avec Tapir et OpenAPI.
+Gatling cible l’API stable `POST /api/v1/transactions`. L’adaptateur sans Tapir est fourni dans `mois5/semaine18/starter_kit/src/main/scala/distributed/http/LoadAdapter.scala`. Il transforme chaque requête acceptée en record Kafka et retourne `202` seulement après l’accusé du broker. La S19 refactorise ensuite cette même route avec Tapir et OpenAPI.
+
+**Simulation Gatling :** `mois5/semaine18/starter_kit/src/gatling/scala/ClearingLoadSimulation.scala`
 
 ```scala
-// src/gatling/scala/ClearingLoadSimulation.scala
 import io.gatling.core.Predef.*
 import io.gatling.http.Predef.*
 import scala.concurrent.duration.*
@@ -43,7 +55,11 @@ class ClearingLoadSimulation extends Simulation:
 
 **TODO stagiaire :** remplacer la création d’un producer par requête par une ressource partagée et scoped, puis vérifier qu’une réponse `202` correspond à un accusé de réception Kafka.
 
+---
+
 ## Kit 18.2 — Toxiproxy local
+
+**Fichier fourni :** `mois5/semaine18/starter_kit/docker/docker-compose.yml`
 
 ```yaml
 services:
@@ -53,6 +69,8 @@ services:
       - "8474:8474"
       - "19042:19042"
 ```
+
+Commandes d'administration :
 
 ```bash
 toxiproxy-cli create cassandra \
@@ -66,6 +84,8 @@ toxiproxy-cli toxic add cassandra \
 
 L'application de laboratoire se connecte à `toxiproxy:19042`.
 
+---
+
 ## Kit 18.3 — Fiche de profilage reproductible
 
 ```text
@@ -78,10 +98,12 @@ Durée de capture :
 Méthode dominante :
 Pourcentage CPU :
 Classe dominante en heap :
-Chemin vers GC root :
+GC root :
 Modification testée :
 Résultat après modification :
 ```
+
+---
 
 ## Kit 18.4 — Matrice JVM
 
@@ -99,6 +121,8 @@ java $JAVA_BASE -XX:+UseG1GC -Xms512m -Xmx512m \
 java $JAVA_BASE -Xmx128m -XX:+HeapDumpOnOutOfMemoryError \
   -XX:HeapDumpPath=/tmp/heap.hprof -jar clearing-engine.jar
 ```
+
+---
 
 ## Kit 18.5 — Contrat de test HA
 
@@ -122,6 +146,7 @@ Mesures :
 Commandes de départ :
 
 ```bash
+cd mois5/semaine18/starter_kit
 docker compose up -d --scale engine=3
 docker compose logs -f engine
 docker compose ps

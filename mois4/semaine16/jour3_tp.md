@@ -12,7 +12,7 @@
 
 ## Exercice 1 : Le Consumer-Persister (2h)
 
-1. Pars du programme fourni `distributed.pipeline.ClearingPipelineApp`.
+1. Pars du programme fourni dans le projet autonome `mois4/semaine16/starter_kit/src/main/scala/distributed/pipeline/ClearingPipelineApp.scala`.
 2. Il doit écouter le topic `clearing-input`.
 3. Pour chaque transaction valide :
    - Persiste la transaction source avec son ID.

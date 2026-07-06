@@ -1,10 +1,19 @@
 # Starter Kit Semaine 17 : Observabilité
 
-Le kit ajoute les signaux d'observabilité sans mélanger leur transport avec la logique de clearing.
+Le kit fournit un projet autonome et auto-contenu sous le dossier `starter_kit/`. Il permet d'ajouter les signaux d'observabilité sans mélanger leur transport avec la logique de clearing.
+
+## Préflight
+
+```bash
+cd mois5/semaine17/starter_kit
+sbt test
+```
+
+---
 
 ## Kit 17.1 — Contexte de log thread-safe
 
-**Fichier fourni :** `fil-rouge/src/main/scala/observability/ObservedProcessing.scala`
+**Fichier fourni :** `mois5/semaine17/starter_kit/src/main/scala/observability/ObservedProcessing.scala`
 
 ```scala
 package observability
@@ -17,35 +26,24 @@ object ObservedProcessing:
     txId: String,
     record: RecordEnvelope
   )(block: => A): A =
-    MDC.put("txId", txId)
-    MDC.put("topic", record.topic)
-    MDC.put("partition", record.partition.toString)
-    MDC.put("offset", record.offset.toString)
-    try block
-    finally MDC.clear()
+    // TODO : Mettre en œuvre MDC
+    ???
 
   def process[A](
     txId: String,
     record: RecordEnvelope
   )(durableProcessing: => A): A =
-    withTransactionContext(txId, record) {
-      val logger = org.slf4j.LoggerFactory.getLogger("ObservedProcessing")
-      logger.info("transaction.started")
-      try {
-        val res = durableProcessing
-        logger.info("transaction.completed")
-        res
-      } catch {
-        case error: Throwable =>
-          logger.error(s"transaction.failed: ${error.getMessage}")
-          throw error
-      }
-    }
+    // TODO : Logger le début, le succès et l'échec de la transaction
+    ???
 ```
 
 **Critère :** deux threads concurrents (ou threads virtuels) gardent des annotations distinctes grâce à la ThreadLocal de MDC.
 
+---
+
 ## Kit 17.2 — Métriques du pipeline
+
+**Fichier fourni :** `mois5/semaine17/starter_kit/src/main/scala/observability/ClearingMetrics.scala`
 
 ```scala
 package observability
@@ -60,25 +58,17 @@ object ClearingMetrics:
     .register(Metrics.globalRegistry)
 
   def observe[A](block: => A): A =
-    val sample = Timer.start(Metrics.globalRegistry)
-    try {
-      val result = block
-      processedSuccess.increment()
-      result
-    } catch {
-      case error: Throwable =>
-        processedFailure.increment()
-        throw error
-    } finally {
-      sample.stop(timer)
-    }
+    // TODO : implémenter la mesure de temps et l'incrémentation des compteurs
+    ???
 ```
 
 `timer` mesure aussi les échecs et les interruptions. Ajuste ensuite les buckets de votre exportateur Prometheus à partir des mesures réelles.
 
+---
+
 ## Kit 17.3 — Stack OpenTelemetry
 
-**Extrait Compose :**
+**Extrait Compose :** `mois5/semaine17/starter_kit/docker/docker-compose.yml`
 
 ```yaml
 services:
@@ -100,12 +90,15 @@ services:
 **Algorithme de propagation Kafka :**
 
 ```scala
+// Fichier : mois5/semaine17/starter_kit/src/main/scala/observability/OpenTelemetrySetup.scala
 // Producer : propagator.inject(currentContext, kafkaHeadersCarrier)
 // Consumer : val parent = propagator.extract(Context.root(), kafkaHeadersCarrier)
 //            tracer.span("clearing.consume", parent) { process(record) }
 ```
 
 **TODO stagiaire :** implémenter le carrier Kafka et vérifier la présence de `traceparent`.
+
+---
 
 ## Kit 17.4 — Provisioning Prometheus/Grafana
 
@@ -119,9 +112,6 @@ services:
 
   grafana:
     image: grafana/grafana
-    volumes:
-      - ./grafana/provisioning:/etc/grafana/provisioning:ro
-      - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
     ports: ["3000:3000"]
 ```
 
@@ -130,8 +120,10 @@ services:
 scrape_configs:
   - job_name: clearing-engine
     static_configs:
-      - targets: ["engine:8080"]
+      - targets: ["host.docker.internal:8080"]
 ```
+
+---
 
 ## Kit 17.5 — Alertes vérifiables
 
@@ -165,7 +157,7 @@ groups:
 **Commandes de contrôle :**
 
 ```bash
+cd mois5/semaine17/starter_kit/docker
 promtool check config prometheus.yml
-promtool check rules alert_rules.yml
 docker compose config
 ```

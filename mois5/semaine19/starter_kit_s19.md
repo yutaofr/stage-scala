@@ -1,11 +1,11 @@
 # Starter Kit Semaine 19 : Industrialisation, CI et API
 
-Les artefacts S19 sont fournis dans `fil-rouge/`. Ils utilisent le même build, les mêmes contrats et les mêmes variables d’environnement que les semaines 14 à 18.
+Les artefacts S19 sont fournis dans le dossier autonome `mois5/semaine19/starter_kit/`. Ils utilisent le même build, les mêmes contrats et les mêmes variables d’environnement que les semaines précédentes.
 
 ## Préflight
 
 ```bash
-cd fil-rouge
+cd mois5/semaine19/starter_kit
 sbt clean test assembly
 test -f target/scala-3.3.8/clearing-engine.jar
 ```
@@ -16,9 +16,9 @@ test -f target/scala-3.3.8/clearing-engine.jar
 
 **Fichiers fournis :**
 
-- `fil-rouge/Dockerfile`
-- `fil-rouge/.dockerignore`
-- `fil-rouge/project/plugins.sbt`
+- `mois5/semaine19/starter_kit/Dockerfile`
+- `mois5/semaine19/starter_kit/.dockerignore`
+- `mois5/semaine19/starter_kit/project/plugins.sbt`
 
 Le build exécute les tests avant `assembly`. L’image runtime :
 
@@ -41,8 +41,8 @@ Le build exécute les tests avant `assembly`. L’image runtime :
 
 **Fichiers fournis :**
 
-- `fil-rouge/docker/compose.yml`
-- `fil-rouge/docker/init-cassandra.cql`
+- `mois5/semaine19/starter_kit/docker/compose.yml`
+- `mois5/semaine19/starter_kit/docker/init-cassandra.cql`
 
 Le service `engine` consomme réellement :
 
@@ -59,10 +59,10 @@ Kafka annonce `localhost:9092` aux outils locaux et `kafka:29092` aux conteneurs
 Le service `worker` lance `distributed.pipeline.ClearingPipelineApp`. Il complète les projections Cassandra, publie la sortie ou la DLQ, puis valide les offsets.
 
 ```bash
-cd fil-rouge
-docker compose -f docker/compose.yml config
-docker compose -f docker/compose.yml up -d --build --wait
-docker compose -f docker/compose.yml ps
+cd mois5/semaine19/starter_kit/docker
+docker compose -f compose.yml config
+docker compose -f compose.yml up -d --build --wait
+docker compose -f compose.yml ps
 curl --fail http://localhost:8080/health
 ```
 
@@ -72,11 +72,11 @@ Si le port local est occupé, définis par exemple `HTTP_HOST_PORT=18083`.
 
 ## Kit 19.3 — GitHub Actions
 
-**Fichier fourni :** `fil-rouge/.github/workflows/ci.yml`
+**Fichier fourni :** `mois5/semaine19/starter_kit/.github/workflows/ci.yml`
 
 La CI :
 
-1. compile et teste depuis `fil-rouge/` ;
+1. compile et teste depuis le projet starter kit ;
 2. construit l’image uniquement après les tests ;
 3. n’accorde aucun droit d’écriture par défaut ;
 4. annule les exécutions obsolètes d’une même branche.
@@ -93,7 +93,7 @@ La CI :
 
 ## Kit 19.4 — API HTTP avec HttpServer du JDK
 
-**Fichier fourni :** `fil-rouge/src/main/scala/distributed/http/Api.scala`
+**Fichier fourni :** `mois5/semaine19/starter_kit/src/main/scala/distributed/http/Api.scala`
 
 Routes stables :
 
@@ -106,7 +106,10 @@ Routes stables :
 Chaque handler hérite de `com.sun.net.httpserver.HttpHandler` et traite les requêtes :
 
 ```scala
-final class IngestionHandler(settings: KafkaSettings) extends HttpHandler:
+final class IngestionHandler(
+  settings: KafkaSettings,
+  producer: KafkaProducer[String, String]
+) extends HttpHandler:
   def handle(exchange: HttpExchange): Unit =
     if exchange.getRequestMethod != "POST" then
       respond(exchange, 405, ApiError("METHOD_NOT_ALLOWED", "POST only").asJson.noSpaces)
