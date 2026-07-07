@@ -88,7 +88,7 @@ Nous allons coder le "pont" entre Kafka et notre logique métier. Le moteur va l
 # 🧠 Quiz Rapide
 
 1. Puis-je avoir deux consumers du même groupe sur la même partition ? (Non, un seul à la fois).
-2. Que se passe-t-il si je relance mon consumer avec le même `group.id` ? (Il reprend à l'offset validé, selon la politique de reset si aucun offset n'existe).
+2. Que se passe-t-il si je relance mon consumer avec le même `group.id` ? (Il reprend à l'offset commité, selon la politique de reset si aucun offset n'existe).
 3. À quoi sert le timeout de `poll()` ? (À borner l'attente et à rendre la boucle réactive aux événements de contrôle).
 
 ---
