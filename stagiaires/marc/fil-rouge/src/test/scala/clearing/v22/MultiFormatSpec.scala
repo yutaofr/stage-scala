@@ -9,6 +9,8 @@ final class MultiFormatSpec extends AnyFlatSpec with Matchers:
   private val ath = BankCode.unsafe("ATH")
   private val cih = BankCode.unsafe("CIH")
   private val rawIban = "MA64ATH00000000000000000"
+  private val sourceHash = IbanHash.from("a" * 64).toOption.get
+  private val destinationHash = IbanHash.from("b" * 64).toOption.get
 
   private val result = ClearingResult(
     referenceCurrency = Currency.MAD,
@@ -22,8 +24,8 @@ final class MultiFormatSpec extends AnyFlatSpec with Matchers:
         status = TransactionStatus.Validated,
         referenceCurrency = Currency.MAD,
         fee = Money(BigDecimal("0.10")),
-        sourceIbanHash = "SOURCE-HASH",
-        destinationIbanHash = "DESTINATION-HASH",
+        sourceIbanHash = sourceHash,
+        destinationIbanHash = destinationHash,
         label = "Facture \"A&B\", urgente\nà traiter",
         warnings = List(V22Warning.MissingLabel("NON RENSEIGNE"))
       )
@@ -95,3 +97,10 @@ final class MultiFormatSpec extends AnyFlatSpec with Matchers:
     rendered(OutputFormat.Csv).linesIterator should have size 3
     rendered(OutputFormat.Xml).linesIterator should have size 3
     rendered.values.mkString should not include rawIban
+
+  "ExportEngine XML" should "exposer les deux adaptateurs nommés par le TP" in:
+    import XmlSerializers.given
+
+    val transaction = MultiExportDemo.sampleTransactions.head
+    ExportEngine.exportItemXml(transaction) should include("<sender>ATH</sender>")
+    ExportEngine.exportBatchXml(List(transaction)).linesIterator should have size 1

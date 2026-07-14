@@ -158,10 +158,10 @@ object TypedRailwayEngine:
     val transaction = rail.transaction
     for
       sourceHash <- hash(transaction.sourceIban).left.map(
-        enrichTechnicalError(rail.lineNumber, transaction.id)
+        hashTechnicalError(rail.lineNumber, transaction.id)
       )
       destinationHash <- hash(transaction.destinationIban).left.map(
-        enrichTechnicalError(rail.lineNumber, transaction.id)
+        hashTechnicalError(rail.lineNumber, transaction.id)
       )
       label <- rail.label.toRight(
         V22ConfigurationError(
@@ -186,18 +186,27 @@ object TypedRailwayEngine:
       warnings = rail.warnings
     )
 
-  private def enrichTechnicalError(
+  private def hashTechnicalError(
     lineNumber: Int,
     transactionId: Int
   )(
-    error: V22Error
-  ): V22Error = error match
-    case technical: V22TechnicalError =>
-      technical.copy(
-        lineNumber = lineNumber,
-        transactionId = Some(transactionId)
-      )
-    case other => other
+    failure: HashFailure
+  ): V22TechnicalError =
+    val (causeType, detail) = failure match
+      case HashFailure.Unavailable =>
+        ("HashProviderFailure", "hachage impossible")
+      case HashFailure.InvalidDigest =>
+        ("InvalidHashDigest", "empreinte de hash invalide")
+      case HashFailure.Simulated =>
+        ("SimulatedHashFailure", "panne de hash simulée")
+
+    V22TechnicalError(
+      lineNumber = lineNumber,
+      transactionId = Some(transactionId),
+      operation = "hash-iban",
+      causeType = causeType,
+      detail = detail
+    )
 
   private def positions(
     transactions: List[PreparedTransaction]

@@ -35,7 +35,11 @@ final class TypedRailwayEngineSpec extends AnyFlatSpec with Matchers:
   )
 
   private val stableHash: HashBoundary = iban =>
-    Right(s"HASH-${iban.bankSegment.take(3)}")
+    Right(hashFor(iban))
+
+  private def hashFor(iban: Iban): IbanHash =
+    val digit = iban.bankSegment.head.toLower.toString
+    IbanHash.from(digit * 64).toOption.get
 
   private def csv(
     id: String = "1",
@@ -70,8 +74,8 @@ final class TypedRailwayEngineSpec extends AnyFlatSpec with Matchers:
         transaction.settlementAmount.value,
         transaction.fee.value,
         transaction.status,
-        transaction.sourceIbanHash,
-        transaction.destinationIbanHash,
+        transaction.sourceIbanHash.value,
+        transaction.destinationIbanHash.value,
         transaction.label,
         transaction.warnings
       )
@@ -84,8 +88,8 @@ final class TypedRailwayEngineSpec extends AnyFlatSpec with Matchers:
         BigDecimal("100.00"),
         BigDecimal("0.10"),
         TransactionStatus.Validated,
-        "HASH-ATH",
-        "HASH-CIH",
+        "a" * 64,
+        "c" * 64,
         "Facture fournisseur",
         Nil
       )
@@ -95,7 +99,7 @@ final class TypedRailwayEngineSpec extends AnyFlatSpec with Matchers:
     val calls = new AtomicInteger(0)
     val countingHash: HashBoundary = iban =>
       calls.incrementAndGet()
-      Right(iban.value)
+      Right(hashFor(iban))
     val noAthFee = config.copy(feeRates = config.feeRates - ath)
 
     val results = List(
@@ -136,15 +140,7 @@ final class TypedRailwayEngineSpec extends AnyFlatSpec with Matchers:
     val calls = new AtomicInteger(0)
     val failingHash: HashBoundary = _ =>
       calls.incrementAndGet()
-      Left(
-        V22TechnicalError(
-          0,
-          None,
-          "hash-iban",
-          "ProviderException",
-          "indisponible"
-        )
-      )
+      Left(HashFailure.Unavailable)
 
     TypedRailwayEngine.processLine(config, Set.empty, failingHash)(
       NumberedLine(8, csv())
@@ -153,8 +149,8 @@ final class TypedRailwayEngineSpec extends AnyFlatSpec with Matchers:
         8,
         Some(1),
         "hash-iban",
-        "ProviderException",
-        "indisponible"
+        "HashProviderFailure",
+        "hachage impossible"
       )
     )
     calls.get shouldBe 1
@@ -194,15 +190,7 @@ final class TypedRailwayEngineSpec extends AnyFlatSpec with Matchers:
     ).mkString("\n")
     val selectiveHash: HashBoundary = iban =>
       if iban == boaIban then
-        Left(
-          V22TechnicalError(
-            0,
-            None,
-            "hash-iban",
-            "ProviderException",
-            "indisponible"
-          )
-        )
+        Left(HashFailure.Unavailable)
       else stableHash(iban)
 
     val result = TypedRailwayEngine.process(config, selectiveHash)(input)

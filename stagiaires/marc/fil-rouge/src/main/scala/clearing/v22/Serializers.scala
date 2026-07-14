@@ -28,6 +28,16 @@ object ExportEngine:
   )(using serializer: ClearingSerializable[T]): String =
     values.map(serializer.toText).mkString("\n")
 
+  def exportItemXml[T](
+    value: T
+  )(using serializer: XmlSerializer[T]): String =
+    serializer.toText(value)
+
+  def exportBatchXml[T](
+    values: List[T]
+  )(using serializer: XmlSerializer[T]): String =
+    values.map(serializer.toText).mkString("\n")
+
 object ManualSerializers:
   val transactionCsv: CsvSerializer[Transaction] =
     (transaction: Transaction) => Rendering.transactionCsv(transaction)
@@ -155,7 +165,7 @@ private object Rendering:
     val warnings = warningCodes(transaction.warnings)
       .map(code => s"\"${json(code)}\"")
       .mkString("[", ",", "]")
-    s"""{"id":${transaction.id},"sender":"${json(transaction.sender.value)}","receiver":"${json(transaction.receiver.value)}","amount":"${formatAmount(transaction.settlementAmount)}","fee":"${formatAmount(transaction.fee)}","currency":"${transaction.referenceCurrency}","label":"${json(transaction.label)}","sourceIbanHash":"${json(transaction.sourceIbanHash)}","destinationIbanHash":"${json(transaction.destinationIbanHash)}","warnings":$warnings}"""
+    s"""{"id":${transaction.id},"sender":"${json(transaction.sender.value)}","receiver":"${json(transaction.receiver.value)}","amount":"${formatAmount(transaction.settlementAmount)}","fee":"${formatAmount(transaction.fee)}","currency":"${transaction.referenceCurrency}","label":"${json(transaction.label)}","sourceIbanHash":"${json(transaction.sourceIbanHash.value)}","destinationIbanHash":"${json(transaction.destinationIbanHash.value)}","warnings":$warnings}"""
 
   private def rejectionJson(rejection: Rejection): String =
     val id = rejection.transactionId.fold("null")(_.toString)
@@ -170,7 +180,7 @@ private object Rendering:
     val warnings = warningCodes(transaction.warnings)
       .map(code => s"<warning>${xml(code)}</warning>")
       .mkString
-    s"<transaction><id>${transaction.id}</id><sender>${xml(transaction.sender.value)}</sender><receiver>${xml(transaction.receiver.value)}</receiver><amount>${formatAmount(transaction.settlementAmount)}</amount><fee>${formatAmount(transaction.fee)}</fee><currency>${transaction.referenceCurrency}</currency><label>${xml(transaction.label)}</label><sourceIbanHash>${xml(transaction.sourceIbanHash)}</sourceIbanHash><destinationIbanHash>${xml(transaction.destinationIbanHash)}</destinationIbanHash><warnings>$warnings</warnings></transaction>"
+    s"<transaction><id>${transaction.id}</id><sender>${xml(transaction.sender.value)}</sender><receiver>${xml(transaction.receiver.value)}</receiver><amount>${formatAmount(transaction.settlementAmount)}</amount><fee>${formatAmount(transaction.fee)}</fee><currency>${transaction.referenceCurrency}</currency><label>${xml(transaction.label)}</label><sourceIbanHash>${xml(transaction.sourceIbanHash.value)}</sourceIbanHash><destinationIbanHash>${xml(transaction.destinationIbanHash.value)}</destinationIbanHash><warnings>$warnings</warnings></transaction>"
 
   private def rejectionXml(rejection: Rejection): String =
     val id = rejection.transactionId.fold("")(_.toString)

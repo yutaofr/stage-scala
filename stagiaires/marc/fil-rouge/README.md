@@ -1,10 +1,10 @@
-# Clearing Engine de Marc — v2.1
+# Clearing Engine de Marc — v2.2
 
 Ce projet est le fil rouge construit par Marc pendant son stage. La version
-`v2.1` poursuit le troisième mois du stage. Elle conserve les jalons S1 à S9
-pour la non-régression et ajoute une voie ferrée `Either` complète. Chaque
-ligne traverse parsing, validation, récupération, change, frais et
-anonymisation; son premier échec devient une valeur sans interrompre le batch.
+`v2.2` poursuit le troisième mois du stage. Elle conserve les jalons S1 à S10
+pour la non-régression et ajoute un domaine opaque au chemin actif. Le parser
+construit `BankCode`, `Iban` et `Money`; le cœur les conserve jusqu'aux bords.
+Des type classes exportent le même résultat en JSON, CSV ou XML.
 
 ## Prérequis
 
@@ -35,20 +35,28 @@ docker run --rm -v "$PWD:/app" -w /app \
 ## Lancer la démonstration
 
 ```bash
-sbt run
+sbt "run --format JSON"
 ```
 
-La commande traite `transactions-v21.csv` avec le profil MAD. Un autre fichier
+La commande traite `transactions-v22.csv` avec le profil MAD. Les autres
+formats utilisent le même résultat :
+
+```bash
+sbt "run --format CSV"
+sbt "run --format XML"
+```
+
+Un autre fichier
 peut être fourni explicitement :
 
 ```bash
-sbt "run chemin/transactions-v21.csv"
+sbt "run --format JSON chemin/transactions-v22.csv"
 ```
 
 Le scénario de panne contrôlée prouve la catégorie technique :
 
 ```bash
-sbt "run --simulate-hash-failure"
+sbt "run --simulate-hash-failure --format JSON"
 ```
 
 Le cœur v2.0 et son profil EUR restent disponibles séparément :
@@ -244,20 +252,41 @@ non-régression, mais ne font pas partie du contrat v1.3.
 - `ClearingAppV21` et `V21Reporter` : capture de `NonFatal`, CLI, panne de hash
   simulée explicitement et unique frontière console.
 
+## Modules ajoutés en S11
+
+- `DomainTypes` : `BankCode`, `Iban`, `IbanHash` et `Money` opaques, factories
+  sûres, `@targetName`, opérations monétaires et `Numeric[Money]`.
+- `V22Domain` : transaction, configuration, résultat, positions et frais
+  entièrement typés sur le chemin v2.2.
+- `ClearingSerializable`, `ExportEngine` et les instances de format : sélection
+  manuelle ou contextuelle de JSON, CSV et XML.
+- `Syntax` : extensions sur `BigDecimal`, `String`, `LocalDateTime`, le domaine
+  et les trois type classes de sérialisation.
+- `TypedCsvParser` et `V22Validation` : conversion des primitives aux bords,
+  erreurs nettoyées et règles sur les opaques.
+- `TypedRailwayEngine` : `for` par ligne, netting `Money`, positions
+  `BankCode`, warnings et unique `partitionMap`.
+- `ClearingAppV22`, `V22IO` et `V22Reporter` : CLI multi-format, lecture typée,
+  hash d'IBAN et unique frontière console.
+- `MultiExportDemo` : trois transactions construites une fois et exportées par
+  trois contextes différents.
+
 ## Chemin d'une donnée
 
 ```text
-fichier -> V21IO -> chaîne CSV -> lignes numérotées
-        -> parse -> validate -> recover -> forex -> fee -> anonymize
-        -> List[Either[ClearingError, RailSuccess]]
-        -> partitionMap -> statistiques + netting des Right
-        -> RailRenderer -> V21Reporter
+fichier -> V22IO -> chaîne CSV -> lignes numérotées
+        -> factories BankCode / Iban / Money
+        -> validate -> recover -> forex -> fee -> hash
+        -> List[Either[V22Error, PreparedTransaction]]
+        -> partitionMap -> Map[BankCode, Money]
+        -> given JSON / CSV / XML -> V22Reporter
 ```
 
-Le cœur v2.1 reçoit une chaîne, une configuration immutable et une fonction de
-hash. Il retourne un rapport sans lire ni afficher. Chaque `Left` reste attaché
-à sa ligne; seuls les `Right` sont anonymisés puis compensés. Les frais restent
-séparés du principal.
+Le cœur v2.2 reçoit une chaîne, une configuration immutable et une fonction de
+hash typée `Iban => Either[HashFailure, IbanHash]`. Il retourne un
+`ClearingResult` sans lire ni
+afficher. Chaque `Left` reste attaché à sa ligne; seuls les `Right` anonymisés
+alimentent les positions et les frais.
 
 ## Lancer les laboratoires S3
 
@@ -334,8 +363,32 @@ du flux ; elle ne garantit donc pas un temps inférieur.
     en `TechnicalError` stable.
 32. `NonFatal` couvre les exceptions récupérables. Les erreurs fatales de la
     JVM doivent continuer à remonter.
+33. Une type class ajoute un comportement à un type sans modifier sa classe ni
+    imposer un héritage métier.
+34. `given` fournit une instance et `using` la demande; un import local rend le
+    choix du format explicite.
+35. Une extension method améliore la syntaxe, mais reste une fonction externe
+    au type enrichi.
+36. Un type opaque distingue deux concepts à la compilation tout en gardant le
+    même type sous-jacent sur la JVM.
+37. `@targetName` sépare les signatures JVM de deux extensions effacées vers le
+    même type.
+38. `Numeric[Money]` permet aux collections de sommer et comparer les montants
+    sans abandonner le type métier.
 
-## Limites volontaires de v2.1
+## Limites volontaires de v2.2
+
+- Les serializers sont volontaires et sans bibliothèque externe. Ils prouvent
+  les type classes, l'échappement et le déterminisme; ils ne constituent pas
+  encore un contrat de schéma versionné.
+- `unsafe` initialise seulement les constantes contrôlées et la démonstration.
+  Toute donnée externe passe par une factory qui retourne `Either`.
+- Les taux et pourcentages restent des `BigDecimal`; S11 demande un opaque
+  `Money`, pas une modélisation complète de chaque grandeur numérique.
+- V2.2 lit encore un fichier local. Kafka, Cassandra et les services
+  conteneurisés arrivent dans les semaines suivantes.
+
+## Limites historiques conservées pour la non-régression
 
 - V2.1 traite chaque ligne avec `Either`, mais n'accumule pas plusieurs erreurs
   entre les étapes : le premier échec bloquant court-circuite la ligne.
@@ -344,14 +397,16 @@ du flux ; elle ne garantit donc pas un temps inférieur.
 - Les frais sont calculés et rapportés, mais ne participent pas au principal de
   règlement. La comptabilisation complète des commissions reste hors S10.
 
-- Les codes bancaires restent des `String`; le validateur les relie au
-  référentiel, mais le compilateur ne peut pas détecter une faute de frappe.
+- Dans les jalons S1 à S10, les codes bancaires restent des `String`; le
+  validateur les relie au référentiel, mais le compilateur ne peut pas détecter
+  une faute de frappe. Le chemin actif v2.2 utilise `BankCode`.
 - La factory historique `Transaction.fromCsv`, conservée pour les jalons S5 à
   S9, utilise encore `Option` et `MalformedCsv`. Le chemin actif v2.1 passe par
   `EitherCsvParser` et ne conserve jamais la ligne CSV brute dans une erreur.
-- Les IBAN restent des chaînes dans le candidat `Transaction` afin que le
-  validateur puisse expliquer les entrées invalides; seules les valeurs passées
-  par `Iban.apply` portent la garantie de validité.
+- Dans le domaine historique, les IBAN restent des chaînes dans le candidat
+  `Transaction` afin que le validateur puisse expliquer les entrées invalides;
+  seules les valeurs passées par `Iban.apply` portent la garantie de validité.
+  Le parser actif v2.2 construit l'opaque `Iban`.
 - La conversion prend trois taux instantanés et ne gère ni date de valeur, ni
   spread, ni arrondi propre à chaque paire de devises.
 - `InternationalFeePipeline` démontre les frais de 2 % demandés par le TP. La

@@ -26,6 +26,15 @@ final class DomainTypesSpec extends AnyFlatSpec with Matchers:
     Iban.from("MA64ATH") shouldBe Left("IBAN invalide")
     Iban.from("MA64ATH0000000000000000-") shouldBe Left("IBAN invalide")
 
+  "IbanHash.from" should "accepter seulement un SHA-256 hexadécimal sûr" in:
+    val valid = "a" * 64
+    val rawIban = "MA64ATH00000000000000000"
+
+    IbanHash.from(valid).map(_.value) shouldBe Right(valid)
+    IbanHash.from(rawIban) shouldBe Left("hash IBAN invalide")
+    IbanHash.from("A" * 64) shouldBe Left("hash IBAN invalide")
+    IbanHash.from("a" * 63) shouldBe Left("hash IBAN invalide")
+
   "Money" should "préserver la précision et fournir les opérations métier" in:
     val first = Money(BigDecimal("10.125"))
     val second = Money(BigDecimal("2.125"))

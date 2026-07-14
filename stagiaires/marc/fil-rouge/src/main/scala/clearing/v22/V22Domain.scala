@@ -38,8 +38,8 @@ case class PreparedTransaction(
   status: TransactionStatus,
   referenceCurrency: Currency,
   fee: Money,
-  sourceIbanHash: String,
-  destinationIbanHash: String,
+  sourceIbanHash: IbanHash,
+  destinationIbanHash: IbanHash,
   label: String,
   warnings: List[V22Warning]
 )
@@ -77,4 +77,7 @@ case class V22Config(
   labelsByTransactionId: Map[Int, String]
 )
 
-type HashBoundary = Iban => Either[V22Error, String]
+enum HashFailure:
+  case Unavailable, InvalidDigest, Simulated
+
+type HashBoundary = Iban => Either[HashFailure, IbanHash]

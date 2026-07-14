@@ -25,7 +25,7 @@ object MultiExportDemo:
       ExportEngine.exportBatch(transactions)
     val xml =
       import XmlSerializers.given
-      ExportEngine.exportBatch(transactions)
+      ExportEngine.exportBatchXml(transactions)
 
     Map(
       OutputFormat.Json -> json,

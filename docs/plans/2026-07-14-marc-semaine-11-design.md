@@ -25,20 +25,23 @@ exécutable.
 
 ## Domaine opaque
 
-`DomainTypes.scala` définit trois types :
+`DomainTypes.scala` définit quatre types :
 
 - `BankCode`, représenté par une `String`, accepte un code normalisé de trois
   ou quatre lettres majuscules;
 - `Iban`, représenté par une `String`, accepte vingt-quatre caractères, le
   pays `MA` et un segment bancaire exploitable;
+- `IbanHash`, représenté par une `String`, accepte exclusivement une empreinte
+  SHA-256 hexadécimale minuscule de soixante-quatre caractères;
 - `Money`, représenté par un `BigDecimal`, conserve la précision décimale et
   fournit `+`, `-`, `*`, `abs`, `isPositive`, `format` et `value`.
 
 Chaque compagnon expose une factory sûre qui retourne `Either[String, A]`.
 `unsafe` sert exclusivement aux fixtures et aux configurations constantes; il
 appelle la factory et échoue immédiatement si la constante est invalide. Les
-extensions `value` de `BankCode` et `Iban` portent des `@targetName` distincts,
-car la JVM efface les deux opaques vers `String`. `Money` fournit un
+extensions `value` de `BankCode`, `Iban` et `IbanHash` portent des
+`@targetName` distincts, car la JVM efface les trois opaques vers `String`.
+`Money` fournit un
 `Numeric[Money]`, donc `sum`, `max` et le netting restent génériques.
 
 `V22Domain.scala` définit `Bank`, `Transaction`, `PreparedTransaction`,
@@ -55,8 +58,9 @@ refus de compilation.
 contrat sans modifier le domaine. Trois objets de format publient leurs
 instances `given` pour `Bank`, `Transaction` et `ClearingResult`.
 
-`ExportEngine.export[T]` et `exportBatch[T]` ne connaissent aucun format. Ils
-demandent un `ClearingSerializable[T]` avec `using`. Le format devient un choix
+La méthode contextuelle `export[T]` de `ExportEngine` et `exportBatch[T]` ne
+connaissent aucun format. Elles demandent un `ClearingSerializable[T]` avec
+`using`. Le format devient un choix
 local et explicite : un bloc importe les instances JSON, un autre les instances
 CSV ou XML. Cette structure permet de démontrer la priorité du scope local et
 évite un serializer global ambigu.
@@ -64,8 +68,10 @@ CSV ou XML. Cette structure permet de démontrer la priorité du scope local et
 Les serializers ordonnent leurs champs et leurs collections. JSON échappe les
 guillemets et les caractères de contrôle; CSV protège les virgules, les
 guillemets et les retours à la ligne; XML échappe les cinq caractères réservés.
-Ils n'exportent jamais un IBAN brut. Les transactions exposent seulement leurs
-hashes dans un résultat de clearing.
+Ils n'exportent jamais un IBAN brut. Les transactions exposent seulement des
+`IbanHash` validés dans un résultat de clearing. La frontière de hash retourne
+un `HashFailure` fermé, sans message arbitraire susceptible de transporter une
+donnée sensible.
 
 ## Extension methods et DSL
 
@@ -106,8 +112,9 @@ compense uniquement les succès. Ses positions utilisent
 `Iban`, puis extrait sa valeur uniquement dans l'adaptateur Java.
 
 `ClearingResult` contient les succès préparés, les rejets, les positions, les
-frais et les compteurs. Il ne contient aucun IBAN. Les trois serializers
-peuvent donc rendre le même résultat sans risque de fuite.
+frais et les compteurs. Il ne contient aucun IBAN et ses empreintes sont des
+`IbanHash` validés. Les trois serializers peuvent donc rendre le même résultat
+sans risque de fuite.
 
 ## Application et démonstrations
 
@@ -116,10 +123,10 @@ serializer demandé par la commande. Le CLI accepte un format JSON, CSV ou XML,
 un chemin facultatif et le mode explicite `--simulate-hash-failure`. Le cœur
 retourne une valeur; `V22Reporter` constitue l'unique frontière console.
 
-`MultiExportDemo` construit trois transactions typées une seule fois, les
-traite, puis exporte le même résultat dans les trois formats. La démonstration
-prouve que seul le contexte de sérialisation change. Elle affiche aussi une
-banque et une transaction avec le même `ExportEngine` générique.
+`MultiExportDemo` construit trois transactions typées une seule fois, puis
+exporte cette même liste dans les trois formats. La démonstration prouve que
+seul le contexte de sérialisation change; le traitement complet du
+`ClearingResult` reste couvert par `ClearingAppV22` et `MultiFormatSpec`.
 
 ## Exercices quotidiens
 
@@ -136,7 +143,7 @@ et consigne la rétrospective de Marc.
 L'acceptation exige :
 
 1. des cycles RED/GREEN observés pour chaque nouveau comportement;
-2. des tests de compilation positifs et négatifs pour les trois opaques;
+2. des tests de compilation positifs et négatifs pour les quatre opaques;
 3. des tests des factories, opérations, `Numeric` et `@targetName`;
 4. des tests des instances manuelles, des `given/using`, du scope local et des
    extensions;

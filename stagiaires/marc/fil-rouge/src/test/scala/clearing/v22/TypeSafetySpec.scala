@@ -35,3 +35,18 @@ final class TypeSafetySpec extends AnyFlatSpec with Matchers:
       import clearing.v22.DomainTypes.*
       val amount: Money = BigDecimal(10)
     """) should not be empty
+
+  it should "fermer les deux rails de la frontière de hash" in:
+    typeCheckErrors("""
+      import clearing.v22.*
+      import clearing.v22.DomainTypes.*
+      val leaking: HashBoundary = iban => Right(iban.value)
+    """) should not be empty
+
+    typeCheckErrors("""
+      import clearing.v22.*
+      import clearing.v22.DomainTypes.*
+      val leakingError: HashBoundary = _ => Left(
+        V22TechnicalError(0, None, "hash-iban", "Raw", "MA64ATH00000000000000000")
+      )
+    """) should not be empty

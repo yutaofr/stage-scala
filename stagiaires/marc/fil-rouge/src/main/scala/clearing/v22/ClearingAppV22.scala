@@ -134,24 +134,15 @@ object ClearingAppV22:
 
   private def hashBoundary(simulateFailure: Boolean): HashBoundary = iban =>
     if simulateFailure && iban.bankSegment.startsWith("BOA") then
-      Left(
-        V22TechnicalError(
-          lineNumber = 0,
-          transactionId = None,
-          operation = "hash-iban",
-          causeType = "SimulatedHashFailure",
-          detail = "panne de hash simulée"
-        )
-      )
+      Left(HashFailure.Simulated)
     else
-      SecurityUtils.hashIbanTry(iban.value).toEither.left.map: error =>
-        V22TechnicalError(
-          lineNumber = 0,
-          transactionId = None,
-          operation = "hash-iban",
-          causeType = error.getClass.getSimpleName,
-          detail = "hachage impossible"
-        )
+      SecurityUtils
+        .hashIbanTry(iban.value)
+        .toEither
+        .left
+        .map(_ => HashFailure.Unavailable)
+        .flatMap: rawHash =>
+          IbanHash.from(rawHash).left.map(_ => HashFailure.InvalidDigest)
 
 object V22Reporter:
   def print(report: String): Unit = println(report)

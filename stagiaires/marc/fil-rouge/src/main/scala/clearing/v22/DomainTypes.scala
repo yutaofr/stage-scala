@@ -8,6 +8,7 @@ import scala.util.Try
 object DomainTypes:
   opaque type BankCode = String
   opaque type Iban = String
+  opaque type IbanHash = String
   opaque type Money = BigDecimal
 
   object BankCode:
@@ -40,6 +41,14 @@ object DomainTypes:
         identity
       )
 
+  object IbanHash:
+    def from(raw: String): Either[String, IbanHash] =
+      Either.cond(
+        raw.matches("[0-9a-f]{64}"),
+        raw,
+        "hash IBAN invalide"
+      )
+
   object Money:
     def apply(value: BigDecimal): Money = value
 
@@ -59,6 +68,10 @@ object DomainTypes:
     def country: String = iban.take(2)
 
     def bankSegment: String = iban.slice(4, 9)
+
+  extension (hash: IbanHash)
+    @targetName("ibanHashValue")
+    def value: String = hash
 
   extension (money: Money)
     def value: BigDecimal = money
