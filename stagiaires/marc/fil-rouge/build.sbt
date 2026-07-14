@@ -12,7 +12,9 @@ lazy val root = project
     libraryDependencies ++= Seq(
       "org.scala-lang.modules" %% "scala-parallel-collections" % "1.2.0",
       "org.springframework" % "spring-context" % "6.2.19",
-      "org.scalatest" %% "scalatest" % "3.2.19" % Test
+      "org.scalatest" %% "scalatest" % "3.2.19" % Test,
+      "org.scalacheck" %% "scalacheck" % "1.18.1" % Test,
+      "org.scalatestplus" %% "scalacheck-1-18" % "3.2.19.0" % Test
     ),
     Test / fork := true,
     Compile / run / fork := true,
