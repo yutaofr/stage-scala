@@ -14,6 +14,7 @@ lazy val root = project
       "io.circe" %% "circe-generic" % "0.14.13",
       "io.circe" %% "circe-parser" % "0.14.13",
       "org.apache.kafka" % "kafka-clients" % "4.3.0",
+      "org.apache.cassandra" % "java-driver-core" % "4.19.3",
       "org.slf4j" % "slf4j-nop" % "1.7.36",
       "org.scala-lang.modules" %% "scala-parallel-collections" % "1.2.0",
       "org.springframework" % "spring-context" % "6.2.19",
