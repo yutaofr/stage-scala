@@ -81,6 +81,42 @@ final class ExchangeRateServiceSpec extends AnyFlatSpec with Matchers:
 
     service.fetchRate(Currency.EUR) shouldBe None
 
+  "HttpExchangeRateService.fetchRateTry" should "exposer un succès typé pour une réponse valide" in:
+    withRawServer(status = 200, body = "{\"rate\":10.80}"):
+      baseUri =>
+        val service = new HttpExchangeRateService(baseUri, client)
+
+        service.fetchRateTry(Currency.EUR).toOption shouldBe
+          Some(BigDecimal("10.80"))
+
+  it should "exposer en Failure les statuts, corps et appels invalides" in:
+    withRawServer(status = 503, body = "indisponible"):
+      baseUri =>
+        val service = new HttpExchangeRateService(baseUri, client)
+        service.fetchRateTry(Currency.EUR).isFailure shouldBe true
+
+    withRawServer(status = 200, body = "{\"currency\":\"EUR\"}"):
+      baseUri =>
+        val service = new HttpExchangeRateService(baseUri, client)
+        service.fetchRateTry(Currency.EUR).isFailure shouldBe true
+
+    val inaccessible = new HttpExchangeRateService(
+      URI.create("http://127.0.0.1:1/"),
+      client
+    )
+    inaccessible.fetchRateTry(Currency.EUR).isFailure shouldBe true
+
+  it should "restaurer le drapeau lorsque le client Java est interrompu" in:
+    withRawServer(status = 200, body = "{\"rate\":10.80}"):
+      baseUri =>
+        val service = new HttpExchangeRateService(baseUri, client)
+
+        try
+          Thread.currentThread().interrupt()
+          service.fetchRateTry(Currency.EUR).isFailure shouldBe true
+          Thread.currentThread().isInterrupted shouldBe true
+        finally Thread.interrupted()
+
   "HttpExchangeRateService.fromUrl" should "construire seulement une URL HTTP absolue" in:
     HttpExchangeRateService.fromUrl(
       "http://127.0.0.1:8080/api",

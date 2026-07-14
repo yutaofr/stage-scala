@@ -38,5 +38,8 @@ object RailRenderer:
         ("FICHIER_VIDE", "fichier vide")
       case FileReadFailure(path, reason) =>
         ("TECH_READ", s"lecture $path : $reason")
+      case TechnicalError(operation, causeType, detail) =>
+        val code = operation.toUpperCase.replace('-', '_')
+        (s"TECH_$code", s"$causeType : $detail")
 
     s"REJET : $code - $reason"

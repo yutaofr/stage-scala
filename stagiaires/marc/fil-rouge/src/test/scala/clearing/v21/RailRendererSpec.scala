@@ -50,15 +50,26 @@ final class RailRendererSpec extends AnyFlatSpec with Matchers:
       ),
       RailRenderer.renderLine(
         Left(FileReadFailure("input.csv", "permission refusée"))
+      ),
+      RailRenderer.renderLine(
+        Left(
+          TechnicalError(
+            "hash-iban",
+            "ProviderException",
+            "hachage impossible"
+          )
+        )
       )
     )
 
     rendered shouldBe List(
       "REJET : VALIDATION_TRANSACTION - MONTANT_NON_POSITIF+IBAN_SOURCE_INVALIDE",
       "REJET : AM05 - transaction 7 — opération dupliquée",
-      "REJET : TECH_READ - lecture input.csv : permission refusée"
+      "REJET : TECH_READ - lecture input.csv : permission refusée",
+      "REJET : TECH_HASH_IBAN - ProviderException : hachage impossible"
     )
-    rendered.mkString should not include "Exception"
+    rendered.mkString should not include "\n\tat "
+    rendered.mkString should not include "java.security."
 
   it should "rendre la récupération sans donnée bancaire sensible" in:
     val recovered = success.copy(

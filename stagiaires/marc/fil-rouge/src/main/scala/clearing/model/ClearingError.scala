@@ -42,6 +42,25 @@ case class TransactionValidationError(
   val field: String = "transaction"
   val message: String = reasons.mkString("+")
 
+case class TechnicalError(
+  operation: String,
+  causeType: String,
+  detail: String
+) extends SystemError
+
+object TechnicalError:
+  def fromThrowable(
+    operation: String,
+    detail: String
+  )(
+    error: Throwable
+  ): TechnicalError =
+    TechnicalError(
+      operation = operation,
+      causeType = error.getClass.getSimpleName,
+      detail = detail
+    )
+
 sealed trait ValidationError extends LineError:
   def field: String
   def message: String

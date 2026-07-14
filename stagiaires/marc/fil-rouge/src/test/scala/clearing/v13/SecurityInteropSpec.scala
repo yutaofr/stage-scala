@@ -35,6 +35,11 @@ final class SecurityInteropSpec extends AnyFlatSpec with Matchers:
     first should fullyMatch regex "[0-9a-f]{64}"
     first should not be SecurityUtils.hashIban(sourceIban)
 
+  "SecurityUtils.hashIbanTry" should "sécuriser la frontière Java sans changer le hash" in:
+    SecurityUtils.hashIbanTry(sourceIban).toOption shouldBe Some(
+      "f528910ebd6e1661f465f3538e4e0b3f2e203e8d29fe4412e6c1c350f7fdecfc"
+    )
+
   "BankTime.format" should "utiliser la date bancaire marocaine" in:
     val timestamp = Instant
       .parse("2026-07-14T12:34:56Z")

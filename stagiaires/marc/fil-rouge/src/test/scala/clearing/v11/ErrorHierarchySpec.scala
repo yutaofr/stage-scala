@@ -63,3 +63,7 @@ final class ErrorHierarchySpec extends AnyFlatSpec with Matchers:
     DetailedErrorReporter.detailedReport(
       ParsingError(8, ParsingFailure.InvalidAmount)
     ) shouldBe "Erreur de parsing [ligne 8] : montant illisible"
+    DetailedErrorReporter.detailedReport(
+      TechnicalError("hash-iban", "ProviderException", "hachage impossible")
+    ) shouldBe
+      "Erreur système — hash-iban [ProviderException] : hachage impossible"

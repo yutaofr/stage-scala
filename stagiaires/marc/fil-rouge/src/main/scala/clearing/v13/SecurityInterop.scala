@@ -6,6 +6,7 @@ import java.security.MessageDigest
 import java.time.format.DateTimeFormatter
 import java.time.{Clock, ZoneId, ZonedDateTime}
 import java.util.UUID
+import scala.util.Try
 
 case class SecureTransactionLog(
   transactionId: Int,
@@ -22,12 +23,15 @@ case class SecureBatch(
 )
 
 object SecurityUtils:
-  def hashIban(iban: String): String =
+  def hashIbanTry(iban: String): Try[String] = Try:
     val digest = MessageDigest.getInstance("SHA-256")
     digest
       .digest(iban.getBytes(StandardCharsets.UTF_8))
       .map(byte => f"${byte & 0xff}%02x")
       .mkString
+
+  def hashIban(iban: String): String =
+    hashIbanTry(iban).get
 
 object BankTime:
   val MoroccoZone: ZoneId = ZoneId.of("Africa/Casablanca")

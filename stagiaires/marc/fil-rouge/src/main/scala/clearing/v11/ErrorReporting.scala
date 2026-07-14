@@ -32,3 +32,5 @@ object DetailedErrorReporter:
         system match
           case FileReadFailure(path, reason) =>
             s"Erreur système — lecture $path : $reason"
+          case TechnicalError(operation, causeType, detail) =>
+            s"Erreur système — $operation [$causeType] : $detail"
