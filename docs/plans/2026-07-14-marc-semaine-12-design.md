@@ -55,10 +55,11 @@ aucun `Gen.filter`; ScalaCheck ne peut donc pas abandonner à cause d'un excès
 de candidats rejetés.
 
 Les propriétés couvrent les lois de Functor, les trois lois de Monad, l'égalité
-entre `for-yield` et `flatMap`/`map`, l'égalité du netting v2.2/v2.3 et
-l'invariant financier. Le gate final exécute 10 000 batchs de 200 transactions;
-pour chacun, la somme des positions vaut `Money.zero`. Les montants partent de
-centimes entiers afin d'éviter tout passage par `Double`.
+entre `for-yield` et son désucrage, l'égalité de chaque position v2.3 avec un
+oracle indépendant et l'invariant financier. Deux propriétés exécutent chacune
+10 000 batchs de 200 transactions : l'une vérifie la somme globale nulle;
+l'autre compare les crédits reçus moins les débits émis pour chaque banque. Les
+montants partent de centimes entiers afin d'éviter tout passage par `Double`.
 
 ## Démonstration et acceptation
 

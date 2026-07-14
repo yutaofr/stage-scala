@@ -9,6 +9,8 @@ final class MonadLawSpec
     extends AnyFlatSpec
     with Matchers
     with ScalaCheckPropertyChecks:
+  private val monad = summon[Monad[MonadicLogger]]
+
   private val logGen: Gen[List[String]] =
     Gen.listOf(Gen.choose(0, 9).map(value => s"trace-$value"))
 
@@ -26,13 +28,13 @@ final class MonadLawSpec
 
   "Monad[MonadicLogger]" should "respecter l'identité gauche" in:
     forAll(Gen.choose(-10000, 10000)): value =>
-      MonadicLogger.pure(value).flatMap(double) shouldBe double(value)
+      monad.flatMap(monad.pure(value))(double) shouldBe double(value)
 
   it should "respecter l'identité droite" in:
     forAll(loggerGen): logger =>
-      logger.flatMap(MonadicLogger.pure) shouldBe logger
+      monad.flatMap(logger)(monad.pure) shouldBe logger
 
   it should "respecter l'associativité" in:
     forAll(loggerGen): logger =>
-      logger.flatMap(double).flatMap(render) shouldBe
-        logger.flatMap(value => double(value).flatMap(render))
+      monad.flatMap(monad.flatMap(logger)(double))(render) shouldBe
+        monad.flatMap(logger)(value => monad.flatMap(double(value))(render))

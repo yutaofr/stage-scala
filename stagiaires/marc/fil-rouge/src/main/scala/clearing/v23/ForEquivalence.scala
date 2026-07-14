@@ -29,4 +29,21 @@ object ForEquivalence:
   ): Either[V22Error, TypedTransactionLine] =
     TypedCsvParser
       .parse(line)
-      .flatMap(V22Validation.validate(config, seenIds))
+      .flatMap: parsed =>
+        V22Validation
+          .validate(config, seenIds)(parsed)
+          .map(validated => validated)
+
+  def loggerWithFlatMap(
+    config: V22Config,
+    seenIds: Set[Int]
+  )(
+    line: NumberedLine
+  ): MonadicLogger[LoggedRailwayLab.Rail] =
+    LoggedRailwayLab.logParse(line).flatMap: parsed =>
+      LoggedRailwayLab
+        .logValidate(config, seenIds)(parsed)
+        .flatMap: validated =>
+          LoggedRailwayLab
+            .logSave(validated)
+            .map(saved => saved)

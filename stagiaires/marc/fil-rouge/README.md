@@ -1,10 +1,11 @@
-# Clearing Engine de Marc — v2.2
+# Clearing Engine de Marc — v2.3
 
 Ce projet est le fil rouge construit par Marc pendant son stage. La version
-`v2.2` poursuit le troisième mois du stage. Elle conserve les jalons S1 à S10
-pour la non-régression et ajoute un domaine opaque au chemin actif. Le parser
-construit `BankCode`, `Iban` et `Money`; le cœur les conserve jusqu'aux bords.
-Des type classes exportent le même résultat en JSON, CSV ou XML.
+`v2.3` termine le troisième mois du stage. Elle conserve les jalons S1 à S11
+pour la non-régression et ajoute `Functor`, `Monad`, un journal pur et des tests
+de propriétés au chemin actif. ScalaCheck soumet le netting à 10 000 batchs de
+200 transactions. Des type classes exportent toujours le même résultat en
+JSON, CSV ou XML.
 
 ## Prérequis
 
@@ -15,6 +16,13 @@ Des type classes exportent le même résultat en JSON, CSV ou XML.
 
 ```bash
 sbt clean test
+```
+
+Le gate ciblé S12 exécute les lois des abstractions et la propriété de
+conservation sur 10 000 batchs :
+
+```bash
+sbt "testOnly clearing.v23.*"
 ```
 
 La couverture du cœur pur v2.0 est mesurée et bloquante à 100 % des statements
@@ -271,6 +279,24 @@ non-régression, mais ne font pas partie du contrat v1.3.
 - `MultiExportDemo` : trois transactions construites une fois et exportées par
   trois contextes différents.
 
+## Modules ajoutés en S12
+
+- `Functor` et `Box` : type class, instances `List`/`Option`/`Box`, fonction
+  `transform` et propriétés d'identité/composition.
+- `Monad` et `MonadicLogger` : `pure`, `flatMap`, `map` dérivé, chaînage
+  générique et accumulation chronologique sans effet de bord.
+- `LoggedRailwayLab` et `ForEquivalence` : relation entre journal et `Either`,
+  puis équivalence observable du `for-yield` et du chaînage explicite.
+- `V23Netting` : débit/crédit séquentiel, auto-virement neutre et invariant de
+  somme globale.
+- `FunctorLawSpec`, `MonadLawSpec` et `PropertySpec` : lois via les instances,
+  IBAN simulés et deux propriétés sur 10 000 batchs de 200 transactions,
+  construits sans filtre ni `Double`.
+- `V23Pipeline` : observation, railway v2.2, netting certifié et export composés
+  par un seul `for-yield` sur `MonadicLogger`.
+- `ClearingAppV23` et `V23Reporter` : lecture, SHA-256, capture de `NonFatal` et
+  unique frontière console.
+
 ## Chemin d'une donnée
 
 ```text
@@ -278,15 +304,14 @@ fichier -> V22IO -> chaîne CSV -> lignes numérotées
         -> factories BankCode / Iban / Money
         -> validate -> recover -> forex -> fee -> hash
         -> List[Either[V22Error, PreparedTransaction]]
-        -> partitionMap -> Map[BankCode, Money]
-        -> given JSON / CSV / XML -> V22Reporter
+        -> partitionMap -> V23Netting -> Map[BankCode, Money]
+        -> given JSON / CSV / XML + journal pur -> V23Reporter
 ```
 
-Le cœur v2.2 reçoit une chaîne, une configuration immutable et une fonction de
-hash typée `Iban => Either[HashFailure, IbanHash]`. Il retourne un
-`ClearingResult` sans lire ni
-afficher. Chaque `Left` reste attaché à sa ligne; seuls les `Right` anonymisés
-alimentent les positions et les frais.
+Le cœur v2.3 reçoit une chaîne, une configuration immutable, un format et une
+fonction de hash typée `Iban => Either[HashFailure, IbanHash]`. Il retourne un
+`V23Execution` et son journal sans lire ni afficher. Chaque `Left` reste attaché
+à sa ligne; seuls les `Right` anonymisés alimentent les positions et les frais.
 
 ## Lancer les laboratoires S3
 
@@ -375,8 +400,20 @@ du flux ; elle ne garantit donc pas un temps inférieur.
     même type.
 38. `Numeric[Money]` permet aux collections de sommer et comparer les montants
     sans abandonner le type métier.
+39. Un Functor transforme la valeur dans un contexte sans changer la forme de
+    ce contexte; identité et composition empêchent les surprises.
+40. Une Monad ajoute `pure` et `flatMap`; `map` se dérive en replaçant le
+    résultat de la fonction dans le contexte.
+41. Un `for-yield` utilise les `flatMap` des générateurs successifs et un `map`
+    final. Deux conteneurs différents ne se mélangent pas automatiquement.
+42. Un journal pur accumule des traces; il ne court-circuite pas un `Either`
+    placé dans sa valeur.
+43. Un générateur doit construire des valeurs valides directement. Filtrer des
+    candidats rares peut faire abandonner ScalaCheck avant le nombre d'essais.
+44. Dix mille essais cherchent efficacement des contre-exemples, mais ne
+    constituent pas une preuve formelle exhaustive.
 
-## Limites volontaires de v2.2
+## Limites volontaires de v2.3
 
 - Les serializers sont volontaires et sans bibliothèque externe. Ils prouvent
   les type classes, l'échappement et le déterminisme; ils ne constituent pas
@@ -385,7 +422,11 @@ du flux ; elle ne garantit donc pas un temps inférieur.
   Toute donnée externe passe par une factory qui retourne `Either`.
 - Les taux et pourcentages restent des `BigDecimal`; S11 demande un opaque
   `Money`, pas une modélisation complète de chaque grandeur numérique.
-- V2.2 lit encore un fichier local. Kafka, Cassandra et les services
+- Le journal v2.3 utilise une `List[String]` pédagogique. Il ne remplace pas une
+  solution de logs structurés, corrélés et persistés.
+- Les propriétés exercent un domaine généré fini. Elles n'établissent pas une
+  preuve formelle sur tous les programmes et toutes les entrées possibles.
+- V2.3 lit encore un fichier local. Kafka, Cassandra et les services
   conteneurisés arrivent dans les semaines suivantes.
 
 ## Limites historiques conservées pour la non-régression

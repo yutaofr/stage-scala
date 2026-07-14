@@ -37,17 +37,13 @@ final class ForComprehensionSpec extends AnyFlatSpec with Matchers:
       )(line)
 
   "LoggedRailwayLab" should "rendre le for identique au chaînage explicite" in:
-    val explicit = LoggedRailwayLab
-      .logParse(valid)
-      .flatMap(
-        LoggedRailwayLab.logValidate(V22Profiles.clearingMAD, Set.empty)
-      )
-      .flatMap(LoggedRailwayLab.logSave)
-
     LoggedRailwayLab.pipeline(
       V22Profiles.clearingMAD,
       Set.empty
-    )(valid) shouldBe explicit
+    )(valid) shouldBe ForEquivalence.loggerWithFlatMap(
+      V22Profiles.clearingMAD,
+      Set.empty
+    )(valid)
 
   "for-comprehension" should "refuser le mixage direct de Either et Option" in:
     typeCheckErrors("""
