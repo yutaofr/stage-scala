@@ -1,10 +1,10 @@
-# Clearing Engine de Marc — v1.2
+# Clearing Engine de Marc — v1.3
 
 Ce projet est le fil rouge construit par Marc pendant son stage. La version
-`v1.2` poursuit le deuxième mois du stage. Cette version conserve les jalons
-S1 à S6 pour la non-régression, puis ajoute le netting bilatéral et
-multilatéral, le traitement par lots, les fenêtres glissantes et un laboratoire
-de passage à l'échelle.
+`v1.3` termine le deuxième mois du stage. Cette version conserve les jalons S1
+à S7 pour la non-régression. Elle ajoute l'interopérabilité Java, la conversion
+MAD par HTTP, l'anonymisation SHA-256, le temps bancaire et un graphe de
+services annotés Spring.
 
 ## Prérequis
 
@@ -31,16 +31,23 @@ docker run --rm -v "$PWD:/app" -w /app \
 sbt run
 ```
 
-Un autre fichier peut être fourni explicitement :
+La commande démarre un serveur de taux local et traite
+`transactions-v13.csv`. Un autre fichier peut être fourni explicitement :
 
 ```bash
-sbt "run chemin/transactions-v11.csv"
+sbt "run chemin/transactions-v13.csv"
 ```
 
-Une démonstration déterministe de 100 000 transactions peut aussi être lancée :
+Le scénario de panne rend seulement le taux USD indisponible :
 
 ```bash
-sbt "run --generated 100000"
+sbt "run --network-failure"
+```
+
+La démonstration déterministe S7 de 100 000 transactions reste disponible :
+
+```bash
+sbt "runMain clearing.v12.runClearingAppV12 --generated 100000"
 ```
 
 Le laboratoire S7 mesure un million de transactions :
@@ -62,9 +69,9 @@ dans v1.2. `ClearingAppV12` calcule alors les règlements bilatéraux, les
 positions N-à-N, les lots et les fenêtres suspectes. Chaque lot et le calcul
 global restent équilibrés.
 
-Le fichier `transactions-v11.csv` illustre 45 succès, trois avertissements et
-12 rejets. Les formats S1 à S6 restent disponibles dans leurs anciens points
-d'entrée, mais ne font pas partie du contrat v1.2.
+Le fichier `transactions-v13.csv` illustre les trois devises, une alerte et
+deux lignes invalides. Les anciens jeux restent disponibles pour la
+non-régression, mais ne font pas partie du contrat v1.3.
 
 ## Modules de la semaine
 
@@ -160,22 +167,42 @@ d'entrée, mais ne font pas partie du contrat v1.2.
 - `ClearingAppV12` : réutilisation de la validation v1.1, démonstration
   déterministe de 100 000 transactions et rapport v1.2 complet.
 
+## Modules ajoutés en S8
+
+- `SecurityUtils`, `BankTime` et `SecureBatchFactory` : SHA-256 via
+  `MessageDigest`, UUID Java, `ZonedDateTime`, zone marocaine et horloge
+  injectable. Le rapport ne rend jamais un IBAN brut.
+- `LegacyJavaMock.java` et `JavaCollectionAdapters` : vraies `ArrayList` et
+  `HashMap`, vue `asScala`, copie immutable, `asJava` et conversion stable de
+  `Double` vers `BigDecimal`; les `null` Java sont filtrés avec `Option` à la
+  frontière.
+- `LocalExchangeRateServer` et `HttpExchangeRateService` : échange HTTP local
+  avec le client et le serveur du JDK, statut contrôlé et absence de dépendance
+  Internet.
+- `CurrencyConversion` : un appel par devise distincte, cache local,
+  taux strictement positif, conversion MAD à deux décimales et rejet limité à
+  la devise sans taux valide.
+- `BankRepository.java`, `SpringTransactionValidator` et `ClearingService` :
+  stéréotypes Spring, injection constructeur, conversion unique du repository
+  Java et assemblage manuel du graphe.
+- `ClearingAppV13` : validation v1.1, repository, change, journal sécurisé,
+  règlements v1.2 et scénario contrôlé de panne USD.
+
 ## Chemin d'une donnée
 
 ```text
-CSV -> List[String] -> Transaction.fromCsv -> Option[Transaction]
-    -> TransactionAssessment(errors, warnings)
-    -> transactions Validated + rejets numérotés + erreurs de fichier
-    -> groupBy par paire -> règlements bilatéraux
-    -> foldLeft N-à-N -> Map[banque, position]
-    -> grouped par lot + sliding par fenêtre -> rapport v1.2
+CSV -> validation v1.1 -> transactions Validated + rejets
+    -> BankRepository Java -> acceptées + rejets de référentiel
+    -> HttpClient -> cache de taux -> conversion MAD ou rejet ciblé
+    -> UUID + ZonedDateTime + hashes SHA-256
+    -> groupBy bilatéral + foldLeft N-à-N -> rapport v1.3
 ```
 
 Une erreur de règle produit un sous-type de `ClearingError`. Le parser conserve
-encore une frontière `Option`, mais v1.1 transforme chaque échec structurel en
-`MalformedCsv` avec la ligne brute. V1.2 ne remplace pas cette frontière : elle
-réutilise la validation puis filtre explicitement les transactions au statut
-`Validated`.
+une frontière `Option`, mais v1.1 transforme chaque échec structurel en
+`MalformedCsv`. V1.3 réutilise cette validation. Les transactions ne rejoignent
+le netting qu'après contrôle du repository et conversion dans une devise
+unique.
 
 ## Lancer les laboratoires S3
 
@@ -217,8 +244,21 @@ du flux ; elle ne garantit donc pas un temps inférieur.
     seulement lorsque son total dépasse strictement le seuil.
 15. Un benchmark compare les résultats avant les durées. Un temps isolé dépend
     de la JVM et de la machine; il ne constitue pas un test fonctionnel.
+16. `asScala` peut créer une vue liée à la collection Java; `.toList` crée un
+    instantané immutable qui isole le cœur métier.
+17. Une frontière HTTP retourne `Option` lorsque l'absence de taux est un échec
+    attendu. Le batch continue avec les devises disponibles.
+18. Une valeur `Clock` et un fournisseur d'UUID injectés rendent les tests
+    déterministes sans remplacer les APIs Java en production.
+19. Une annotation Spring décrit le rôle d'un composant. L'injection par
+    constructeur rend ses dépendances explicites, même lors d'un assemblage
+    manuel.
+20. Le netting ne doit jamais additionner des monnaies différentes. La
+    conversion ou le rejet ciblé précède donc tous les calculs v1.2.
+21. Les collections Java peuvent contenir `null`. La frontière les transforme
+    en `Option` et les filtre avant d'appeler les fonctions Scala.
 
-## Limites volontaires de v1.2
+## Limites volontaires de v1.3
 
 - Les codes bancaires restent des `String`; le validateur les relie au
   référentiel, mais le compilateur ne peut pas détecter une faute de frappe.
@@ -227,13 +267,13 @@ du flux ; elle ne garantit donc pas un temps inférieur.
 - Les IBAN restent des chaînes dans le candidat `Transaction` afin que le
   validateur puisse expliquer les entrées invalides; seules les valeurs passées
   par `Iban.apply` portent la garantie de validité.
-- La devise est validée à l'entrée, mais le netting v1.1 ne convertit pas encore
-  les positions multidevises.
+- La conversion prend trois taux instantanés et ne gère ni date de valeur, ni
+  spread, ni arrondi propre à chaque paire de devises.
 - `InternationalFeePipeline` démontre les frais de 2 % demandés par le TP. La
   chaîne de clearing principale reste marocaine : elle explique puis rejette un
   IBAN international avant le netting.
-- Le netting v1.2 suppose une unique devise MAD. Il ne convertit pas les
-  devises et ne mélange donc jamais des montants de monnaies différentes.
+- Le petit JSON HTTP est extrait sans bibliothèque dédiée. Une structure JSON
+  riche et un décodage typé arriveront avec Circe au mois 3.
 - Les règlements produits sont des instructions calculées. V1.2 ne gère ni
   frais, ni collatéral, ni liquidité, ni finalité de paiement.
 - L'identifiant déterministe sert d'ordre temporel dans le laboratoire de
@@ -241,7 +281,11 @@ du flux ; elle ne garantit donc pas un temps inférieur.
 - Les mesures `List`/`Vector`, strict/`view` et séquentiel/parallèle décrivent
   l'environnement d'exécution; aucune variante n'est déclarée toujours plus
   rapide.
+- Les annotations Spring sont réelles, mais la démo assemble les objets à la
+  main. Elle ne démarre pas encore un contexte Spring ou Spring Boot.
+- Le `BankRepository` reste en mémoire et le serveur de taux reste local. Les
+  mois suivants introduiront Cassandra, Kafka et les services conteneurisés.
 
-Les modules v0.x contiennent encore leurs tuples pédagogiques. Le paquet v1.2
-utilise `BankPair` en production; l'adaptateur `(String, String)` reste exposé
+Les modules v0.x contiennent encore leurs tuples pédagogiques. Le paquet v1.3
+réutilise `BankPair` en production; l'adaptateur `(String, String)` reste exposé
 par l'exercice bilatéral parce que le TP demande cette forme exacte.
