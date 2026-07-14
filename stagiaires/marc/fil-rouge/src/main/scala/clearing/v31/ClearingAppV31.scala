@@ -283,8 +283,8 @@ object DashboardApp:
         .toCompletableFuture
         .get()
     finally
-      scheduler.close()
-      session.close()
+      try scheduler.close()
+      finally session.close()
 
 object ClearingAppV31:
   def run(command: V31Command): Unit = command match

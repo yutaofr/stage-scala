@@ -53,6 +53,7 @@ sbt 'run dashboard --banks AWB,CIH --date 2026-07-14 \
 Le programme a rendu trois rafraîchissements espacés de cinq secondes pour les
 deux banques. Chaque ligne contient l'heure d'observation, le timestamp de la
 dernière donnée et son âge. Un seul job planifié dessert la liste bornée. Un
-test utilise volontairement un pool planifié de deux threads et un chargement
-plus long que l'intervalle : l'in-flight guard conserve un maximum observé de
-un chargement, puis le scheduler s'arrête après le troisième résultat.
+test utilise volontairement un pool planifié de deux threads, un intervalle
+d'une nanoseconde et un chargement asynchrone plus long : l'in-flight guard
+conserve un maximum observé de un chargement et exactement trois appels, puis
+le scheduler s'arrête après le troisième résultat.

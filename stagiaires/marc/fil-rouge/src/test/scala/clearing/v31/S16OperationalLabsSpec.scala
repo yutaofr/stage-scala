@@ -52,38 +52,43 @@ final class S16OperationalLabsSpec extends AnyFlatSpec with Matchers:
     val active = new AtomicInteger(0)
     val maximum = new AtomicInteger(0)
     val refreshNumber = new AtomicInteger(0)
+    val loadCalls = new AtomicInteger(0)
     val worker = Executors.newCachedThreadPool()
     val scheduler = DashboardScheduler(Executors.newScheduledThreadPool(2))
-    val load = () => CompletableFuture.supplyAsync(
-      () =>
-        val current = active.incrementAndGet()
-        maximum.accumulateAndGet(current, Math.max)
-        try
-          Thread.sleep(25)
-          val index = refreshNumber.incrementAndGet()
-          List(
-            DashboardRow(
-              "AWB",
-              date,
-              BigDecimal(index),
-              instant,
-              instant.plusSeconds(index.toLong),
-              index.toLong
+    val load = () =>
+      loadCalls.incrementAndGet()
+      CompletableFuture.supplyAsync(
+        () =>
+          val current = active.incrementAndGet()
+          maximum.accumulateAndGet(current, Math.max)
+          try
+            Thread.sleep(25)
+            val index = refreshNumber.incrementAndGet()
+            List(
+              DashboardRow(
+                "AWB",
+                date,
+                BigDecimal(index),
+                instant,
+                instant.plusSeconds(index.toLong),
+                index.toLong
+              )
             )
-          )
-        finally active.decrementAndGet(),
-      worker
-    )
+          finally active.decrementAndGet(),
+        worker
+      )
 
     try
       val refreshes = scheduler
-        .run(load, Duration.ofMillis(5), maxRefreshes = 3)
+        .run(load, Duration.ofNanos(1), maxRefreshes = 3)
         .toCompletableFuture
         .get()
 
+      Thread.sleep(50)
       refreshes should have size 3
       refreshes.flatten.map(_.position) shouldBe List(1, 2, 3)
       maximum.get() shouldBe 1
+      loadCalls.get() shouldBe 3
     finally
       scheduler.close()
       worker.shutdownNow()

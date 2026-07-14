@@ -41,10 +41,12 @@ une contribution par banque et une activité de paire.
 
 ## Comparaison séquentielle / parallèle
 
-Le laboratoire `benchmark` utilise 100 projections déterministes. Après un
-warm-up, il exécute trois mesures séquentielles puis trois mesures sur un pool
-fixe de huit threads. Chaque mesure conserve durée, débit, succès et erreurs;
-elle ne sélectionne pas seulement le meilleur run.
+Le laboratoire `benchmark` utilise 100 projections déterministes. Le warm-up
+parcourt les 100 clés dans les deux modes; les six mesures portent donc toutes
+sur des upserts de la même distribution. Il exécute ensuite trois mesures
+séquentielles puis trois mesures sur un pool fixe de huit threads. Chaque
+mesure conserve durée, débit, succès et erreurs; elle ne sélectionne pas
+seulement le meilleur run.
 
 ```bash
 sbt 'run benchmark --samples 100 --repetitions 3 --parallelism 8'
@@ -52,12 +54,12 @@ sbt 'run benchmark --samples 100 --repetitions 3 --parallelism 8'
 
 | Mode | Run | Durée (ms) | Débit (records/s) | Succès | Erreurs |
 |---|---:|---:|---:|---:|---:|
-| Séquentiel | 1 | 110.48 | 905.12 | 100 | 0 |
-| Séquentiel | 2 | 87.61 | 1141.40 | 100 | 0 |
-| Séquentiel | 3 | 78.89 | 1267.66 | 100 | 0 |
-| Parallèle, 8 threads | 1 | 28.50 | 3509.33 | 100 | 0 |
-| Parallèle, 8 threads | 2 | 23.81 | 4200.39 | 100 | 0 |
-| Parallèle, 8 threads | 3 | 26.04 | 3840.56 | 100 | 0 |
+| Séquentiel | 1 | 81.59 | 1225.71 | 100 | 0 |
+| Séquentiel | 2 | 74.42 | 1343.66 | 100 | 0 |
+| Séquentiel | 3 | 71.82 | 1392.33 | 100 | 0 |
+| Parallèle, 8 threads | 1 | 15.77 | 6342.80 | 100 | 0 |
+| Parallèle, 8 threads | 2 | 14.85 | 6732.42 | 100 | 0 |
+| Parallèle, 8 threads | 3 | 15.51 | 6446.78 | 100 | 0 |
 
 Sur cette machine et ce jeu local, la variante parallèle est plus rapide dans
 les trois runs. Ce résultat décrit uniquement ce laboratoire : il ne fixe pas

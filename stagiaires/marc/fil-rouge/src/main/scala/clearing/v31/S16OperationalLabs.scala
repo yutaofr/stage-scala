@@ -37,7 +37,7 @@ object RepositoryPerformanceLab:
     require(repetitions >= 3, "le benchmark exige au moins trois mesures")
     require(parallelism > 0, "parallelism doit être strictement positif")
 
-    val warmup = samples.take(Math.min(samples.size, 10))
+    val warmup = samples
     runSequential(warmup, save)
     val executor = Executors.newFixedThreadPool(parallelism)
     try
@@ -164,15 +164,14 @@ final class DashboardScheduler(
         if !result.isDone && inFlight.compareAndSet(false, true) then
           try
             load().whenComplete: (rows, error) =>
-              inFlight.set(false)
               if error != null then result.completeExceptionally(error)
               else
                 refreshes.add(rows)
                 if refreshes.size() >= maxRefreshes then
                   result.complete(refreshes.asScala.toList)
+                else inFlight.set(false)
           catch
             case NonFatal(error) =>
-              inFlight.set(false)
               result.completeExceptionally(error)
 
     val future = executor.scheduleAtFixedRate(
