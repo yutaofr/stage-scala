@@ -2,6 +2,7 @@ package clearing.v21
 
 import clearing.model.*
 import clearing.v20.PreparedTransaction
+import java.util.Locale
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
@@ -84,3 +85,34 @@ final class RailRendererSpec extends AnyFlatSpec with Matchers:
     ).mkString("\n")
     rendered should not include "MA64"
     rendered should not include "source-hash"
+
+  it should "sanitiser les anciennes erreurs qui transportent une valeur brute" in:
+    val secretIban = "MA64SECRET000000000000000"
+    val secretCsv =
+      s"9,ATH,CIH,$secretIban,MA64CIH00000000000000000,100,VIR,MAD"
+    val rendered = List(
+      RailRenderer.renderError(InvalidIban(secretIban)),
+      RailRenderer.renderError(MalformedCsv(secretCsv)),
+      RailRenderer.renderError(
+        FieldValidationError("sourceIban", s"valeur interdite : $secretIban")
+      )
+    )
+
+    rendered shouldBe List(
+      "REJET : VALIDATION_IBAN - IBAN invalide",
+      "REJET : VALIDATION_CSV - format CSV invalide",
+      "REJET : VALIDATION_FIELD - champ sourceIban invalide"
+    )
+    rendered.mkString should not include secretIban
+    rendered.mkString should not include secretCsv
+
+  it should "stabiliser les codes techniques quelle que soit la locale JVM" in:
+    val previousLocale = Locale.getDefault
+
+    try
+      Locale.setDefault(Locale.forLanguageTag("tr"))
+      RailRenderer.renderError(
+        TechnicalError("hash-iban", "ProviderException", "indisponible")
+      ) shouldBe
+        "REJET : TECH_HASH_IBAN - ProviderException : indisponible"
+    finally Locale.setDefault(previousLocale)

@@ -101,6 +101,37 @@ final class RailValidationSpec extends AnyFlatSpec with Matchers:
       )
     )
 
+  it should "relier chaque segment bancaire IBAN à la banque déclarée" in:
+    val incoherent = rail(
+      source = destinationIban,
+      destination = sourceIban
+    )
+
+    RailValidation.validate(config, Set.empty)(incoherent) shouldBe Left(
+      TransactionValidationError(
+        3,
+        Some(1),
+        List(
+          "IBAN_SOURCE_BANQUE_INCOHERENTE:ATH",
+          "IBAN_DESTINATION_BANQUE_INCOHERENTE:CIH"
+        )
+      )
+    )
+
+  it should "refuser deux IBAN identiques en plus du virement interne" in:
+    val sameIban = rail(
+      receiver = "ATH",
+      destination = sourceIban
+    )
+
+    RailValidation.validate(config, Set.empty)(sameIban) shouldBe Left(
+      TransactionValidationError(
+        3,
+        Some(1),
+        List("VIREMENT_INTERNE", "IBANS_IDENTIQUES")
+      )
+    )
+
   it should "court-circuiter un identifiant déjà accepté par une erreur métier" in:
     RailValidation.validate(config, Set(1))(rail()) shouldBe Left(
       Iso20022Rejection(Iso20022Code.AM05, transactionId = 1)

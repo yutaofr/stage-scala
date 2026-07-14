@@ -1,6 +1,7 @@
 package clearing.v21
 
 import clearing.model.*
+import java.util.Locale
 import scala.math.BigDecimal.RoundingMode
 
 object RailRenderer:
@@ -43,8 +44,16 @@ object RailRenderer:
         (failure.code, failure.message)
       case TransactionValidationError(_, _, reasons) =>
         ("VALIDATION_TRANSACTION", reasons.mkString("+"))
-      case validation: ValidationError =>
-        ("VALIDATION", validation.message)
+      case InvalidAmount(_) =>
+        ("VALIDATION_AMOUNT", "montant invalide")
+      case UnknownBank(code) =>
+        ("VALIDATION_BANK", s"banque $code inconnue")
+      case InvalidIban(_) =>
+        ("VALIDATION_IBAN", "IBAN invalide")
+      case FieldValidationError(field, _) =>
+        ("VALIDATION_FIELD", s"champ $field invalide")
+      case MalformedCsv(_) =>
+        ("VALIDATION_CSV", "format CSV invalide")
       case business: BusinessError =>
         (business.internalCode, business.businessMessage)
       case CorruptedFile(reason) =>
@@ -54,7 +63,7 @@ object RailRenderer:
       case FileReadFailure(path, reason) =>
         ("TECH_READ", s"lecture $path : $reason")
       case TechnicalError(operation, causeType, detail) =>
-        val code = operation.toUpperCase.replace('-', '_')
+        val code = operation.toUpperCase(Locale.ROOT).replace('-', '_')
         (s"TECH_$code", s"$causeType : $detail")
 
     s"REJET : $code - $reason"

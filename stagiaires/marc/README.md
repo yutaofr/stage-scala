@@ -25,3 +25,4 @@ trouvent dans `suivi/`.
 | S7 | v1.2 | Compensation bilatérale, multilatérale et passage à l'échelle | Validée le 14/07/2026 |
 | S8 | v1.3 | Interopérabilité Java/Spring et démo du mois 2 | Validée le 14/07/2026 |
 | S9 | v2.0 | Pureté, composition et currying | Validée le 14/07/2026 |
+| S10 | v2.1 | Either, Try et Railway Oriented Programming | Validée le 14/07/2026 |

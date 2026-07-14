@@ -1,10 +1,10 @@
-# Clearing Engine de Marc — v2.0
+# Clearing Engine de Marc — v2.1
 
 Ce projet est le fil rouge construit par Marc pendant son stage. La version
-`v2.0` ouvre le troisième mois du stage. Elle conserve les jalons S1 à S8 pour
-la non-régression et ajoute un cœur de clearing déterministe composé uniquement
-de fonctions pures. Les fichiers et la console restent dans deux adaptateurs de
-bord. Le même cœur fonctionne avec un profil MAD ou EUR.
+`v2.1` poursuit le troisième mois du stage. Elle conserve les jalons S1 à S9
+pour la non-régression et ajoute une voie ferrée `Either` complète. Chaque
+ligne traverse parsing, validation, récupération, change, frais et
+anonymisation; son premier échec devient une valeur sans interrompre le batch.
 
 ## Prérequis
 
@@ -38,17 +38,23 @@ docker run --rm -v "$PWD:/app" -w /app \
 sbt run
 ```
 
-La commande traite `transactions-v20.csv` avec le profil MAD. Un autre fichier
+La commande traite `transactions-v21.csv` avec le profil MAD. Un autre fichier
 peut être fourni explicitement :
 
 ```bash
-sbt "run chemin/transactions-v20.csv"
+sbt "run chemin/transactions-v21.csv"
 ```
 
-Le profil EUR réutilise exactement le même pipeline :
+Le scénario de panne contrôlée prouve la catégorie technique :
 
 ```bash
-sbt "run --profile EUR transactions-v20.csv"
+sbt "run --simulate-hash-failure"
+```
+
+Le cœur v2.0 et son profil EUR restent disponibles séparément :
+
+```bash
+sbt "runMain clearing.v20.runClearingAppV20 --profile EUR transactions-v20.csv"
 ```
 
 La démonstration connectée v1.3 reste disponible séparément :
@@ -219,19 +225,39 @@ non-régression, mais ne font pas partie du contrat v1.3.
 - `sbt-scoverage` : gate limité aux six fichiers du cœur pur, avec seuils
   statement et branch fixés à 100 %.
 
+## Modules ajoutés en S10
+
+- `EitherCsvParser` : parsing détaillé des huit colonnes en
+  `Either[ParsingError, RailTransaction]`, sans conserver la ligne brute.
+- `RailValidation` : accumulation des violations d'une ligne et rejet métier
+  des IDs déjà acceptés.
+- `AccountReservation` : exercice `findAccount`, `checkBalance` et
+  `reserveFunds` composé avec un `for`.
+- `RailRecovery` : récupération du seul libellé optionnel, avec warning
+  conservé sur le rail droit.
+- `RailwayEngine` : `for` complet par ligne, `List[Either]`, un
+  `partitionMap`, statistiques et netting limité aux succès.
+- `SecurityUtils.hashIbanTry`, `HttpExchangeRateService.fetchRateTry` et
+  `V21IO` : frontières Java et fichier converties en valeurs typées.
+- `RailRenderer` : consommation des rails avec `fold`, maps triées et rendu
+  sans IBAN brut ni stack trace.
+- `ClearingAppV21` et `V21Reporter` : capture de `NonFatal`, CLI, panne de hash
+  simulée explicitement et unique frontière console.
+
 ## Chemin d'une donnée
 
 ```text
-fichier -> IOBridge -> chaîne CSV
-        -> splitLines -> parse -> validate -> prepare -> calculate
-        -> PureClearingReport -> rendu déterministe -> ClearingReporter
+fichier -> V21IO -> chaîne CSV -> lignes numérotées
+        -> parse -> validate -> recover -> forex -> fee -> anonymize
+        -> List[Either[ClearingError, RailSuccess]]
+        -> partitionMap -> statistiques + netting des Right
+        -> RailRenderer -> V21Reporter
 ```
 
-Le cœur v2.0 reçoit une chaîne et une configuration immutable. Il retourne un
-rapport sans lire, afficher, interroger le réseau, demander l'heure ou créer un
-UUID. Une ligne échouée devient un `PureRejection`; les autres sont nettoyées,
-validées, converties, anonymisées puis compensées. Les frais sont rapportés à
-part et ne modifient pas le principal crédité au bénéficiaire.
+Le cœur v2.1 reçoit une chaîne, une configuration immutable et une fonction de
+hash. Il retourne un rapport sans lire ni afficher. Chaque `Left` reste attaché
+à sa ligne; seuls les `Right` sont anonymisés puis compensés. Les frais restent
+séparés du principal.
 
 ## Lancer les laboratoires S3
 
@@ -296,20 +322,33 @@ du flux ; elle ne garantit donc pas un temps inférieur.
     l'afficher.
 26. Un rapport déterministe exclut l'heure et l'UUID, trie les maps avant le
     rendu et conserve l'ordre d'entrée des listes.
+27. `Either` nomme l'erreur sur le rail gauche et la valeur sur le rail droit;
+    `flatMap` arrête seulement la ligne au premier échec.
+28. Une for-comprehension sur `Either` exprime le même enchaînement que des
+    appels successifs à `flatMap` et un dernier `map`.
+29. `fold` force le traitement explicite des deux rails sans dépendance
+    externe; l'`Either` standard ne fournit pas `bimap`.
+30. Une récupération sûre reste étroite et observable. Le défaut de libellé
+    devient un warning; montant, IBAN, taux et frais restent bloquants.
+31. `Try` protège une frontière Java; le cœur convertit ensuite son `Failure`
+    en `TechnicalError` stable.
+32. `NonFatal` couvre les exceptions récupérables. Les erreurs fatales de la
+    JVM doivent continuer à remonter.
 
-## Limites volontaires de v1.3 et v2.0
+## Limites volontaires de v2.1
 
-- V2.0 accumule explicitement succès et rejets entre les étapes. La propagation
-  de l'`Either` avec `flatMap` sera le sujet de S10.
-- Les profils MAD/EUR sont des valeurs locales déterministes. V2.0 ne contacte
+- V2.1 traite chaque ligne avec `Either`, mais n'accumule pas plusieurs erreurs
+  entre les étapes : le premier échec bloquant court-circuite la ligne.
+- Le profil MAD est une valeur locale déterministe. V2.1 ne contacte
   volontairement ni fournisseur de taux, ni Kafka, ni Cassandra.
 - Les frais sont calculés et rapportés, mais ne participent pas au principal de
-  règlement. La comptabilisation complète des commissions reste hors S9.
+  règlement. La comptabilisation complète des commissions reste hors S10.
 
 - Les codes bancaires restent des `String`; le validateur les relie au
   référentiel, mais le compilateur ne peut pas détecter une faute de frappe.
-- Le parser utilise encore `Option`; `MalformedCsv` conserve la ligne brute,
-  mais ne distingue pas encore chaque cause syntaxique.
+- La factory historique `Transaction.fromCsv`, conservée pour les jalons S5 à
+  S9, utilise encore `Option` et `MalformedCsv`. Le chemin actif v2.1 passe par
+  `EitherCsvParser` et ne conserve jamais la ligne CSV brute dans une erreur.
 - Les IBAN restent des chaînes dans le candidat `Transaction` afin que le
   validateur puisse expliquer les entrées invalides; seules les valeurs passées
   par `Iban.apply` portent la garantie de validité.
