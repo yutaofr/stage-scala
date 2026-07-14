@@ -92,12 +92,14 @@ final case class ProducerCommand(
   count: Int,
   seed: Long,
   rate: Int,
-  bootstrapServers: String
+  bootstrapServers: String,
+  rejectEvery: Option[Int] = None
 )
 
 object ProducerCli:
   val Usage =
     "Usage : producer [--count N] [--seed N] [--rate N] " +
+      "[--reject-every N] " +
       "[--bootstrap-servers HOST:PORT]"
 
   private val default = ProducerCommand(50, 1500L, 10, "localhost:9092")
@@ -115,6 +117,10 @@ object ProducerCli:
           loop(tail, command.copy(seed = value))
       case "--rate" :: raw :: tail =>
         positiveInt(raw).flatMap(value => loop(tail, command.copy(rate = value)))
+      case "--reject-every" :: raw :: tail =>
+        positiveInt(raw).flatMap(value =>
+          loop(tail, command.copy(rejectEvery = Some(value)))
+        )
       case "--bootstrap-servers" :: value :: tail if value.nonEmpty =>
         loop(tail, command.copy(bootstrapServers = value))
       case _ => Left(Usage)
@@ -134,16 +140,21 @@ object ProducerApp:
     )
     try
       producer.send(
-        TransactionGenerator.generate(command.count, command.seed)
+        command.rejectEvery match
+          case Some(rejectEvery) =>
+            TransactionGenerator.generateMixed(
+              command.count,
+              command.seed,
+              rejectEvery
+            )
+          case None =>
+            TransactionGenerator.generate(command.count, command.seed)
       )
     finally producer.close()
 
 @main def runTransactionProducerV30(args: String*): Unit =
   ProducerCli.parse(args.toList) match
-    case Left(error) => println(error)
+    case Left(error) => V30Reporter.print(error)
     case Right(command) =>
       val report = ProducerApp.run(command)
-      println(
-        s"PRODUCER_V30 attempted=${report.attempted} " +
-          s"acknowledged=${report.acknowledged} failed=${report.failed}"
-      )
+      V30Reporter.print(V30Renderer.producer(report))

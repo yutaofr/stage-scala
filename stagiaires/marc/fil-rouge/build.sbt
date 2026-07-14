@@ -23,7 +23,7 @@ lazy val root = project
     ),
     Test / fork := true,
     Compile / run / fork := true,
-    Compile / mainClass := Some("clearing.v23.runClearingAppV23"),
+    Compile / mainClass := Some("clearing.v30.runClearingAppV30"),
     coverageExcludedFiles :=
       s"^(?!.*[\\\\/]clearing[\\\\/]v20[\\\\/]($pureCoreFiles)$$).*$$",
     coverageFailOnMinimum := true,

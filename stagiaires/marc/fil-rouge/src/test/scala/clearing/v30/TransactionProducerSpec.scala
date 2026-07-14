@@ -27,10 +27,14 @@ final class TransactionProducerSpec extends AnyFlatSpec with Matchers:
         "42",
         "--rate",
         "100",
+        "--reject-every",
+        "10",
         "--bootstrap-servers",
         "kafka:29092"
       )
-    ) shouldBe Right(ProducerCommand(1000, 42L, 100, "kafka:29092"))
+    ) shouldBe Right(
+      ProducerCommand(1000, 42L, 100, "kafka:29092", Some(10))
+    )
 
     ProducerCli.parse(List("--rate", "0")) shouldBe Left(ProducerCli.Usage)
     ProducerCli.parse(List("--unknown")) shouldBe Left(ProducerCli.Usage)
@@ -56,6 +60,15 @@ final class TransactionProducerSpec extends AnyFlatSpec with Matchers:
     first should have size 50
     first.map(_.id) shouldBe (1 to 50).toList
     all(first.map(_.amount)) should be > BigDecimal(0)
+
+  it should "injecter des rejets déterministes pour le gate J5" in:
+    val mixed = TransactionGenerator.generateMixed(
+      count = 1000,
+      seed = 1500L,
+      rejectEvery = 10
+    )
+
+    mixed.count(event => event.sender == event.receiver) shouldBe 100
 
   "TransactionProducer" should "envoyer clé, header et JSON puis attendre tous les callbacks" in:
     val kafka = new MockProducer[String, String](

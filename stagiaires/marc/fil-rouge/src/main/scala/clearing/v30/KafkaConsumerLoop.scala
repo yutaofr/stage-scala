@@ -242,7 +242,7 @@ object ConsumerCli:
 
 @main def runKafkaConsumerV30(args: String*): Unit =
   ConsumerCli.parse(args.toList) match
-    case Left(error) => println(error)
+    case Left(error) => V30Reporter.print(error)
     case Right(command) =>
       command.maxRecords match
         case None =>
@@ -254,9 +254,5 @@ object ConsumerCli:
           )
           try
             val report = ConsumerApp.runBounded(loop, maxRecords)
-            println(
-              s"CONSUMER_V30 published=${report.published} " +
-                s"duplicates=${report.duplicates} " +
-                s"failedPartitions=${report.failedPartitions.size}"
-            )
+            V30Reporter.print(V30Renderer.consumer(report))
           finally loop.close()

@@ -28,8 +28,18 @@ object TransactionGenerator:
       )
     .toList
 
+  def generateMixed(
+    count: Int,
+    seed: Long,
+    rejectEvery: Int
+  ): List[InputTransactionEvent] =
+    require(rejectEvery > 0, "rejectEvery doit être strictement positif")
+    generate(count, seed).map: event =>
+      if event.id % rejectEvery == 0 then
+        event.copy(receiver = event.sender)
+      else event
+
   private def iban(bank: String, account: Int): String =
     val prefix = s"MA64$bank"
     val suffix = account.toString
     prefix + "0" * (24 - prefix.length - suffix.length) + suffix
-

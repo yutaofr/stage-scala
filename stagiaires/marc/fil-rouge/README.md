@@ -1,16 +1,16 @@
-# Clearing Engine de Marc — v2.3
+# Clearing Engine de Marc — v3.0
 
 Ce projet est le fil rouge construit par Marc pendant son stage. La version
-`v2.3` termine le troisième mois du stage. Elle conserve les jalons S1 à S11
-pour la non-régression et ajoute `Functor`, `Monad`, un journal pur et des tests
-de propriétés au chemin actif. ScalaCheck soumet le netting à 10 000 batchs de
-200 transactions. Des type classes exportent toujours le même résultat en
-JSON, CSV ou XML.
+`v3.0` ouvre le quatrième mois avec Kafka en mode KRaft. Elle conserve le cœur
+pur et typé v2.3, puis ajoute un producer idempotent, un consumer à commits
+manuels, une DLQ privée et une preuve at-least-once. Les semaines Pekko et ZIO
+restent hors périmètre; aucune de ces bibliothèques n'est introduite.
 
 ## Prérequis
 
 - Java 17 ou 21.
-- SBT 1.10.11, ou Docker.
+- SBT 1.10.11.
+- Docker avec le plugin Compose.
 
 ## Lancer les tests
 
@@ -23,6 +23,13 @@ conservation sur 10 000 batchs :
 
 ```bash
 sbt "testOnly clearing.v23.*"
+```
+
+Le gate ciblé S15 vérifie les contrats Kafka, les fenêtres de crash et 1 000
+événements déterministes :
+
+```bash
+sbt "testOnly clearing.v30.*"
 ```
 
 La couverture du cœur pur v2.0 est mesurée et bloquante à 100 % des statements
@@ -40,7 +47,29 @@ docker run --rm -v "$PWD:/app" -w /app \
   sbt test
 ```
 
-## Lancer la démonstration
+## Lancer Kafka v3.0
+
+```bash
+docker compose -f docker/docker-compose-kafka.yml up -d --wait
+sbt "runMain clearing.v30.runTransactionProducerV30"
+sbt "runMain clearing.v30.runKafkaConsumerV30 \
+  --group-id marc-v30-demo --max-records 50"
+```
+
+Le producer par défaut envoie 50 événements à 10/s. Le gate reproductible de
+1 000 événements injecte 100 rejets fonctionnels :
+
+```bash
+sbt "runMain clearing.v30.runTransactionProducerV30 \
+  --count 1000 --seed 1500 --rate 1000 --reject-every 10"
+sbt "runMain clearing.v30.runKafkaConsumerV30 \
+  --group-id marc-v30-gate --max-records 1000"
+```
+
+Les preuves exécutées se trouvent dans `preuves/`. Arrêter le laboratoire avec
+`docker compose -f docker/docker-compose-kafka.yml down`.
+
+## Lancer les démonstrations historiques
 
 ```bash
 sbt "run --format JSON"
@@ -297,7 +326,37 @@ non-régression, mais ne font pas partie du contrat v1.3.
 - `ClearingAppV23` et `V23Reporter` : lecture, SHA-256, capture de `NonFatal` et
   unique frontière console.
 
-## Chemin d'une donnée
+## Modules ajoutés en S15
+
+- `EventModel` et `EventCodec` : contrat JSON à huit champs, enveloppe horodatée
+  et événements output/DLQ sans IBAN brut.
+- `V30RecordProcessor` : adaptation vers `TypedRailwayEngine` v2.3 sans
+  recopier le domaine ni les règles métier.
+- `TransactionGenerator` et `TransactionProducer` : seed fixe, clé sender,
+  header transaction, `acks=all`, idempotence et callbacks attendus.
+- `BatchCoordinator` : traitement séquentiel par partition, arrêt au premier
+  échec et calcul exact de l'offset suivant.
+- `InMemoryDeduplicationRegistry` : déduplication pédagogique, appliquée après
+  l'accusé de publication et explicitement perdue au redémarrage.
+- `KafkaDecisionPublisher`, `KafkaOffsetCommitter` et `KafkaConsumerLoop` :
+  output/DLQ avant `commitSync`, auto-commit désactivé et arrêt propre.
+- `docker-compose-kafka.yml` : Apache Kafka 4.3.0 KRaft, listeners hôte et
+  conteneur, healthcheck broker et trois topics de trois partitions.
+
+## Chemin Kafka v3.0
+
+```text
+clearing-input -> RecordEnvelope -> EventCodec -> TypedRailwayEngine v2.3
+  -> ValidatedEvent ou RejectedEvent
+  -> clearing-output ou clearing-dlq
+  -> ack -> cache mémoire -> commit(partition, offset + 1)
+```
+
+La clé est la banque émettrice. La DLQ contient un fingerprint SHA-256 plutôt
+que le payload original. Un crash après publication et avant commit peut
+rejouer le record; le v3.0 garantit at-least-once, pas exactly-once externe.
+
+## Chemin historique v2.3
 
 ```text
 fichier -> V22IO -> chaîne CSV -> lignes numérotées
@@ -412,8 +471,28 @@ du flux ; elle ne garantit donc pas un temps inférieur.
     candidats rares peut faire abandonner ScalaCheck avant le nombre d'essais.
 44. Dix mille essais cherchent efficacement des contre-exemples, mais ne
     constituent pas une preuve formelle exhaustive.
+45. KRaft porte les métadonnées Kafka sans ZooKeeper; le laboratoire conserve
+    cependant un seul broker et un facteur de réplication 1.
+46. La clé sender conserve l'ordre des événements d'une banque dans une même
+    partition; elle ne crée aucun ordre global entre partitions.
+47. Un offset committé désigne le prochain record à lire. Après l'offset 10,
+    le consumer committe donc 11.
+48. At-least-once préfère un doublon possible à une perte : output ou DLQ doit
+    être confirmé avant le commit.
+49. L'idempotence du producer Kafka ne rend pas un effet externe exactly-once.
+    La déduplication durable appartient au stockage métier.
+50. Une DLQ est aussi une frontière de sécurité; un fingerprint permet la
+    corrélation sans recopier les IBAN du payload invalide.
 
-## Limites volontaires de v2.3
+## Limites volontaires de v3.0
+
+- Le cluster possède un seul broker, sans réplication réelle, TLS ni SASL.
+- Le cache de déduplication est local au processus et perdu au redémarrage.
+- Un crash entre l'ack de sortie et le commit peut republier le résultat.
+- Les événements JSON ne disposent pas encore d'un registry de schémas.
+- Le monitoring Prometheus/Grafana arrive après la persistance Cassandra.
+
+## Limites volontaires historiques de v2.3
 
 - Les serializers sont volontaires et sans bibliothèque externe. Ils prouvent
   les type classes, l'échappement et le déterminisme; ils ne constituent pas
