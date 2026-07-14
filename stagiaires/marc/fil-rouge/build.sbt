@@ -1,6 +1,6 @@
 ThisBuild / scalaVersion := "3.3.8"
 ThisBuild / organization := "ma.ath.stagiaires"
-ThisBuild / version := "0.4.0-SNAPSHOT"
+ThisBuild / version := "1.0.0-SNAPSHOT"
 
 lazy val root = project
   .in(file("."))
@@ -9,5 +9,5 @@ lazy val root = project
     libraryDependencies += "org.scalatest" %% "scalatest" % "3.2.19" % Test,
     Test / fork := true,
     Compile / run / fork := true,
-    Compile / mainClass := Some("clearing.runMainV04")
+    Compile / mainClass := Some("clearing.v10.runClearingAppV10")
   )

@@ -20,4 +20,5 @@ trouvent dans `suivi/`.
 | S2 | v0.2 | Parsing, pattern matching et traits | Validée le 14/07/2026 |
 | S3 | v0.3 | Collections et pipeline fonctionnel | Validée le 14/07/2026 |
 | S4 | v0.4 | HOF, Option et récursion terminale | Validée le 14/07/2026 |
-| S5 | v1.0 | Case classes, enums et ADT métier | À lancer |
+| S5 | v1.0 | Case classes, enums et ADT métier | Validée le 14/07/2026 |
+| S6 | v1.1 | Gestion d'erreurs avec Either et Validated | À lancer |

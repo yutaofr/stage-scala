@@ -1,9 +1,9 @@
-# Clearing Engine de Marc — v0.4
+# Clearing Engine de Marc — v1.0
 
 Ce projet est le fil rouge construit par Marc pendant son stage. La version
-`v0.4` clôt le premier mois du stage. Cette version conserve les fondations S1
-à S3 et ajoute des règles configurables, la composition avec `Option` et des
-algorithmes récursifs terminaux.
+`v1.0` ouvre le deuxième mois du stage. Cette version conserve les prototypes
+S1 à S4 pour la non-régression et ajoute une nouvelle chaîne fondée sur des case
+classes, des enums et une hiérarchie d'erreurs métier.
 
 ## Prérequis
 
@@ -33,7 +33,7 @@ sbt run
 Un autre fichier peut être fourni explicitement :
 
 ```bash
-sbt "run chemin/transactions.csv"
+sbt "run chemin/transactions-v10.csv"
 ```
 
 Le format final contient cinq colonnes :
@@ -42,12 +42,16 @@ Le format final contient cinq colonnes :
 id,sender,receiver,amount,type
 ```
 
-Le parser accepte aussi le format pédagogique à trois colonnes. `MainV04`
-compose parsing, validation et enrichissement avec `Option`. Les règles par
-défaut rejettent les montants non positifs ou supérieurs ou égaux à 100 000 DH.
-Le workflow rejette aussi les banques inconnues et les virements internes. Pour
-chaque transfert retenu, le moteur débite l'émetteur et crédite le bénéficiaire ;
+Le parser accepte aussi le format pédagogique à trois colonnes.
+`ClearingAppV10` sépare les lignes malformées, les transactions invalides et
+les transactions valides. Les règles rejettent les montants non positifs, les
+banques inconnues, les virements internes et les identifiants dupliqués. Pour
+chaque transfert valide, le moteur débite l'émetteur et crédite le bénéficiaire;
 la somme des positions reste nulle.
+
+Comme le format à trois colonnes ne porte pas d'identifiant, `parseLines` lui
+attribue des identifiants distincts après le plus grand ID explicite du fichier.
+Plusieurs lignes historiques ne deviennent donc pas de faux doublons.
 
 ## Modules de la semaine
 
@@ -95,18 +99,34 @@ la somme des positions reste nulle.
 - `MainV04` : règles injectées, netting `foldLeft`, compteurs d'acceptation et
   rapport trié.
 
+## Modules ajoutés en S5
+
+- `clearing.model.Domain` : case classes `Bank`, `Account`, `Transaction`,
+  `ClearingBatch`, `ClearingResult` et résultats de validation nommés.
+- `TransactionStatus` et `TransactionType` : états et types fermés, contrôlés
+  par le compilateur.
+- `ClearingError` : erreurs `InvalidAmount`, `UnknownBank`,
+  `DuplicateTransaction` et `ValidationError`.
+- `CsvParserV10` et `TransactionGeneratorV10` : création de transactions
+  métier sans tuple positionnel.
+- `TransactionValidator` et `ErrorReporter` : accumulation et rendu exhaustif
+  des erreurs typées.
+- `NettingCalculatorV10`, `BatchProcessor` et `ClearingAppV10` : traitement
+  complet du lot et rapport v1.0.
+
 ## Chemin d'une donnée
 
 ```text
-CSV -> List[String] -> view -> Transaction.apply
-    -> Option validation -> Option enrichissement -> flatten
-    -> List[Transaction] -> NettingCalculator.calculate
-    -> Map[banque, position] -> rapport trié
+CSV -> List[String] -> CsvParserV10 -> List[Transaction]
+    -> ValidationSummary(valid, invalid)
+    -> ClearingBatch -> ClearingResult
+    -> Map[banque, position] + erreurs typées -> rapport trié
 ```
 
-Une ligne malformée, une règle refusée ou une banque absente produit `None`.
-`flatten` retire ces absences et le rapport compte les lignes ignorées. S6
-remplacera cette information binaire par des erreurs métier typées.
+Une erreur de règle produit un sous-type de `ClearingError`. Une ligne que le
+parser ne peut pas construire produit encore `None`; le rapport la compte sans
+en conserver la cause. S6 remplacera ce dernier manque par `Either` et
+`Validated`.
 
 ## Lancer les laboratoires S3
 
@@ -128,15 +148,22 @@ du flux ; elle ne garantit donc pas un temps inférieur.
 3. En Scala, `if`, `match`, `for` et les blocs produisent des valeurs.
 4. Une fonction de calcul retourne une valeur ; le bord du programme l'affiche.
 5. Un test décrit un comportement attendu et protège les prochains refactorings.
+6. Une case class donne un nom et un type à chaque champ; `copy` crée une
+   nouvelle valeur sans mutation.
+7. Un enum ferme la liste des états possibles; un match exhaustif signale les
+   cas oubliés lors de la compilation.
+8. Un ADT d'erreur permet d'accumuler et de traiter des échecs métier sans
+   comparer des messages libres.
 
-## Limites volontaires de v0.4
+## Limites volontaires de v1.0
 
-- Les transferts restent des tuples : l'ordre des champs peut être inversé.
-- Les banques et catégories restent des `String` : une faute de frappe compile.
-- `Option` distingue succès et absence, mais ne conserve pas la cause d'un
-  rejet et ne permet pas d'accumuler plusieurs erreurs.
+- Les codes bancaires restent des `String`; le validateur les relie au
+  référentiel, mais le compilateur ne peut pas détecter une faute de frappe.
+- Le parser utilise encore `Option`; il compte les lignes malformées sans
+  conserver leur cause précise.
+- `ClearingError` accumule les erreurs métier dans une `List`; S6 comparera ce
+  choix à `Either` et `Validated`.
 
-Ces limites alimentent directement les semaines S5, S6 et S10.
-
-Les transformations du premier mois rendent les limites des tuples visibles ;
-leur remplacement reste volontairement réservé à la modélisation ADT de S5.
+Les modules v0.x contiennent encore leurs tuples pédagogiques. Le paquet v1.0
+ne les appelle pas; ils restent disponibles pour comparer avant et après la
+migration.
