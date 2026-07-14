@@ -35,7 +35,8 @@ object KafkaRecordAdapter:
     )
 
 final class KafkaDecisionPublisher(
-  producer: Producer[String, String]
+  producer: Producer[String, String],
+  headerInjector: KafkaRecordHeaderInjector = KafkaRecordHeaderInjector.noop
 ) extends DecisionPublisher:
   def publish(
     _key: Option[String],
@@ -59,12 +60,20 @@ final class KafkaDecisionPublisher(
           "transaction-id",
           id.toString.getBytes(StandardCharsets.UTF_8)
         )
+    headerInjector.inject(record)
 
     try
       producer.send(record).get()
       Right(())
     catch
       case NonFatal(_) => Left(PublishingFailure("publication Kafka impossible"))
+
+trait KafkaRecordHeaderInjector:
+  def inject(record: ProducerRecord[String, String]): Unit
+
+object KafkaRecordHeaderInjector:
+  val noop: KafkaRecordHeaderInjector = new KafkaRecordHeaderInjector:
+    def inject(record: ProducerRecord[String, String]): Unit = ()
 
 final class KafkaOffsetCommitter(
   consumer: Consumer[String, String]

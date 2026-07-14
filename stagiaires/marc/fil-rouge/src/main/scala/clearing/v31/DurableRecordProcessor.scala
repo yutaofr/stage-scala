@@ -13,11 +13,19 @@ enum DurableRecordOutcome:
 trait DurableProcessing:
   def process(envelope: RecordEnvelope): DurableRecordOutcome
 
+trait DurableStageObserver:
+  def aroundPersist[A](operation: => A): A
+
+object DurableStageObserver:
+  val noop: DurableStageObserver = new DurableStageObserver:
+    def aroundPersist[A](operation: => A): A = operation
+
 final class DurableRecordProcessor(
   decide: RecordEnvelope => ProcessingDecision,
   repository: DurableRepository,
   publisher: DecisionPublisher,
-  now: () => Instant = () => Instant.now()
+  now: () => Instant = () => Instant.now(),
+  observer: DurableStageObserver = DurableStageObserver.noop
 ) extends DurableProcessing:
   def process(envelope: RecordEnvelope): DurableRecordOutcome =
     try processUnsafe(envelope)
@@ -29,6 +37,12 @@ final class DurableRecordProcessor(
     envelope: RecordEnvelope
   ): DurableRecordOutcome =
     val original = decide(envelope)
+    observer.aroundPersist(persistUnsafe(envelope, original))
+
+  private def persistUnsafe(
+    envelope: RecordEnvelope,
+    original: ProcessingDecision
+  ): DurableRecordOutcome =
     val fingerprint = PayloadFingerprint.sha256(envelope.value)
     val eventKey = original.transactionId
       .map(id => s"tx:$id")

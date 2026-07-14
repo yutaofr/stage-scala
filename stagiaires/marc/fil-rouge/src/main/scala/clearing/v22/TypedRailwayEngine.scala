@@ -15,22 +15,42 @@ private case class ChargedTransaction(
   fee: Money
 )
 
+enum RailwayStage(val spanName: String):
+  case Parse extends RailwayStage("parse")
+  case Validate extends RailwayStage("validate")
+  case Netting extends RailwayStage("netting")
+
+trait RailwayStageObserver:
+  def around[A](stage: RailwayStage)(operation: => A): A
+
+object RailwayStageObserver:
+  val noop: RailwayStageObserver = new RailwayStageObserver:
+    def around[A](stage: RailwayStage)(operation: => A): A = operation
+
 object TypedRailwayEngine:
   def processLine(
     config: V22Config,
     seenIds: Set[Int],
-    hash: HashBoundary
+    hash: HashBoundary,
+    observer: RailwayStageObserver = RailwayStageObserver.noop
   )(
     line: NumberedLine
   ): Either[V22Error, PreparedTransaction] =
-    for
-      parsed <- TypedCsvParser.parse(line)
-      valid <- V22Validation.validate(config, seenIds)(parsed)
-      recovered <- recoverLabel(config)(valid)
-      converted <- applyForex(config)(recovered)
-      charged <- applyFee(config)(converted)
-      secured <- anonymize(hash)(charged)
-    yield secured
+    observer
+      .around(RailwayStage.Parse)(TypedCsvParser.parse(line))
+      .flatMap: parsed =>
+        observer
+          .around(RailwayStage.Validate)(
+            V22Validation.validate(config, seenIds)(parsed)
+          )
+          .flatMap: valid =>
+            observer.around(RailwayStage.Netting):
+              for
+                recovered <- recoverLabel(config)(valid)
+                converted <- applyForex(config)(recovered)
+                charged <- applyFee(config)(converted)
+                secured <- anonymize(hash)(charged)
+              yield secured
 
   def process(
     config: V22Config,

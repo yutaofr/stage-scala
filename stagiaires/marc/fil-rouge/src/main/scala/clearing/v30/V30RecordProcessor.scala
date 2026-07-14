@@ -1,13 +1,14 @@
 package clearing.v30
 
-import clearing.v22.{HashBoundary, NumberedLine, PreparedTransaction, TypedRailwayEngine, V22Config, V22Error, V22Warning}
+import clearing.v22.{HashBoundary, NumberedLine, PreparedTransaction, RailwayStageObserver, TypedRailwayEngine, V22Config, V22Error, V22Warning}
 import clearing.v22.DomainTypes.*
 import java.nio.charset.StandardCharsets
 import java.security.MessageDigest
 
 final class V30RecordProcessor(
   config: V22Config,
-  hash: HashBoundary
+  hash: HashBoundary,
+  observer: RailwayStageObserver = RailwayStageObserver.noop
 ):
   def process(envelope: RecordEnvelope): ProcessingDecision =
     EventCodec.decodeInput(envelope.value) match
@@ -20,7 +21,7 @@ final class V30RecordProcessor(
         )
       case Right(event) =>
         TypedRailwayEngine
-          .processLine(config, Set.empty, hash)(
+          .processLine(config, Set.empty, hash, observer)(
             NumberedLine(lineNumber(envelope.offset), canonicalCsv(event))
           )
           .fold(
