@@ -76,7 +76,7 @@ le broker API.
 - [x] Key, headers et value de output/DLQ contiennent zéro IBAN brut.
 - [x] La suite S1–S15 passe sous Java 21.
 - [x] La suite S1–S15 passe sous Java 17 Docker.
-- [ ] La revue mentor ne conserve aucun point critique ou important.
+- [x] La revue mentor ne conserve aucun point critique ou important.
 
 ## Journal TDD
 
@@ -102,7 +102,7 @@ le broker API.
 
 ## Validation mentor
 
-**Décision : qualification en cours.**
+**Décision : semaine validée le 14 juillet 2026.**
 
 La suite complète passe sous Java 21 et Java 17 Docker : 515 tests, 84 suites,
 0 échec dans chaque environnement. Le gate Kafka propre confirme 1 000 entrées,
@@ -111,5 +111,9 @@ La suite complète passe sous Java 21 et Java 17 Docker : 515 tests, 84 suites,
 La première revue senior a trouvé un point critique et deux points importants :
 absence de `seek` après une publication échouée, fuite possible par la clé
 Kafka héritée de l'entrée et collision de déduplication entre deux payloads de
-même ID. Les correctifs sont implémentés et couverts par tests. La décision
-finale attend la contre-revue senior.
+même ID. La contre-revue confirme leur fermeture : 0 point critique et 0 point
+important. Les 38 tests v3.0 passent dans 9 suites.
+
+Point mineur reporté à la semaine d'observabilité : le mode continu ne journalise
+pas encore les compteurs de retry et de doublons de chaque batch. Cette limite
+ne modifie pas la sémantique at-least-once validée ici.

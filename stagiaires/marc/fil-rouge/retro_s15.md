@@ -56,5 +56,7 @@ contrats de schéma.
 
 Le gate propre a produit et consommé 1 000 événements : 900 sorties, 100 DLQ,
 lag nul et aucun IBAN brut. Le netting des succès reste équilibré. La mutation
-du mauvais ordre mark/publish a bien été détectée. Le v3.0 est prêt pour la
-revue mentor et pour la persistance durable de S16.
+du mauvais ordre mark/publish a bien été détectée. Après fermeture des trois
+points bloquants de la première revue, la contre-revue conclut à 0 point
+critique et 0 point important. Le v3.0 est prêt pour la persistance durable de
+S16.
