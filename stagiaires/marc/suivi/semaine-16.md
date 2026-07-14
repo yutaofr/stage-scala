@@ -24,13 +24,16 @@ garanties Kafka de S15 et ne prétendre ni exactly-once, ni haute disponibilité
 - [x] J1 — Lancer Cassandra 4.1.11, créer un keyspace avec
   `NetworkTopologyStrategy` et modéliser cinq tables par requête.
 - [x] J2 — Définir un repository asynchrone, une session partagée, des
-  statements préparés et des projections idempotentes.
+  statements préparés et des projections idempotentes; comparer trois runs
+  séquentiels à trois runs sur huit threads après warm-up.
 - [x] J3 — Orchestrer `Received`, projections, `Projected`, ack, `Completed`,
   commit et reprise de partition; faire échouer une mutation de l'ordre.
 - [x] J4 — Lire historique bucketé, mouvements et position banque/jour, puis
-  agréger le top des paires sans `ALLOW FILTERING`.
+  agréger le top des paires sans `ALLOW FILTERING`; réconcilier la position et
+  exécuter trois rafraîchissements dashboard sans chevauchement.
 - [x] J5 — Qualifier 500 records, couper Cassandra pendant le traitement,
-  reprendre avec le même groupe et prouver un replay durable complet.
+  reprendre avec le même groupe, prouver un replay durable complet et observer
+  le système dix minutes sur 30 000 records.
 
 ## Livrable v3.1
 
@@ -58,12 +61,14 @@ Le CLI unifié fournit `producer`, `qualify`, `consumer` et `report`.
 - [x] Les IBAN bruts ne sont stockés dans aucune table.
 - [x] La session et les statements sont partagés pendant le processus.
 - [x] Le repository expose des `CompletionStage` et appelle `executeAsync`.
+- [x] Le benchmark conserve warm-up, paramètres et trois mesures par mode.
 - [x] La boucle borne les effets actifs avec `max.poll.records=1`.
 - [x] Les projections valides créent 1 historique, 2 mouvements, 2
   contributions et 1 activité de paire.
 - [x] Un replay exact ne double aucune projection.
 - [x] Le même ID avec un autre fingerprint devient `EVENT_ID_CONFLICT` durable.
-- [x] Un JSON sans ID possède une clé durable dérivée de son fingerprint.
+- [x] Un JSON sans ID possède une clé durable topic/partition/offset; deux
+  offsets aux octets identiques gardent chacun leur DLQ.
 - [x] `Completed` arrive après l'ack output/DLQ et avant le commit.
 - [x] La mutation `Completed avant publish` fait échouer trois tests.
 - [x] Les fenêtres `Received`, projection, `Projected` et ack sont testées.
@@ -76,8 +81,13 @@ Le CLI unifié fournit `producer`, `qualify`, `consumer` et `report`.
 - [x] Un nouveau groupe relit 500 doublons sans publication ni projection.
 - [x] Output, DLQ et historique contiennent zéro IBAN brut.
 - [x] Le test live force `pageSize=1` et traverse plusieurs pages.
-- [x] La suite S1–S16 passe sous Java 21 : 546 tests, 94 suites, 0 échec.
-- [x] La suite S1–S16 passe sous Java 17 Docker : 546 tests, 94 suites,
+- [x] La position issue des mouvements égale la projection `bank_positions`.
+- [x] Le dashboard rafraîchit une liste bornée trois fois, affiche l'âge et
+  interdit deux chargements concurrents.
+- [x] Le gate de dix minutes échantillonne CPU, mémoire, débit et lag chaque
+  minute; 30 000 records finissent avec lag 0 et position globale 0.00.
+- [x] La suite S1–S16 passe sous Java 21 : 551 tests, 95 suites, 0 échec.
+- [x] La suite S1–S16 passe sous Java 17 Docker : 551 tests, 95 suites,
   0 échec.
 - [ ] La revue mentor ne conserve aucun point critique ou important.
 

@@ -25,6 +25,8 @@ publication pourrait perdre une sortie après un crash.
   possibles, projections inchangées ;
 - état `Completed` : doublon absorbé durablement et offset autorisé ;
 - même ID, autre fingerprint : `EVENT_ID_CONFLICT` durable en DLQ ;
+- deux offsets invalides portant les mêmes octets : deux DLQ distinctes; le
+  replay du même topic/partition/offset est absorbé ;
 - échec d'une partition : arrêt local et `retryOffset` au premier record non
   terminé, sans bloquer les autres partitions.
 

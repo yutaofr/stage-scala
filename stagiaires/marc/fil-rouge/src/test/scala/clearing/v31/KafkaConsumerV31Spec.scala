@@ -108,7 +108,7 @@ final class KafkaConsumerV31Spec extends AnyFlatSpec with Matchers:
 
     closed.toList shouldBe List("producer", "cassandra")
 
-  "V31Cli" should "router producer, consumer et report" in:
+  "V31Cli" should "router producer, consumer, report et laboratoires S16" in:
     V31Cli.parse(List("producer", "--count", "50")) shouldBe Right(
       V31Command.Produce(ProducerCommand(50, 1500L, 10, "localhost:9092"))
     )
@@ -123,6 +123,31 @@ final class KafkaConsumerV31Spec extends AnyFlatSpec with Matchers:
       List("report", "--bank", "AWB", "--date", "2026-07-14")
     ) shouldBe Right(
       V31Command.Report(ReportCommand("AWB", LocalDate.parse("2026-07-14"), 10))
+    )
+    V31Cli.parse(List("benchmark")) shouldBe Right(
+      V31Command.Benchmark(BenchmarkCommand(100, 3, 8))
+    )
+    V31Cli.parse(
+      List(
+        "dashboard",
+        "--banks",
+        "AWB,CIH",
+        "--date",
+        "2026-07-14",
+        "--interval-seconds",
+        "5",
+        "--refreshes",
+        "3"
+      )
+    ) shouldBe Right(
+      V31Command.Dashboard(
+        DashboardCommand(
+          List("AWB", "CIH"),
+          LocalDate.parse("2026-07-14"),
+          5,
+          3
+        )
+      )
     )
 
   "V31BatchReports" should "retirer une partition après sa reprise" in:

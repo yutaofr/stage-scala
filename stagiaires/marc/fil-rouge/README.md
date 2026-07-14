@@ -84,6 +84,9 @@ docker compose -f docker/docker-compose-v31.yml wait kafka-init cassandra-init
 sbt "run qualify --seed 1600"
 sbt "run consumer --group-id marc-v31-demo --max-records 500"
 sbt "run report --bank AWB --date 2026-07-14"
+sbt "run benchmark --samples 100 --repetitions 3 --parallelism 8"
+sbt "run dashboard --banks AWB,CIH --date 2026-07-14 \
+  --interval-seconds 5 --refreshes 3"
 ```
 
 Le scénario `qualify` produit 485 événements valides uniques, 5 JSON invalides

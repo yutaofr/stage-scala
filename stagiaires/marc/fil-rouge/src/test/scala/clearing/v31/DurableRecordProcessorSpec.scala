@@ -144,3 +144,34 @@ final class DurableRecordProcessorSpec extends AnyFlatSpec with Matchers:
 
     await(repository.states("tx:42")) should have size 2
     repository.snapshot shouldBe DurableSnapshot(1, 2, 2, 1)
+
+  it should "distinguer deux offsets invalides portant les mêmes octets" in:
+    val repository = InMemoryDurableRepository()
+    var publications = 0
+    val rejected = ProcessingDecision.Rejected(
+      RejectedEvent(
+        None,
+        "INVALID_JSON",
+        "json invalide",
+        "c" * 64,
+        instant
+      )
+    )
+    val processor = DurableRecordProcessor(
+      _ => rejected,
+      repository,
+      DecisionPublisher: (_, _) =>
+        publications += 1
+        Right(()),
+      () => instant
+    )
+    val first = envelope("{invalid").copy(headers = Map.empty, offset = 7L)
+    val second = first.copy(offset = 8L)
+
+    processor.process(first) shouldBe DurableRecordOutcome.Published
+    processor.process(second) shouldBe DurableRecordOutcome.Published
+    processor.process(first) shouldBe DurableRecordOutcome.Duplicate
+
+    publications shouldBe 2
+    await(repository.states("invalid:clearing-input:0:7")) should have size 1
+    await(repository.states("invalid:clearing-input:0:8")) should have size 1

@@ -38,3 +38,28 @@ Tests: succeeded 1, failed 0
 Le test tronque les cinq tables, écrit deux fois le même événement via
 `executeAsync`, puis relit une seule ligne d'état, une seule ligne historique,
 une contribution par banque et une activité de paire.
+
+## Comparaison séquentielle / parallèle
+
+Le laboratoire `benchmark` utilise 100 projections déterministes. Après un
+warm-up, il exécute trois mesures séquentielles puis trois mesures sur un pool
+fixe de huit threads. Chaque mesure conserve durée, débit, succès et erreurs;
+elle ne sélectionne pas seulement le meilleur run.
+
+```bash
+sbt 'run benchmark --samples 100 --repetitions 3 --parallelism 8'
+```
+
+| Mode | Run | Durée (ms) | Débit (records/s) | Succès | Erreurs |
+|---|---:|---:|---:|---:|---:|
+| Séquentiel | 1 | 110.48 | 905.12 | 100 | 0 |
+| Séquentiel | 2 | 87.61 | 1141.40 | 100 | 0 |
+| Séquentiel | 3 | 78.89 | 1267.66 | 100 | 0 |
+| Parallèle, 8 threads | 1 | 28.50 | 3509.33 | 100 | 0 |
+| Parallèle, 8 threads | 2 | 23.81 | 4200.39 | 100 | 0 |
+| Parallèle, 8 threads | 3 | 26.04 | 3840.56 | 100 | 0 |
+
+Sur cette machine et ce jeu local, la variante parallèle est plus rapide dans
+les trois runs. Ce résultat décrit uniquement ce laboratoire : il ne fixe pas
+un débit de production et ne justifie pas d'augmenter la concurrence sans
+mesurer la saturation Cassandra.

@@ -49,6 +49,12 @@ unitaires complètent cette preuve en injectant précisément les pannes après
 `Received`, pendant les projections, après `Projected` et entre l'ack et
 `Completed`, fenêtres trop courtes pour être ciblées fiablement à la main.
 
+Le run de dix minutes complète cette preuve fonctionnelle par une observation
+opérationnelle. Les 30 000 records atteignent lag 0 pendant la cinquième
+fenêtre; les cinq fenêtres idle montrent notamment une baisse RSS après GC.
+Cette durée reste trop courte pour conclure à l'absence de fuite ou à une
+capacité de production.
+
 ## Asynchronisme borné
 
 Le port du repository retourne des `CompletionStage` et le driver utilise

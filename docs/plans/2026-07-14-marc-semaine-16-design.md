@@ -57,9 +57,10 @@ Un record déjà `Completed` avec le même fingerprint est un doublon durable :
 le consumer ne réécrit pas les projections et ne republie pas la décision,
 mais il autorise l'avancement de l'offset. Si le même ID arrive avec un autre
 fingerprint, le record suit son propre état durable et produit un
-`EVENT_ID_CONFLICT` en DLQ. Un JSON sans ID reçoit une clé
-`invalid:<fingerprint>` afin que sa DLQ puisse aussi devenir durablement
-idempotente.
+`EVENT_ID_CONFLICT` en DLQ. Un JSON sans ID reçoit la clé stable du record
+`invalid:<topic>:<partition>:<offset>`; son fingerprint reste la clé de contenu.
+Deux offsets portant les mêmes octets produisent donc chacun leur DLQ, tandis
+que le replay du même offset reste durablement idempotent.
 
 Le driver Apache Cassandra expose `CompletionStage`. Le repository prépare les
 statements une fois par session et conserve des méthodes asynchrones. Les

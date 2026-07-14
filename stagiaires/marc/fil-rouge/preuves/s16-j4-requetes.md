@@ -27,3 +27,32 @@ secondaires sont ajoutées comme suppressed exceptions.
 
 Le parcours des pages utilise un accumulateur inversé puis un seul `reverse`.
 Il évite la concaténation quadratique d'une liste complète à chaque page.
+
+## Réconciliation de position
+
+`report` lit la partition complète `transactions_by_bank_day` de la banque et
+du jour, applique `IN = crédit` et `OUT = débit`, puis compare cette position à
+`bank_positions`. Le run réel après le laboratoire benchmark a donné :
+
+```text
+REPORT_V31 bank=AWB date=2026-07-14 position=-190.00 txCount=102
+movementPosition=-190.00 positionsMatch=true
+```
+
+Le test fake et le test Cassandra live protègent la même égalité. L'invariant
+global reste contrôlé séparément, car l'égalité d'une banque ne suffit pas à
+prouver l'équilibre de toutes les banques.
+
+## Simulation dashboard
+
+```bash
+sbt 'run dashboard --banks AWB,CIH --date 2026-07-14 \
+  --interval-seconds 5 --refreshes 3'
+```
+
+Le programme a rendu trois rafraîchissements espacés de cinq secondes pour les
+deux banques. Chaque ligne contient l'heure d'observation, le timestamp de la
+dernière donnée et son âge. Un seul job planifié dessert la liste bornée. Un
+test utilise volontairement un pool planifié de deux threads et un chargement
+plus long que l'intervalle : l'in-flight guard conserve un maximum observé de
+un chargement, puis le scheduler s'arrête après le troisième résultat.

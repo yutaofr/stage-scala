@@ -77,6 +77,11 @@ final class CassandraRepositoryIntegrationSpec
         List("tx:43", "tx:42")
       await(repository.positionByBank("AWB", date)) shouldBe
         BankPosition("AWB", date, BigDecimal(-140), 2)
+      PositionReconciliation.calculate(
+        "AWB",
+        date,
+        await(repository.movementsByBank("AWB", date, 100))
+      ) shouldBe await(repository.positionByBank("AWB", date))
       await(repository.positionByBank("CIH", date)) shouldBe
         BankPosition("CIH", date, BigDecimal(140), 2)
       await(repository.topPairsByDate(date, 10)) shouldBe

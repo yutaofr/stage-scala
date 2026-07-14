@@ -29,7 +29,9 @@ final class DurableRecordProcessor(
     val fingerprint = PayloadFingerprint.sha256(envelope.value)
     val eventKey = original.transactionId
       .map(id => s"tx:$id")
-      .getOrElse(s"invalid:$fingerprint")
+      .getOrElse(
+        s"invalid:${envelope.topic}:${envelope.partition}:${envelope.offset}"
+      )
     val identity = DurableIdentity(eventKey, fingerprint)
     val states = await(repository.states(eventKey))
     val matching = states.find(_.payloadFingerprint == fingerprint)

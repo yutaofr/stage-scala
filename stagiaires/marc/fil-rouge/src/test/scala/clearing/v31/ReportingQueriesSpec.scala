@@ -31,6 +31,30 @@ final class ReportingQueriesSpec extends AnyFlatSpec with Matchers:
     await(repository.topPairsByDate(date, 10)) shouldBe
       List(PairSummary("AWB|CIH", BigDecimal(10), 1))
 
+  it should "reconcilier la position et dater les données du dashboard" in:
+    val repository = InMemoryDurableRepository()
+    await(
+      repository.saveValidated(
+        DurableIdentity("tx:42", "fp-42"),
+        event(42)
+      )
+    )
+
+    val movements = await(repository.movementsByBank("AWB", date, 100))
+    PositionReconciliation.calculate("AWB", date, movements) shouldBe
+      await(repository.positionByBank("AWB", date))
+
+    val dashboard = await(
+      DashboardLoader.load(
+        repository,
+        List("CIH", "AWB", "AWB"),
+        date,
+        () => instant.plusSeconds(60)
+      )
+    )
+    dashboard.map(_.bank) shouldBe List("AWB", "CIH")
+    all(dashboard.map(_.ageSeconds)) shouldBe 60L
+
   private def event(id: Int): ValidatedEvent =
     ValidatedEvent(
       id,

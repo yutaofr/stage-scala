@@ -1,6 +1,6 @@
 ThisBuild / scalaVersion := "3.3.8"
 ThisBuild / organization := "ma.ath.stagiaires"
-ThisBuild / version := "3.0.0-SNAPSHOT"
+ThisBuild / version := "3.1.0-SNAPSHOT"
 
 val pureCoreFiles =
   "PureDomain|DataCleaner|CurriedRules|PureNettingCalculator|PureClearingEngine|PureClearingRenderer"
