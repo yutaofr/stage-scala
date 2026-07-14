@@ -45,6 +45,12 @@ object CompletionStages:
       .allOf(futures*)
       .thenApply(_ => ())
 
+  def values[A](stages: List[CompletionStage[A]]): CompletionStage[List[A]] =
+    val futures = stages.map(_.toCompletableFuture)
+    CompletableFuture
+      .allOf(futures*)
+      .thenApply(_ => futures.map(_.join()))
+
 final class InMemoryDurableRepository private () extends DurableRepository:
   private val stateRows = mutable.Map.empty[(String, String), ProcessingState]
   private val historyRows =
@@ -77,72 +83,19 @@ final class InMemoryDurableRepository private () extends DurableRepository:
     identity: DurableIdentity,
     event: ValidatedEvent
   ): CompletionStage[Unit] =
-    val date = event.occurredAt.atZone(ZoneOffset.UTC).toLocalDate
-    val amount = BigDecimal(event.settlementAmount)
-    val history = HistoryRow(
-      identity.eventKey,
-      event.transactionId,
-      event.sender,
-      event.receiver,
-      amount,
-      event.currency,
-      event.status,
-      event.occurredAt
-    )
-    val movements = List(
-      BankMovement(
-        event.sender,
-        date,
-        identity.eventKey,
-        "OUT",
-        event.receiver,
-        amount,
-        event.currency,
-        event.occurredAt
-      ),
-      BankMovement(
-        event.receiver,
-        date,
-        identity.eventKey,
-        "IN",
-        event.sender,
-        amount,
-        event.currency,
-        event.occurredAt
-      )
-    )
-    val positions = List(
-      PositionContribution(
-        event.sender,
-        date,
-        identity.eventKey,
-        -amount,
-        1,
-        event.occurredAt
-      ),
-      PositionContribution(
-        event.receiver,
-        date,
-        identity.eventKey,
-        amount,
-        1,
-        event.occurredAt
-      )
-    )
-    val pair = List(event.sender, event.receiver).sorted.mkString("|")
-    val activity = PairActivity(date, pair, identity.eventKey, amount, 1)
+    val projections = ValidatedProjectionSet.from(identity, event)
 
     synchronized:
       historyRows.update(
         (
-          date,
-          HistoryBucket.forEvent(identity.eventKey),
+          projections.date,
+          projections.bucket,
           event.occurredAt,
           identity.eventKey
         ),
-        history
+        projections.history
       )
-      movements.foreach: movement =>
+      projections.movements.foreach: movement =>
         movementRows.update(
           (
             movement.bank,
@@ -153,11 +106,12 @@ final class InMemoryDurableRepository private () extends DurableRepository:
           ),
           movement
         )
-      positions.foreach: position =>
+      projections.positions.foreach: position =>
         positionRows.update(
           (position.bank, position.date, position.eventKey),
           position
         )
+      val activity = projections.pairActivity
       pairRows.update((activity.date, activity.pair, activity.eventKey), activity)
 
     CompletionStages.unit

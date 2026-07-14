@@ -26,3 +26,15 @@ sbt 'testOnly clearing.v31.DurableRepositorySpec'
 
 Le premier run a échoué à la compilation sur les types v3.1 absents. Le run
 GREEN vérifie le repository et le bucket sur mille clés déterministes.
+
+Le même contrat a ensuite été exécuté contre Cassandra 4.1.11 avec le driver
+Apache 4.19.3 :
+
+```text
+CassandraRepositoryIntegrationSpec
+Tests: succeeded 1, failed 0
+```
+
+Le test tronque les cinq tables, écrit deux fois le même événement via
+`executeAsync`, puis relit une seule ligne d'état, une seule ligne historique,
+une contribution par banque et une activité de paire.
