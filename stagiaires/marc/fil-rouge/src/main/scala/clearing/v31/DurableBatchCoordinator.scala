@@ -3,7 +3,7 @@ package clearing.v31
 import clearing.v30.{BatchReport, InputPartition, RecordEnvelope}
 
 final class DurableBatchCoordinator(
-  processor: DurableRecordProcessor
+  processor: DurableProcessing
 ):
   def process(records: List[RecordEnvelope]): BatchReport =
     records

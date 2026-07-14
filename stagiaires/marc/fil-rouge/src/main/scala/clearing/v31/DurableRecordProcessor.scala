@@ -10,12 +10,15 @@ enum DurableRecordOutcome:
   case Duplicate
   case Failed(reason: String)
 
+trait DurableProcessing:
+  def process(envelope: RecordEnvelope): DurableRecordOutcome
+
 final class DurableRecordProcessor(
   decide: RecordEnvelope => ProcessingDecision,
   repository: DurableRepository,
   publisher: DecisionPublisher,
   now: () => Instant = () => Instant.now()
-):
+) extends DurableProcessing:
   def process(envelope: RecordEnvelope): DurableRecordOutcome =
     try processUnsafe(envelope)
     catch
