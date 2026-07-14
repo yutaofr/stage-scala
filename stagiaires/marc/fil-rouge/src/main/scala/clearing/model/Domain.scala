@@ -1,5 +1,6 @@
 package clearing.model
 
+import java.util.Locale
 import scala.util.Try
 
 case class Bank(code: String, name: String)
@@ -14,7 +15,7 @@ enum TransactionType(val code: String):
 
 object TransactionType:
   def fromCode(raw: String): Option[TransactionType] =
-    raw.trim.toUpperCase match
+    raw.trim.toUpperCase(Locale.ROOT) match
       case "VIR" => Some(TransactionType.Transfer)
       case "PRE" => Some(TransactionType.Withdrawal)
       case "CHQ" => Some(TransactionType.Check)
@@ -25,7 +26,7 @@ enum Currency:
 
 object Currency:
   def fromString(raw: String): Option[Currency] =
-    raw.trim.toUpperCase match
+    raw.trim.toUpperCase(Locale.ROOT) match
       case "MAD" => Some(Currency.MAD)
       case "EUR" => Some(Currency.EUR)
       case "USD" => Some(Currency.USD)
@@ -35,7 +36,7 @@ case class Iban private (value: String)
 
 object Iban:
   def apply(raw: String): Option[Iban] =
-    val normalized = raw.trim.toUpperCase
+    val normalized = raw.trim.toUpperCase(Locale.ROOT)
     Option.when(normalized.length == 24 && normalized.startsWith("MA"))(
       new Iban(normalized)
     )
@@ -85,13 +86,13 @@ object Transaction:
           currency <- Currency.fromString(currencyRaw)
         yield Transaction(
           id = id,
-          sender = sender.toUpperCase,
-          receiver = receiver.toUpperCase,
+          sender = sender.toUpperCase(Locale.ROOT),
+          receiver = receiver.toUpperCase(Locale.ROOT),
           amount = amount,
           transactionType = transactionType,
           status = TransactionStatus.Pending,
-          sourceIban = sourceIban.toUpperCase,
-          destinationIban = destinationIban.toUpperCase,
+          sourceIban = sourceIban.toUpperCase(Locale.ROOT),
+          destinationIban = destinationIban.toUpperCase(Locale.ROOT),
           currency = currency
         )
       case _ => None

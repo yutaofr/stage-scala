@@ -1,10 +1,12 @@
 package clearing.v20
 
-import clearing.model.Transaction
+import clearing.model.{Currency, Transaction}
+import clearing.v13.SecurityUtils
+import java.util.Locale
 
 object DataCleaner:
   val cleanIban: String => String =
-    _.filterNot(_.isWhitespace).toUpperCase
+    _.filterNot(_.isWhitespace).toUpperCase(Locale.ROOT)
 
   val formatAmount: BigDecimal => BigDecimal =
     _.setScale(2, BigDecimal.RoundingMode.HALF_UP)
@@ -19,6 +21,30 @@ object DataCleaner:
       amount = formatAmount(transaction.amount),
       sourceIban = cleanIban(transaction.sourceIban),
       destinationIban = cleanIban(transaction.destinationIban)
+    )
+
+  def anonymize(
+    referenceCurrency: Currency,
+    settlementAmount: BigDecimal,
+    fee: BigDecimal
+  )(
+    transaction: Transaction
+  ): PreparedTransaction =
+    PreparedTransaction(
+      id = transaction.id,
+      sender = transaction.sender,
+      receiver = transaction.receiver,
+      settlementAmount = formatAmount(settlementAmount),
+      transactionType = transaction.transactionType,
+      status = transaction.status,
+      referenceCurrency = referenceCurrency,
+      fee = formatAmount(fee),
+      sourceIbanHash = SecurityUtils.hashIban(
+        cleanIban(transaction.sourceIban)
+      ),
+      destinationIbanHash = SecurityUtils.hashIban(
+        cleanIban(transaction.destinationIban)
+      )
     )
 
   private val trim: String => String = _.trim

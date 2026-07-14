@@ -1,10 +1,10 @@
-# Clearing Engine de Marc — v1.3
+# Clearing Engine de Marc — v2.0
 
 Ce projet est le fil rouge construit par Marc pendant son stage. La version
-`v1.3` termine le deuxième mois du stage. Cette version conserve les jalons S1
-à S7 pour la non-régression. Elle ajoute l'interopérabilité Java, la conversion
-MAD par HTTP, l'anonymisation SHA-256, le temps bancaire et un graphe de
-services annotés Spring.
+`v2.0` ouvre le troisième mois du stage. Elle conserve les jalons S1 à S8 pour
+la non-régression et ajoute un cœur de clearing déterministe composé uniquement
+de fonctions pures. Les fichiers et la console restent dans deux adaptateurs de
+bord. Le même cœur fonctionne avec un profil MAD ou EUR.
 
 ## Prérequis
 
@@ -15,6 +15,13 @@ services annotés Spring.
 
 ```bash
 sbt clean test
+```
+
+La couverture du cœur pur v2.0 est mesurée et bloquante à 100 % des statements
+et des branches :
+
+```bash
+sbt clean coverage "testOnly clearing.v20.*" coverageReport
 ```
 
 Dans l'image pédagogique Docker :
@@ -31,17 +38,23 @@ docker run --rm -v "$PWD:/app" -w /app \
 sbt run
 ```
 
-La commande démarre un serveur de taux local et traite
-`transactions-v13.csv`. Un autre fichier peut être fourni explicitement :
+La commande traite `transactions-v20.csv` avec le profil MAD. Un autre fichier
+peut être fourni explicitement :
 
 ```bash
-sbt "run chemin/transactions-v13.csv"
+sbt "run chemin/transactions-v20.csv"
 ```
 
-Le scénario de panne rend seulement le taux USD indisponible :
+Le profil EUR réutilise exactement le même pipeline :
 
 ```bash
-sbt "run --network-failure"
+sbt "run --profile EUR transactions-v20.csv"
+```
+
+La démonstration connectée v1.3 reste disponible séparément :
+
+```bash
+sbt "runMain clearing.v13.runClearingAppV13"
 ```
 
 La démonstration déterministe S7 de 100 000 transactions reste disponible :
@@ -188,21 +201,37 @@ non-régression, mais ne font pas partie du contrat v1.3.
 - `ClearingAppV13` : validation v1.1, repository, change, journal sécurisé,
   règlements v1.2 et scénario contrôlé de panne USD.
 
+## Modules ajoutés en S9
+
+- `DataCleaner` : nettoyage d'IBAN, arrondi financier, `Either` pédagogique,
+  anonymisation et exemples explicites de `andThen` et `compose`.
+- `CurriedRules` et `PureEngineProfiles` : limites strictes, frais configurés
+  par application partielle et profils MAD/EUR injectés sans état global.
+- `PureDomain` : états intermédiaires nommés qui conservent numéros de ligne,
+  ordre des transactions et rejets sans exposer les IBAN bruts.
+- `PureNettingCalculator` : calcul immutable avec `foldLeft` et `updatedWith`;
+  les frais restent séparés du principal de règlement.
+- `PureClearingEngine` : cinq fonctions d'étape assemblées avec `andThen`, de
+  la chaîne CSV au rapport déterministe.
+- `PureClearingRenderer` : maps triées, hashes seulement et octets stables.
+- `IOBridge` et `ClearingReporter` : lecture et affichage isolés aux bords;
+  aucun effet de bord ne se trouve dans le cœur.
+- `sbt-scoverage` : gate limité aux six fichiers du cœur pur, avec seuils
+  statement et branch fixés à 100 %.
+
 ## Chemin d'une donnée
 
 ```text
-CSV -> validation v1.1 -> transactions Validated + rejets
-    -> BankRepository Java -> acceptées + rejets de référentiel
-    -> HttpClient -> cache de taux -> conversion MAD ou rejet ciblé
-    -> UUID + ZonedDateTime + hashes SHA-256
-    -> groupBy bilatéral + foldLeft N-à-N -> rapport v1.3
+fichier -> IOBridge -> chaîne CSV
+        -> splitLines -> parse -> validate -> prepare -> calculate
+        -> PureClearingReport -> rendu déterministe -> ClearingReporter
 ```
 
-Une erreur de règle produit un sous-type de `ClearingError`. Le parser conserve
-une frontière `Option`, mais v1.1 transforme chaque échec structurel en
-`MalformedCsv`. V1.3 réutilise cette validation. Les transactions ne rejoignent
-le netting qu'après contrôle du repository et conversion dans une devise
-unique.
+Le cœur v2.0 reçoit une chaîne et une configuration immutable. Il retourne un
+rapport sans lire, afficher, interroger le réseau, demander l'heure ou créer un
+UUID. Une ligne échouée devient un `PureRejection`; les autres sont nettoyées,
+validées, converties, anonymisées puis compensées. Les frais sont rapportés à
+part et ne modifient pas le principal crédité au bénéficiaire.
 
 ## Lancer les laboratoires S3
 
@@ -257,8 +286,25 @@ du flux ; elle ne garantit donc pas un temps inférieur.
     conversion ou le rejet ciblé précède donc tous les calculs v1.2.
 21. Les collections Java peuvent contenir `null`. La frontière les transforme
     en `Option` et les filtre avant d'appeler les fonctions Scala.
+22. Une fonction pure retourne la même valeur pour les mêmes arguments et ne
+    modifie aucun état observable; elle se teste sans infrastructure.
+23. `andThen` suit l'ordre de lecture, tandis que `compose` commence par la
+    fonction placée à droite.
+24. Le currying fixe une partie de la configuration une seule fois et produit
+    une nouvelle fonction spécialisée, par exemple pour une limite ou un taux.
+25. Un log pur est une chaîne retournée. Seul l'adaptateur de bord décide de
+    l'afficher.
+26. Un rapport déterministe exclut l'heure et l'UUID, trie les maps avant le
+    rendu et conserve l'ordre d'entrée des listes.
 
-## Limites volontaires de v1.3
+## Limites volontaires de v1.3 et v2.0
+
+- V2.0 accumule explicitement succès et rejets entre les étapes. La propagation
+  de l'`Either` avec `flatMap` sera le sujet de S10.
+- Les profils MAD/EUR sont des valeurs locales déterministes. V2.0 ne contacte
+  volontairement ni fournisseur de taux, ni Kafka, ni Cassandra.
+- Les frais sont calculés et rapportés, mais ne participent pas au principal de
+  règlement. La comptabilisation complète des commissions reste hors S9.
 
 - Les codes bancaires restent des `String`; le validateur les relie au
   référentiel, mais le compilateur ne peut pas détecter une faute de frappe.
