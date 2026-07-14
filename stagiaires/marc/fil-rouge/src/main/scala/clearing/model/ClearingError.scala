@@ -34,6 +34,14 @@ enum ParsingFailure:
 case class ParsingError(lineNumber: Int, failure: ParsingFailure)
     extends LineError
 
+case class TransactionValidationError(
+  lineNumber: Int,
+  transactionId: Option[Int],
+  reasons: List[String]
+) extends ValidationError:
+  val field: String = "transaction"
+  val message: String = reasons.mkString("+")
+
 sealed trait ValidationError extends LineError:
   def field: String
   def message: String

@@ -102,6 +102,9 @@ final class PureDomainSpec extends AnyFlatSpec with Matchers:
       ),
       PureClearingEngine.errorCode(
         ParsingError(8, ParsingFailure.InvalidAmount)
+      ),
+      PureClearingEngine.errorCode(
+        TransactionValidationError(8, Some(17), List("MONTANT_NON_POSITIF"))
       )
     ) shouldBe List(
       "MONTANT_INVALIDE",
@@ -112,7 +115,8 @@ final class PureDomainSpec extends AnyFlatSpec with Matchers:
       "TRANSACTION_DUPLIQUEE",
       "TRANSACTION_SUSPECTE",
       "ISO20022:AC01",
-      "PARSE_AMOUNT"
+      "PARSE_AMOUNT",
+      "VALIDATION_TRANSACTION"
     )
 
   "PureClearingEngine.validationErrorCode" should "rendre chaque erreur pure" in:
