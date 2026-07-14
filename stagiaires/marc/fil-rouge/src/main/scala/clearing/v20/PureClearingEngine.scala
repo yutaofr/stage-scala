@@ -246,6 +246,7 @@ object PureClearingEngine:
     case Iso20022Rejection(code, _)   => s"ISO20022:${code.toString}"
     case ParsingError(_, failure)     => failure.code
     case TransactionValidationError(_, _, _) => "VALIDATION_TRANSACTION"
+    case ConfigurationError(_, _, internalCode, _) => internalCode
 
   private[v20] def validationErrorCode(
     error: PureValidationError

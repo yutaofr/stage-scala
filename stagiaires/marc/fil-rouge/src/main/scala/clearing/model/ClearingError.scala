@@ -69,6 +69,13 @@ sealed trait BusinessError extends LineError:
   def internalCode: String
   def businessMessage: String
 
+case class ConfigurationError(
+  lineNumber: Int,
+  transactionId: Int,
+  internalCode: String,
+  businessMessage: String
+) extends BusinessError
+
 case class CorruptedFile(reason: String) extends HighLevelError
 
 case object EmptyFile extends HighLevelError

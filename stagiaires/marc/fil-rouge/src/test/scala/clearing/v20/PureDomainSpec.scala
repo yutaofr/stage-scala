@@ -105,6 +105,9 @@ final class PureDomainSpec extends AnyFlatSpec with Matchers:
       ),
       PureClearingEngine.errorCode(
         TransactionValidationError(8, Some(17), List("MONTANT_NON_POSITIF"))
+      ),
+      PureClearingEngine.errorCode(
+        ConfigurationError(8, 17, "FX_RATE_MISSING", "taux USD absent")
       )
     ) shouldBe List(
       "MONTANT_INVALIDE",
@@ -116,7 +119,8 @@ final class PureDomainSpec extends AnyFlatSpec with Matchers:
       "TRANSACTION_SUSPECTE",
       "ISO20022:AC01",
       "PARSE_AMOUNT",
-      "VALIDATION_TRANSACTION"
+      "VALIDATION_TRANSACTION",
+      "FX_RATE_MISSING"
     )
 
   "PureClearingEngine.validationErrorCode" should "rendre chaque erreur pure" in:

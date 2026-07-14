@@ -1,6 +1,6 @@
 package clearing.v21
 
-import clearing.model.{Currency, Transaction, TransactionType}
+import clearing.model.{ClearingError, Currency, TechnicalError, Transaction, TransactionType}
 import clearing.v20.PreparedTransaction
 
 case class NumberedLine(lineNumber: Int, value: String)
@@ -29,4 +29,29 @@ case class RailSuccess(
   prepared: PreparedTransaction,
   label: String,
   warnings: List[LightWarning]
+)
+
+type HashBoundary = String => Either[TechnicalError, String]
+
+case class LineResult(
+  lineNumber: Int,
+  result: Either[ClearingError, RailSuccess]
+)
+
+case class ErrorStatistics(
+  parsing: Int,
+  validation: Int,
+  business: Int,
+  technical: Int,
+  warnings: Int
+)
+
+case class V21Report(
+  referenceCurrency: Currency,
+  lineResults: List[LineResult],
+  successes: List[RailSuccess],
+  errors: List[ClearingError],
+  positions: Map[String, BigDecimal],
+  feesByBank: Map[String, BigDecimal],
+  statistics: ErrorStatistics
 )
