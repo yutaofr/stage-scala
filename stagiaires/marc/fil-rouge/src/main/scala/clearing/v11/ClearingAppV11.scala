@@ -64,10 +64,13 @@ object ClearingAppV11:
           val nextSeenIds = state.seenIds + transaction.id
 
           if errors.isEmpty then
+            val accepted = transaction.copy(
+              status = TransactionStatus.Validated
+            )
             state.copy(
               seenIds = nextSeenIds,
               successfulTransactions =
-                transaction :: state.successfulTransactions,
+                accepted :: state.successfulTransactions,
               warnings = assessment.warnings.reverse ::: state.warnings
             )
           else

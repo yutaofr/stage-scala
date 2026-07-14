@@ -30,6 +30,15 @@ final class IntegrationV11Spec extends AnyFlatSpec with Matchers:
     result.fileErrors shouldBe empty
     NettingCalculatorV10.globalNet(result.netPositions) shouldBe BigDecimal(0)
 
+  it should "marquer chaque transaction acceptée comme validée" in:
+    val result = ClearingAppV11.processLines(
+      resourceLines("transactions-s6.csv")
+    )
+
+    result.successfulTransactions.map(_.status).distinct shouldBe List(
+      TransactionStatus.Validated
+    )
+
   it should "conserver toutes les erreurs de la même ligne" in:
     val result = ClearingAppV11.processLines(
       resourceLines("transactions-s6.csv")
