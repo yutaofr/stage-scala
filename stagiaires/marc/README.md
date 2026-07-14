@@ -28,3 +28,6 @@ trouvent dans `suivi/`.
 | S10 | v2.1 | Either, Try et Railway Oriented Programming | Validée le 14/07/2026 |
 | S11 | v2.2 | Polymorphisme ad-hoc et types opaques | Validée le 14/07/2026 |
 | S12 | v2.3 | Monades et tests de propriétés | Validée le 14/07/2026 |
+| S13 | — | Concurrence native et Pekko | Ignorée par périmètre du stage |
+| S14 | — | Observation ZIO | Ignorée par périmètre du stage |
+| S15 | v3.0 | Stream Processing avec Kafka | Prochaine semaine à implémenter |
