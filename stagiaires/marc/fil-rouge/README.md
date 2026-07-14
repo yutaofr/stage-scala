@@ -1,10 +1,10 @@
-# Clearing Engine de Marc — v3.0
+# Clearing Engine de Marc — v3.1
 
 Ce projet est le fil rouge construit par Marc pendant son stage. La version
-`v3.0` ouvre le quatrième mois avec Kafka en mode KRaft. Elle conserve le cœur
-pur et typé v2.3, puis ajoute un producer idempotent, un consumer à commits
-manuels, une DLQ privée et une preuve at-least-once. Les semaines Pekko et ZIO
-restent hors périmètre; aucune de ces bibliothèques n'est introduite.
+`v3.1` conserve Kafka KRaft et le cœur pur v2.3, puis remplace le cache de
+déduplication v3.0 par un état Cassandra durable et cinq projections orientées
+requêtes. Les semaines Pekko, ZIO et Cats restent hors périmètre; aucune de ces
+bibliothèques n'est introduite.
 
 ## Prérequis
 
@@ -30,6 +30,13 @@ Le gate ciblé S15 vérifie les contrats Kafka, les fenêtres de crash et 1 000
 
 ```bash
 sbt "testOnly clearing.v30.*"
+```
+
+Le gate ciblé S16 vérifie l'état durable, les projections idempotentes, les
+requêtes paginées et le scénario de 500 records :
+
+```bash
+sbt "testOnly clearing.v31.*"
 ```
 
 La couverture du cœur pur v2.0 est mesurée et bloquante à 100 % des statements
@@ -68,6 +75,38 @@ sbt "runMain clearing.v30.runKafkaConsumerV30 \
 
 Les preuves exécutées se trouvent dans `preuves/`. Arrêter le laboratoire avec
 `docker compose -f docker/docker-compose-kafka.yml down`.
+
+## Lancer Kafka et Cassandra v3.1
+
+```bash
+docker compose -f docker/docker-compose-v31.yml up -d
+docker compose -f docker/docker-compose-v31.yml wait kafka-init cassandra-init
+sbt "run qualify --seed 1600"
+sbt "run consumer --group-id marc-v31-demo --max-records 500"
+sbt "run report --bank AWB --date 2026-07-14"
+```
+
+Le scénario `qualify` produit 485 événements valides uniques, 5 JSON invalides
+et 10 replays exacts. L'état suit l'ordre :
+
+```text
+Received → projections idempotentes → Projected
+         → output/DLQ acquitté → Completed → commit offset + 1
+```
+
+`Completed` vient après l'ack Kafka. Un crash dans cette dernière fenêtre peut
+dupliquer une sortie, mais ne perd pas la sortie et ne double pas Cassandra.
+Les tables couvrent la reprise, l'historique bucketé, les mouvements et
+positions par banque/jour, ainsi que l'activité des paires. Aucun IBAN brut
+n'est persisté.
+
+Les preuves S16 dans `preuves/` montrent une coupure Cassandra après un
+traitement partiel, la reprise du même consumer group jusqu'au lag nul et un
+replay complet absorbé sans nouvelle projection. Arrêter le laboratoire avec :
+
+```bash
+docker compose -f docker/docker-compose-v31.yml down -v
+```
 
 ## Lancer les démonstrations historiques
 
@@ -495,6 +534,21 @@ du flux ; elle ne garantit donc pas un temps inférieur.
   ignoré comme replay.
 - Les événements JSON ne disposent pas encore d'un registry de schémas.
 - Le monitoring Prometheus/Grafana arrive après la persistance Cassandra.
+
+## Limites volontaires de v3.1
+
+- Le laboratoire possède un broker Kafka et un nœud Cassandra avec réplication
+  1; il ne prouve aucune haute disponibilité.
+- L'état durable et les projections sont idempotents, mais Kafka et Cassandra
+  ne partagent pas de transaction exactly-once.
+- Un crash après l'ack Kafka et avant `Completed` peut republier output ou DLQ.
+- `max.poll.records=1` borne simplement les futures; aucun débit cible n'est
+  encore qualifié.
+- L'historique utilise 16 buckets fixes et le top des paires est agrégé en
+  Scala; ces choix devront être mesurés avant un volume de production.
+- Le script Compose initialise `clearing/datacenter1`; un autre keyspace ou
+  datacenter doit être créé par une migration compatible.
+- Prometheus et Grafana appartiennent à la prochaine semaine autorisée.
 
 ## Limites volontaires historiques de v2.3
 

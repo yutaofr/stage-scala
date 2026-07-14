@@ -31,4 +31,4 @@ trouvent dans `suivi/`.
 | S13 | — | Concurrence native et Pekko | Ignorée par périmètre du stage |
 | S14 | — | Observation ZIO | Ignorée par périmètre du stage |
 | S15 | v3.0 | Stream Processing avec Kafka | Validée le 14/07/2026 |
-| S16 | v3.1 | Persistance Cassandra et reprise durable | Prochaine semaine à implémenter |
+| S16 | v3.1 | Persistance Cassandra et reprise durable | Qualification terminée, revue senior en cours |
