@@ -4,16 +4,31 @@ import clearing.model.*
 import scala.math.BigDecimal.RoundingMode
 
 object RailRenderer:
+  def renderReport(report: V21Report): String =
+    val statistics = report.statistics
+    val lineRows = report.lineResults.map: line =>
+      s"LIGNE|${line.lineNumber}|${renderLine(line.result)}"
+    val positionRows = report.positions.toList.sortBy(_._1).map:
+      (bank, amount) => s"POSITION|$bank|${formatAmount(amount)}"
+    val feeRows = report.feesByBank.toList.sortBy(_._1).map:
+      (bank, amount) => s"FRAIS|$bank|${formatAmount(amount)}"
+    val header = List(
+      s"V21|REFERENCE|${report.referenceCurrency}",
+      s"SUCCES|${report.successes.size}",
+      s"REJETS|${report.errors.size}",
+      s"STATISTIQUES|parsing=${statistics.parsing}|validation=${statistics.validation}|business=${statistics.business}|technical=${statistics.technical}|warnings=${statistics.warnings}"
+    )
+    val global = s"GLOBAL|${formatAmount(report.positions.values.sum)}"
+
+    (header ++ lineRows ++ positionRows ++ feeRows :+ global).mkString("\n")
+
   def renderLine(
     result: Either[ClearingError, RailSuccess]
   ): String =
     result.fold(renderError, renderSuccess)
 
   def renderSuccess(success: RailSuccess): String =
-    val amount = success.prepared.settlementAmount
-      .setScale(2, RoundingMode.HALF_UP)
-      .bigDecimal
-      .toPlainString
+    val amount = formatAmount(success.prepared.settlementAmount)
     val firstLine =
       s"Transaction OK : $amount ${success.prepared.referenceCurrency}"
     val warningLines = success.warnings.map:
@@ -43,3 +58,9 @@ object RailRenderer:
         (s"TECH_$code", s"$causeType : $detail")
 
     s"REJET : $code - $reason"
+
+  private def formatAmount(amount: BigDecimal): String =
+    amount
+      .setScale(2, RoundingMode.HALF_UP)
+      .bigDecimal
+      .toPlainString
