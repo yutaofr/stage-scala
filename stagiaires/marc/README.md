@@ -1,8 +1,14 @@
 # Parcours de Marc
 
-Marc construit un seul projet fil rouge pendant vingt semaines. Le code se
-trouve dans `fil-rouge/`; les preuves d'apprentissage et d'acceptation se
-trouvent dans `suivi/`.
+Marc construit un seul projet fil rouge pendant dix-sept semaines. Sa version
+fonctionnelle finale est `v3.2`, conservée par le tag `marc-v3.2`. À partir de
+la semaine 18, Marc poursuit le parcours en mode enseignement : il étudie les
+notions, réalise les exercices d'analyse et passe les validations orales sans
+ajouter de code de production au fil rouge.
+
+Le code se trouve dans `fil-rouge/`; les preuves d'apprentissage et
+d'acceptation se trouvent dans `suivi/`. La semaine 20 ne comporte ni mémoire
+ni soutenance de mémoire.
 
 ## Règles de travail
 
@@ -11,6 +17,7 @@ trouvent dans `suivi/`.
 - Conserver les décisions et les limites observées.
 - Présenter chaque vendredi un scénario nominal et un scénario d'échec.
 - Ne passer à la semaine suivante qu'après validation du mentor.
+- Pour S18 à S20, raisonner sur `v3.2` sans créer de version `v3.3` ou `v4`.
 
 ## État
 
@@ -33,3 +40,6 @@ trouvent dans `suivi/`.
 | S15 | v3.0 | Stream Processing avec Kafka | Validée le 14/07/2026 |
 | S16 | v3.1 | Persistance Cassandra et reprise durable | Validée le 14/07/2026 |
 | S17 | v3.2 | Logs, métriques, traces, Grafana et alertes | Validée le 14/07/2026 |
+| S18 | — | Robustesse et performance | En cours — enseignement uniquement |
+| S19 | — | Industrialisation, CI/CD et API | Prévue — enseignement uniquement |
+| S20 | — | Livraison et transfert de connaissances | Prévue — enseignement, sans mémoire |
