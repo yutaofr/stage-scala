@@ -91,7 +91,8 @@ private object Rendering:
         formatAmount(transaction.settlementAmount),
         formatAmount(transaction.fee),
         transaction.referenceCurrency.toString,
-        transaction.label
+        transaction.label,
+        warningCodes(transaction.warnings).mkString("+")
       ).map(csvField).mkString(",")
     val rejections = result.rejections.map: rejection =>
       List(
@@ -106,10 +107,12 @@ private object Rendering:
     val fees = result.feesByBank.toList.sortBy(_._1.value).map:
       (bank, amount) => s"FEE,${bank.value},${formatAmount(amount)}"
     val statistics = result.statistics
+    val global = s"GLOBAL,${formatAmount(result.positions.values.sum)}"
     val stats =
       s"STATISTICS,${statistics.parsing},${statistics.validation},${statistics.business},${statistics.technical},${statistics.warnings}"
 
-    ((header :: transactions) ++ rejections ++ positions ++ fees :+ stats)
+    ((header :: transactions) ++ rejections ++ positions ++ fees ++
+      List(global, stats))
       .mkString("\n")
 
   def transactionJson(transaction: Transaction): String =
@@ -123,9 +126,10 @@ private object Rendering:
     val rejections = result.rejections.map(rejectionJson).mkString("[", ",", "]")
     val positions = moneyMapJson(result.positions)
     val fees = moneyMapJson(result.feesByBank)
+    val global = formatAmount(result.positions.values.sum)
     val stats = result.statistics
 
-    s"""{"referenceCurrency":"${result.referenceCurrency}","successes":${result.transactions.size},"rejections":${result.rejections.size},"transactions":$transactions,"errors":$rejections,"positions":$positions,"fees":$fees,"statistics":{"parsing":${stats.parsing},"validation":${stats.validation},"business":${stats.business},"technical":${stats.technical},"warnings":${stats.warnings}}}"""
+    s"""{"referenceCurrency":"${result.referenceCurrency}","successes":${result.transactions.size},"rejections":${result.rejections.size},"transactions":$transactions,"errors":$rejections,"positions":$positions,"fees":$fees,"global":"$global","statistics":{"parsing":${stats.parsing},"validation":${stats.validation},"business":${stats.business},"technical":${stats.technical},"warnings":${stats.warnings}}}"""
 
   def transactionXml(transaction: Transaction): String =
     s"<transaction><id>${transaction.id}</id><sender>${xml(transaction.sender.value)}</sender><receiver>${xml(transaction.receiver.value)}</receiver><amount>${formatAmount(transaction.amount)}</amount><type>${transaction.transactionType.code}</type><currency>${transaction.currency}</currency><status>${transaction.status}</status></transaction>"
@@ -143,11 +147,15 @@ private object Rendering:
       (bank, amount) =>
         s"<fee bank=\"${xml(bank.value)}\">${formatAmount(amount)}</fee>"
     val stats = result.statistics
+    val global = formatAmount(result.positions.values.sum)
 
-    s"<clearingResult referenceCurrency=\"${result.referenceCurrency}\"><transactions>${transactions}</transactions><rejections>${rejections}</rejections><positions>${positions.mkString}</positions><fees>${fees.mkString}</fees><statistics parsing=\"${stats.parsing}\" validation=\"${stats.validation}\" business=\"${stats.business}\" technical=\"${stats.technical}\" warnings=\"${stats.warnings}\"/></clearingResult>"
+    s"<clearingResult referenceCurrency=\"${result.referenceCurrency}\" successes=\"${result.transactions.size}\" rejections=\"${result.rejections.size}\"><transactions>${transactions}</transactions><rejections>${rejections}</rejections><positions>${positions.mkString}</positions><fees>${fees.mkString}</fees><global>$global</global><statistics parsing=\"${stats.parsing}\" validation=\"${stats.validation}\" business=\"${stats.business}\" technical=\"${stats.technical}\" warnings=\"${stats.warnings}\"/></clearingResult>"
 
   private def preparedJson(transaction: PreparedTransaction): String =
-    s"""{"id":${transaction.id},"sender":"${json(transaction.sender.value)}","receiver":"${json(transaction.receiver.value)}","amount":"${formatAmount(transaction.settlementAmount)}","fee":"${formatAmount(transaction.fee)}","currency":"${transaction.referenceCurrency}","label":"${json(transaction.label)}","sourceIbanHash":"${json(transaction.sourceIbanHash)}","destinationIbanHash":"${json(transaction.destinationIbanHash)}"}"""
+    val warnings = warningCodes(transaction.warnings)
+      .map(code => s"\"${json(code)}\"")
+      .mkString("[", ",", "]")
+    s"""{"id":${transaction.id},"sender":"${json(transaction.sender.value)}","receiver":"${json(transaction.receiver.value)}","amount":"${formatAmount(transaction.settlementAmount)}","fee":"${formatAmount(transaction.fee)}","currency":"${transaction.referenceCurrency}","label":"${json(transaction.label)}","sourceIbanHash":"${json(transaction.sourceIbanHash)}","destinationIbanHash":"${json(transaction.destinationIbanHash)}","warnings":$warnings}"""
 
   private def rejectionJson(rejection: Rejection): String =
     val id = rejection.transactionId.fold("null")(_.toString)
@@ -159,7 +167,10 @@ private object Rendering:
     .mkString("{", ",", "}")
 
   private def preparedXml(transaction: PreparedTransaction): String =
-    s"<transaction><id>${transaction.id}</id><sender>${xml(transaction.sender.value)}</sender><receiver>${xml(transaction.receiver.value)}</receiver><amount>${formatAmount(transaction.settlementAmount)}</amount><fee>${formatAmount(transaction.fee)}</fee><currency>${transaction.referenceCurrency}</currency><label>${xml(transaction.label)}</label><sourceIbanHash>${xml(transaction.sourceIbanHash)}</sourceIbanHash><destinationIbanHash>${xml(transaction.destinationIbanHash)}</destinationIbanHash></transaction>"
+    val warnings = warningCodes(transaction.warnings)
+      .map(code => s"<warning>${xml(code)}</warning>")
+      .mkString
+    s"<transaction><id>${transaction.id}</id><sender>${xml(transaction.sender.value)}</sender><receiver>${xml(transaction.receiver.value)}</receiver><amount>${formatAmount(transaction.settlementAmount)}</amount><fee>${formatAmount(transaction.fee)}</fee><currency>${transaction.referenceCurrency}</currency><label>${xml(transaction.label)}</label><sourceIbanHash>${xml(transaction.sourceIbanHash)}</sourceIbanHash><destinationIbanHash>${xml(transaction.destinationIbanHash)}</destinationIbanHash><warnings>$warnings</warnings></transaction>"
 
   private def rejectionXml(rejection: Rejection): String =
     val id = rejection.transactionId.fold("")(_.toString)
@@ -170,6 +181,10 @@ private object Rendering:
       .setScale(2, RoundingMode.HALF_UP)
       .bigDecimal
       .toPlainString
+
+  private def warningCodes(warnings: List[V22Warning]): List[String] =
+    warnings.map:
+      case V22Warning.MissingLabel(_) => "LABEL_MANQUANT"
 
   private def csvField(value: String): String =
     if value.exists(character => character == ',' || character == '"' ||
