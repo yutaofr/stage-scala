@@ -23,7 +23,7 @@ final class ObservedDurableProcessor(
     finally restore(previous)
 
   private def setCorrelation(envelope: RecordEnvelope): Unit =
-    MDC.put("txId", envelope.headers.getOrElse("transaction-id", "unknown"))
+    MDC.put("txId", CorrelationFields.transactionId(envelope))
     MDC.put("topic", envelope.topic)
     MDC.put("partition", envelope.partition.toString)
     MDC.put("offset", envelope.offset.toString)
@@ -41,3 +41,12 @@ final class ObservedDurableProcessor(
     previous match
       case Some(values) => MDC.setContextMap(values)
       case None         => MDC.clear()
+
+private[v32] object CorrelationFields:
+  def transactionId(envelope: RecordEnvelope): String =
+    envelope.headers
+      .get("transaction-id")
+      .flatMap(_.toIntOption)
+      .filter(_ > 0)
+      .map(_.toString)
+      .getOrElse("unknown")

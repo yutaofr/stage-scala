@@ -73,6 +73,23 @@ final class ClearingTracingSpec extends AnyFlatSpec with Matchers:
       consume.getEvents.asScala.map(_.getName) should contain("exception")
     finally test.close()
 
+  it should "replace an untrusted transaction header before tracing it" in:
+    val test = TestTelemetry()
+    try
+      val sensitive = "MA64011519000001205000534921-client-secret"
+      val traced = TracingDurableProcessor(
+        _ => DurableRecordOutcome.Duplicate,
+        test.openTelemetry
+      )
+
+      traced.process(validEnvelope.copy(headers = Map("transaction-id" -> sensitive)))
+
+      val consume = named(test.finished, "clearing.consume")
+      consume.getAttributes.get(AttributeKey.stringKey("tx.id")) shouldBe
+        "unknown"
+      consume.getAttributes.asMap.toString should not include sensitive
+    finally test.close()
+
   private val instant = Instant.parse("2026-07-14T12:00:00Z")
   private val safeHash = IbanHash.from("a" * 64).toOption.get
   private val workingHash: HashBoundary = _ => Right(safeHash)

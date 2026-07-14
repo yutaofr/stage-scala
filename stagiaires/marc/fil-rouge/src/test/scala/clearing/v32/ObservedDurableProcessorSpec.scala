@@ -111,6 +111,23 @@ final class ObservedDurableProcessorSpec extends AnyFlatSpec with Matchers:
     rendered should not include "9999.99"
     rendered should not include "client=secret"
 
+  it should "replace an untrusted transaction header before logging it" in:
+    val (logger, events) = testLogger("untrusted-header")
+    var seenTxId = ""
+    val observed = ObservedDurableProcessor(
+      new DurableProcessing:
+        def process(envelope: RecordEnvelope) =
+          seenTxId = MDC.get("txId")
+          DurableRecordOutcome.Published,
+      logger
+    )
+    val sensitive = "MA64011519000001205000534921-client-secret"
+
+    observed.process(envelope(sensitive))
+
+    seenTxId shouldBe "unknown"
+    events.list.asScala.map(_.getMDCPropertyMap.toString).mkString("\n") should not include sensitive
+
   private def envelope(txId: String): RecordEnvelope =
     RecordEnvelope(
       KafkaSettings.InputTopic,

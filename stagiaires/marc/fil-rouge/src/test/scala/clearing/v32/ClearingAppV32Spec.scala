@@ -1,7 +1,8 @@
 package clearing.v32
 
 import clearing.v30.{BatchReport, InputPartition}
-import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.{CountDownLatch, TimeUnit}
+import java.util.concurrent.atomic.{AtomicBoolean, AtomicInteger}
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
@@ -89,6 +90,29 @@ final class ClearingAppV32Spec extends AnyFlatSpec with Matchers:
 
     runtime.runBounded(3) shouldBe
       BatchReport(Map(partition -> 3L), 2, 1, Set.empty)
+
+  "ContinuousShutdown" should "wait for the main thread to finish closing" in:
+    val releaseMain = CountDownLatch(1)
+    val closeFinished = CountDownLatch(1)
+    val fallbackCloses = AtomicInteger(0)
+    val mainThread = Thread: () =>
+      releaseMain.await()
+      Thread.sleep(50)
+      closeFinished.countDown()
+    mainThread.start()
+    val shutdown = ContinuousShutdown(
+      mainThread,
+      () => releaseMain.countDown(),
+      () => fallbackCloses.incrementAndGet(),
+      2000L
+    )
+
+    shutdown.requestAndAwait()
+
+    closeFinished.await(0, TimeUnit.MILLISECONDS) shouldBe true
+    mainThread.isAlive shouldBe false
+    fallbackCloses.get() shouldBe 0
+    shutdown.isRequested shouldBe true
 
   private def named(
     name: String,

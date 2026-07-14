@@ -1,10 +1,11 @@
-# Clearing Engine de Marc — v3.1
+# Clearing Engine de Marc — v3.2
 
 Ce projet est le fil rouge construit par Marc pendant son stage. La version
-`v3.1` conserve Kafka KRaft et le cœur pur v2.3, puis remplace le cache de
-déduplication v3.0 par un état Cassandra durable et cinq projections orientées
-requêtes. Les semaines Pekko, ZIO et Cats restent hors périmètre; aucune de ces
-bibliothèques n'est introduite.
+`v3.2` conserve le traitement durable Kafka+Cassandra v3.1 et ajoute des logs
+JSON corrélés, des métriques Prometheus, des traces OpenTelemetry propagées par
+Kafka, un dashboard Grafana et des alertes routées par Alertmanager. Les
+semaines Pekko, ZIO et Cats restent hors périmètre; aucune de ces bibliothèques
+n'est introduite.
 
 ## Prérequis
 
@@ -37,6 +38,12 @@ requêtes paginées et le scénario de 500 records :
 
 ```bash
 sbt "testOnly clearing.v31.*"
+```
+
+Le gate ciblé S17 vérifie les logs, métriques, traces, dashboards et règles :
+
+```bash
+sbt "testOnly clearing.v32.*"
 ```
 
 La couverture du cœur pur v2.0 est mesurée et bloquante à 100 % des statements
@@ -110,6 +117,45 @@ replay complet absorbé sans nouvelle projection. Arrêter le laboratoire avec :
 ```bash
 docker compose -f docker/docker-compose-v31.yml down -v
 ```
+
+## Lancer l'observabilité v3.2
+
+La stack v3.2 ajoute OpenTelemetry Collector, Jaeger, Prometheus, Grafana,
+Alertmanager et un webhook local. Tous les dashboards, datasources et règles
+sont provisionnés depuis `docker/observability/`.
+
+```bash
+docker compose -f docker/docker-compose-v32.yml up -d
+sbt -Dlogback.configurationFile=src/main/resources/logback-json.xml \
+  "run consumer --group-id marc-v32-demo"
+sbt "run qualify --seed 1701"
+```
+
+Interfaces locales : métriques sur `:8080/metrics`, Jaeger sur `:16686`,
+Prometheus sur `:9090`, Grafana sur `:3000` et Alertmanager sur `:9093`.
+
+Le gate reproductible recrée les volumes, traite 500 records, exige 485 sorties
+et 5 DLQ, extrait les 970 IBAN réels de l'input, contrôle les signaux, provoque
+`EngineDown`, corrèle pending/firing/resolved par incident, recherche les
+données sensibles puis supprime les conteneurs et volumes :
+
+```bash
+./scripts/verify-v32-runtime.sh
+```
+
+Le comportement par défaut nettoie toujours la stack. Pour conserver
+temporairement l'application rétablie et les interfaces locales afin de
+collecter des preuves visuelles, le mode doit être explicitement activé :
+
+```bash
+KEEP_STACK=1 ./scripts/verify-v32-runtime.sh
+```
+
+Après la collecte, arrêter le processus annoncé par le gate et exécuter
+`docker compose -f docker/docker-compose-v32.yml down -v`.
+
+Les objectifs et limites sont décrits dans `slo-v32.md`. Les preuves S17 se
+trouvent dans `preuves/s17-j*.md`.
 
 ## Lancer les démonstrations historiques
 

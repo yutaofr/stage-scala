@@ -43,5 +43,7 @@ L'exporteur OpenTelemetry mémoire vérifie :
 - la continuation du trace ID et du parent span ID lors de la consommation;
 - un nouveau contexte racine valide en l'absence de header.
 
-La capture Jaeger avec l'export OTLP réel appartient au gate Docker final,
-après ajout du Collector et de Jaeger au runtime v3.2.
+Le gate Docker final a exporté par OTLP vers le Collector puis Jaeger. L'API
+Jaeger a retourné 20 traces récentes et les cinq opérations attendues :
+`clearing.consume`, `parse`, `validate`, `netting` et `persist`. La réponse
+brute est conservée pendant le gate dans `target/v32-runtime/jaeger-traces.json`.

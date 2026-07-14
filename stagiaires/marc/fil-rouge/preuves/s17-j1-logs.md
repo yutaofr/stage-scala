@@ -36,5 +36,10 @@ Les tests prouvent :
   `message`, `service` et `environment` depuis l'encoder configuré par le vrai
   fichier XML.
 
-L'extrait JSON de l'application live sera ajouté au gate S17, lorsque le runtime
-v3.2 complet pourra être lancé avec Kafka et Cassandra.
+Le gate runtime a ensuite traité 500 records avec la configuration JSON réelle.
+Il a extrait 1 044 événements JSON parseables, retrouvé un événement de fin avec
+`txId`, `topic`, `partition` et `offset`, puis extrait depuis l'input Kafka les
+970 IBAN distincts réellement générés. Il a recherché ces 970 valeurs dans le
+log complet, les traces, les sorties Kafka, la DLQ et les projections Cassandra.
+La recherche n'a trouvé aucune occurrence. Un header `transaction-id` non
+numérique, trop grand ou sensible devient `unknown` avant le MDC et la trace.

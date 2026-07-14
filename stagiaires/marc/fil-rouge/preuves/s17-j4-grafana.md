@@ -21,7 +21,7 @@ Chaque panneau documente son comportement sans données. La seule variable est
 variable `$bank` n'est créée, car le moteur n'expose pas une métrique bancaire
 utile et bornée en semaine 17.
 
-## Preuve de contrat
+## Preuves
 
 La commande suivante valide le JSON, les cinq panneaux, leurs unités, les
 requêtes PromQL, le provisioning et les montages Compose :
@@ -31,6 +31,13 @@ sbt 'testOnly clearing.v32.GrafanaProvisioningSpec'
 docker compose -f docker/docker-compose-v32.yml config --quiet
 ```
 
-La capture d'écran et la vérification de données du simulateur seront ajoutées
-au gate runtime S17. Le contrat de fichier seul ne prouve pas encore que
-Grafana a rendu les séries d'un processus réel.
+Le gate runtime a ensuite interrogé le Grafana réellement démarré. L'API a
+retourné la datasource `prometheus-clearing` reliée à
+`http://prometheus:9090`, puis le dashboard `clearing-engine-v32` intitulé
+`Clearing Engine v3.2` avec exactement cinq panneaux. Prometheus avait au même
+moment réconcilié 500 traitements et un lag nul.
+
+La capture visuelle n'a pas été conservée : la connexion du navigateur de
+l'environnement de travail a échoué avant l'ouverture de l'interface. Cette
+limite concerne l'artefact d'illustration, pas le provisioning ni les données,
+qui ont été contrôlés par les API réelles du conteneur.

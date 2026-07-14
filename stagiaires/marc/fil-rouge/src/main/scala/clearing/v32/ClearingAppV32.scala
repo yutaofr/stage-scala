@@ -226,6 +226,25 @@ private object RuntimeResources:
             case Some(first) => first.addSuppressed(error)
     firstFailure.foreach(throw _)
 
+private[v32] final class ContinuousShutdown(
+  mainThread: Thread,
+  wakeup: () => Unit,
+  closeAfterTimeout: () => Unit,
+  joinTimeoutMillis: Long
+):
+  private val requested = AtomicBoolean(false)
+
+  def isRequested: Boolean = requested.get()
+
+  def requestAndAwait(): Unit =
+    requested.set(true)
+    try wakeup()
+    finally
+      try mainThread.join(joinTimeoutMillis)
+      catch
+        case _: InterruptedException => Thread.currentThread().interrupt()
+      if mainThread.isAlive then closeAfterTimeout()
+
 object ClearingAppV32:
   def run(command: V31Command, baseSettings: V32Settings): Unit = command match
     case V31Command.Consume(consumerCommand) =>
@@ -251,19 +270,25 @@ object ClearingAppV32:
     case other => ClearingAppV31.run(other)
 
   private def runContinuously(runtime: V32ConsumerRuntime): Unit =
-    val stopped = AtomicBoolean(false)
-    val hook = Thread(() =>
-      stopped.set(true)
-      runtime.wakeup()
+    val shutdown = ContinuousShutdown(
+      Thread.currentThread(),
+      () => runtime.wakeup(),
+      () => runtime.close(),
+      joinTimeoutMillis = 30000L
     )
+    val hook = Thread(() => shutdown.requestAndAwait())
+    hook.setName("clearing-v32-shutdown")
     Runtime.getRuntime.addShutdownHook(hook)
-    try runtime.runUntil(() => stopped.get())
+    try runtime.runUntil(() => shutdown.isRequested)
     catch
-      case _: org.apache.kafka.common.errors.WakeupException if stopped.get() =>
+      case _: org.apache.kafka.common.errors.WakeupException
+          if shutdown.isRequested =>
         ()
     finally
       runtime.close()
-      if !stopped.get() then Runtime.getRuntime.removeShutdownHook(hook)
+      if !shutdown.isRequested then
+        try Runtime.getRuntime.removeShutdownHook(hook)
+        catch case _: IllegalStateException => ()
 
 @main def runClearingAppV32(args: String*): Unit =
   (V31Cli.parse(args.toList), V32Settings.fromEnvironment()) match

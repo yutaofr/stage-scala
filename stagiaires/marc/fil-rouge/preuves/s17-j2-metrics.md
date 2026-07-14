@@ -51,5 +51,7 @@ Les tests vérifient :
   `/health`;
 - le refus de connexion après fermeture du serveur.
 
-La preuve Prometheus UP puis DOWN appartient au gate Docker final, après
-assemblage du runtime v3.2 et du service Prometheus.
+Le gate Docker final a observé la cible `clearing-engine` successivement `up`,
+`down`, puis `up`. Avant le redémarrage volontaire, Prometheus a réconcilié
+exactement 500 traitements et un lag total nul. Le gate a aussi lu directement
+les trois familles `clearing_*` sur `/metrics`.

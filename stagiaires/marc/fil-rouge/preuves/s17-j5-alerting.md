@@ -35,7 +35,13 @@ docker run --rm \
 docker compose -f docker/docker-compose-v32.yml config --quiet
 ```
 
-Le gate runtime final doit encore prouver la même alerte dans les états
-pending, firing et resolved, puis retrouver les notifications firing et
-resolved dans le webhook. Les fichiers de configuration seuls ne prouvent pas
-ce chemin réseau.
+Le gate runtime final a d'abord attendu l'absence d'`EngineDown` dans Prometheus
+et Alertmanager, puis enregistré le nombre initial de notifications. Il a arrêté le moteur, observé `EngineDown` dans les états
+`pending` puis `firing`, retrouvé l'alerte active dans Alertmanager et la
+notification `firing` dans le webhook. Après redémarrage, la cible est revenue
+à `up`, l'alerte a disparu de Prometheus et Alertmanager, puis le webhook a
+reçu `resolved`. Le gate exige que les deux notifications soient postérieures
+au baseline et portent le même `startsAt`; une notification de démarrage ne
+peut donc plus satisfaire la reprise volontaire. Le journal final contient
+quatre notifications : un couple firing/resolved de démarrage et un couple
+distinct firing/resolved pour la panne injectée.

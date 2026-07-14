@@ -46,8 +46,7 @@ final class TracingDurableProcessor(
     span.setAttribute("messaging.destination.name", envelope.topic)
     span.setAttribute("messaging.kafka.partition", envelope.partition.toLong)
     span.setAttribute("messaging.kafka.offset", envelope.offset)
-    envelope.headers.get("transaction-id").foreach: txId =>
-      span.setAttribute("tx.id", txId)
+    span.setAttribute("tx.id", CorrelationFields.transactionId(envelope))
 
     val scope = span.makeCurrent()
     try
