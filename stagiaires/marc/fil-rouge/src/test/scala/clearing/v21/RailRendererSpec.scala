@@ -1,0 +1,75 @@
+package clearing.v21
+
+import clearing.model.*
+import clearing.v20.PreparedTransaction
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
+
+final class RailRendererSpec extends AnyFlatSpec with Matchers:
+  private val prepared = PreparedTransaction(
+    id = 7,
+    sender = "ATH",
+    receiver = "CIH",
+    settlementAmount = BigDecimal("100"),
+    transactionType = TransactionType.Transfer,
+    status = TransactionStatus.Validated,
+    referenceCurrency = Currency.MAD,
+    fee = BigDecimal("0.10"),
+    sourceIbanHash = "source-hash",
+    destinationIbanHash = "destination-hash"
+  )
+  private val success = RailSuccess(
+    lineNumber = 3,
+    prepared = prepared,
+    label = "Facture juillet",
+    warnings = Nil
+  )
+
+  "RailRenderer.renderLine" should "rendre le rail droit avec fold" in:
+    RailRenderer.renderLine(Right(success)) shouldBe
+      "Transaction OK : 100.00 MAD"
+
+  it should "rendre une erreur de parsing précise avec fold" in:
+    RailRenderer.renderLine(
+      Left(ParsingError(3, ParsingFailure.InvalidAmount))
+    ) shouldBe "REJET : PARSE_AMOUNT - montant illisible"
+
+  it should "rendre validation, métier et système sans stack trace" in:
+    val rendered = List(
+      RailRenderer.renderLine(
+        Left(
+          TransactionValidationError(
+            3,
+            Some(7),
+            List("MONTANT_NON_POSITIF", "IBAN_SOURCE_INVALIDE")
+          )
+        )
+      ),
+      RailRenderer.renderLine(
+        Left(Iso20022Rejection(Iso20022Code.AM05, 7))
+      ),
+      RailRenderer.renderLine(
+        Left(FileReadFailure("input.csv", "permission refusée"))
+      )
+    )
+
+    rendered shouldBe List(
+      "REJET : VALIDATION_TRANSACTION - MONTANT_NON_POSITIF+IBAN_SOURCE_INVALIDE",
+      "REJET : AM05 - transaction 7 — opération dupliquée",
+      "REJET : TECH_READ - lecture input.csv : permission refusée"
+    )
+    rendered.mkString should not include "Exception"
+
+  it should "rendre la récupération sans donnée bancaire sensible" in:
+    val recovered = success.copy(
+      label = "NON RENSEIGNE",
+      warnings = List(LightWarning.MissingLabel("NON RENSEIGNE"))
+    )
+    val rendered = RailRenderer.renderSuccess(recovered)
+
+    rendered shouldBe List(
+      "Transaction OK : 100.00 MAD",
+      "AVERTISSEMENT : LABEL_MANQUANT -> NON RENSEIGNE"
+    ).mkString("\n")
+    rendered should not include "MA64"
+    rendered should not include "source-hash"
