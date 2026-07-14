@@ -23,11 +23,19 @@ final class V31ConsumerBatchRunner(
     if report.retryOffsets.nonEmpty then rewinder.rewind(report.retryOffsets)
     report
 
+trait ConsumerPollObserver:
+  def afterPoll(consumer: Consumer[String, String]): Unit
+
+object ConsumerPollObserver:
+  val noop: ConsumerPollObserver = new ConsumerPollObserver:
+    def afterPoll(consumer: Consumer[String, String]): Unit = ()
+
 final class KafkaConsumerLoopV31(
   consumer: Consumer[String, String],
   runner: V31ConsumerBatchRunner,
   resources: List[AutoCloseable] = Nil,
-  pollTimeout: Duration = Duration.ofSeconds(1)
+  pollTimeout: Duration = Duration.ofSeconds(1),
+  pollObserver: ConsumerPollObserver = ConsumerPollObserver.noop
 ) extends AutoCloseable:
   def pollOnce(): BatchReport =
     val records = consumer
@@ -36,6 +44,7 @@ final class KafkaConsumerLoopV31(
       .asScala
       .map(KafkaRecordAdapter.toEnvelope)
       .toList
+    pollObserver.afterPoll(consumer)
     runner.run(records)
 
   def runUntil(stopRequested: () => Boolean): Unit =
