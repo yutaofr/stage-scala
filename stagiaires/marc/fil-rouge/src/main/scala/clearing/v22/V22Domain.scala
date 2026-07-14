@@ -17,6 +17,15 @@ case class Transaction(
   status: TransactionStatus = TransactionStatus.Pending
 )
 
+case class NumberedLine(lineNumber: Int, value: String)
+
+case class TypedTransactionLine(
+  lineNumber: Int,
+  transaction: Transaction,
+  label: Option[String],
+  warnings: List[V22Warning]
+)
+
 enum V22Warning:
   case MissingLabel(defaultLabel: String)
 
