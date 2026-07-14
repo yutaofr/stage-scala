@@ -103,10 +103,18 @@ object CassandraStatements:
 
 final class LiveCassandraRepository(
   session: CqlSession,
-  statements: CassandraStatements
+  statements: CassandraStatements,
+  pageSize: Int = 5000
 ) extends DurableRepository:
+  require(pageSize > 0, "pageSize doit être strictement positif")
+
   def states(eventKey: String): CompletionStage[List[ProcessingState]] =
-    allRows(session.executeAsync(statements.selectStates.bind(eventKey)))
+    val statement = statements.selectStates
+      .boundStatementBuilder()
+      .setString(0, eventKey)
+      .setPageSize(pageSize)
+      .build()
+    allRows(session.executeAsync(statement))
       .thenApply: rows =>
         rows.map: row =>
           ProcessingState(
@@ -205,6 +213,7 @@ final class LiveCassandraRepository(
       .setString(0, bank)
       .setLocalDate(1, date)
       .setInt(2, limit)
+      .setPageSize(pageSize)
       .build()
     allRows(session.executeAsync(statement)).thenApply: rows =>
       rows.map: row =>
@@ -227,6 +236,7 @@ final class LiveCassandraRepository(
       .boundStatementBuilder()
       .setString(0, bank)
       .setLocalDate(1, date)
+      .setPageSize(pageSize)
       .build()
     allRows(session.executeAsync(statement)).thenApply: rows =>
       BankPosition(
@@ -242,20 +252,25 @@ final class LiveCassandraRepository(
         .boundStatementBuilder()
         .setLocalDate(0, date)
         .setShort(1, bucket.toShort)
+        .setPageSize(pageSize)
         .build()
       allRows(session.executeAsync(statement))
 
     CompletionStages.values(reads).thenApply: pages =>
       pages.flatten
         .map(historyRow)
-        .sortBy(_.occurredAt)(Ordering[java.time.Instant].reverse)
+        .sortWith(HistoryOrdering.before)
 
   def topPairsByDate(
     date: LocalDate,
     limit: Int
   ): CompletionStage[List[PairSummary]] =
     require(limit > 0, "limit doit être strictement positif")
-    val statement = statements.selectPairs.bind(date)
+    val statement = statements.selectPairs
+      .boundStatementBuilder()
+      .setLocalDate(0, date)
+      .setPageSize(pageSize)
+      .build()
     allRows(session.executeAsync(statement)).thenApply: rows =>
       rows
         .groupBy(_.getString("bank_pair"))
@@ -291,9 +306,10 @@ final class LiveCassandraRepository(
 
   private def collectRows(
     result: AsyncResultSet,
-    accumulated: List[Row]
+    reversed: List[Row]
   ): CompletionStage[List[Row]] =
-    val next = accumulated ::: result.currentPage().asScala.toList
+    val next = result.currentPage().asScala.foldLeft(reversed):
+      (rows, row) => row :: rows
     if result.hasMorePages then
       result.fetchNextPage().thenCompose(page => collectRows(page, next))
-    else CompletionStages.successful(next)
+    else CompletionStages.successful(next.reverse)

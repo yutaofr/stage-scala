@@ -127,7 +127,12 @@ final class InMemoryDurableRepository private () extends DurableRepository:
         movementRows.values
           .filter(row => row.bank == bank && row.date == date)
           .toList
-          .sortBy(_.occurredAt)(Ordering[java.time.Instant].reverse)
+          .sortWith: (left, right) =>
+            if left.occurredAt != right.occurredAt then
+              left.occurredAt.isAfter(right.occurredAt)
+            else if left.eventKey != right.eventKey then
+              left.eventKey < right.eventKey
+            else left.direction < right.direction
           .take(limit)
 
   def positionByBank(
@@ -151,7 +156,7 @@ final class InMemoryDurableRepository private () extends DurableRepository:
         historyRows.values
           .filter(row => row.occurredAt.atZone(ZoneOffset.UTC).toLocalDate == date)
           .toList
-          .sortBy(_.occurredAt)(Ordering[java.time.Instant].reverse)
+          .sortWith(HistoryOrdering.before)
 
   def topPairsByDate(
     date: LocalDate,

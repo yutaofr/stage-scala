@@ -28,7 +28,8 @@ final class CassandraRepositoryIntegrationSpec
 
       val repository = LiveCassandraRepository(
         session,
-        CassandraStatements.prepare(session)
+        CassandraStatements.prepare(session),
+        pageSize = 1
       )
       val instant = Instant.parse("2026-07-14T12:30:00Z")
       val date = LocalDate.parse("2026-07-14")
@@ -62,16 +63,22 @@ final class CassandraRepositoryIntegrationSpec
       await(repository.markState(completed))
       await(repository.saveValidated(identity, event))
       await(repository.saveValidated(identity, event))
+      val second = event.copy(
+        transactionId = 43,
+        settlementAmount = "40.00",
+        occurredAt = instant.plusSeconds(1)
+      )
+      await(repository.saveValidated(DurableIdentity("tx:43", "fp-b"), second))
 
       await(repository.states("tx:42")) shouldBe List(completed)
       await(repository.historyByDate(date)).map(_.transactionId) shouldBe
-        List(42)
+        List(43, 42)
       await(repository.movementsByBank("AWB", date, 10)).map(_.eventKey) shouldBe
-        List("tx:42")
+        List("tx:43", "tx:42")
       await(repository.positionByBank("AWB", date)) shouldBe
-        BankPosition("AWB", date, BigDecimal(-100), 1)
+        BankPosition("AWB", date, BigDecimal(-140), 2)
       await(repository.positionByBank("CIH", date)) shouldBe
-        BankPosition("CIH", date, BigDecimal(100), 1)
+        BankPosition("CIH", date, BigDecimal(140), 2)
       await(repository.topPairsByDate(date, 10)) shouldBe
-        List(PairSummary("AWB|CIH", BigDecimal(100), 1))
+        List(PairSummary("AWB|CIH", BigDecimal(140), 2))
     finally session.close()

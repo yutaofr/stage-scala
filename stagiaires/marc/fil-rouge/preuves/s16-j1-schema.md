@@ -39,3 +39,9 @@ docker compose -f docker/docker-compose-v31.yml config --quiet
 Le test de contrat contrôle les versions, healthchecks, dépendances, tables et
 interdictions du schéma. La preuve runtime Cassandra sera ajoutée après
 l'implémentation du repository.
+
+Les variables `CASSANDRA_KEYSPACE` et `CASSANDRA_DATACENTER` configurent la
+connexion du processus. Le script Compose initialise volontairement
+`clearing/datacenter1`. Une valeur différente exige donc de créer au préalable
+un schéma compatible dans le datacenter ciblé ; le script local n'est pas un
+moteur de migration paramétrable.

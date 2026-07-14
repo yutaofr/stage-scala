@@ -164,3 +164,9 @@ object HistoryBucket:
 
   def forEvent(eventKey: String): Int =
     Math.floorMod(eventKey.hashCode, Count)
+
+object HistoryOrdering:
+  def before(left: HistoryRow, right: HistoryRow): Boolean =
+    if left.occurredAt != right.occurredAt then
+      left.occurredAt.isAfter(right.occurredAt)
+    else left.eventKey < right.eventKey
