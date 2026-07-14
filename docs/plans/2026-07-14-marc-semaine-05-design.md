@@ -4,8 +4,8 @@
 
 La version v1.0 remplace les tuples positionnels du prototype par un modèle
 métier nommé. Elle rend les états, les types de transaction et les erreurs
-énumérables par le compilateur. La semaine 6 introduira `Either` et
-`Validated`; la semaine 5 conserve donc des `List` et des objets de résultat
+énumérables par le compilateur. La semaine 6 approfondira les ADT, guards,
+extracteurs et factories; la semaine 5 conserve donc des `List` et des objets de résultat
 nommés.
 
 ## Frontière de migration

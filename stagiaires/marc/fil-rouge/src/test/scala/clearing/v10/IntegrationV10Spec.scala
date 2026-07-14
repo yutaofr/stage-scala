@@ -41,7 +41,7 @@ final class IntegrationV10Spec extends AnyFlatSpec with Matchers:
     appResult.result.errors.map(_.getClass.getSimpleName) shouldBe List(
       "InvalidAmount",
       "UnknownBank",
-      "ValidationError",
+      "FieldValidationError",
       "DuplicateTransaction$"
     )
 

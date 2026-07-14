@@ -72,7 +72,8 @@ Le moteur de frais reste un exercice séparé du netting. Ajouter une commission
 métier devra représenter explicitement le compte bénéficiaire des frais.
 
 `Option` compte les lignes ignorées, mais ne conserve pas leur cause. Marc garde
-ce manque visible pour introduire `Either` et `Validated` en S6.
+ce manque visible. Le support réel de S6 approfondira d'abord les ADT, guards,
+extracteurs et factories; `Either` et `Validated` viendront plus tard.
 
 ### Démonstration mensuelle
 

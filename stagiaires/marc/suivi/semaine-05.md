@@ -82,8 +82,9 @@ du jour 2, puis a ajouté le quatrième état et sa branche de routage comme le
 demande l'exercice d'exhaustivité du jour 3.
 
 Le parser conserve `Option`. Les erreurs de syntaxe restent donc seulement
-comptées; les erreurs métier, elles, sont précises et cumulables. S6 introduira
-`Either` et `Validated` à partir de cette limite observable.
+comptées; les erreurs métier, elles, sont précises et cumulables. La lecture du
+support S6 a ensuite corrigé la prévision initiale : S6 approfondit les ADT,
+guards, extracteurs et factories; `Either` et `Validated` viendront plus tard.
 
 La revue avant jalon a corrigé trois écarts : `ClearingBatch.id` est maintenant
 un `Int`, plusieurs lignes à trois colonnes reçoivent des IDs distincts et
@@ -102,8 +103,9 @@ Les trois points forts présentés par Marc sont :
    séparées; un seul `ValidationSummary` alimente le calcul et le rapport.
 
 La zone d'amélioration est le résultat du parser. `Option` indique seulement
-qu'une ligne est absente; S6 devra conserver la cause avec `Either`, puis
-accumuler plusieurs erreurs indépendantes avec `Validated`.
+qu'une ligne est absente. S6 conservera donc la ligne brute dans une erreur
+typée et accumulera les erreurs indépendantes avec l'ADT et les collections
+déjà étudiés, conformément au support réel de la semaine.
 
 ## Validation mentor
 

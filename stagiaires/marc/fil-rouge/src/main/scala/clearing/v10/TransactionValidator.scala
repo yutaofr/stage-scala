@@ -27,7 +27,7 @@ object TransactionValidator:
     val transferErrors =
       if transaction.sender == transaction.receiver then
         List(
-          ValidationError(
+          FieldValidationError(
             "receiver",
             "doit être différente de la banque source"
           )

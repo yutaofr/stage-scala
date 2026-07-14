@@ -32,7 +32,7 @@ final class TransactionValidatorSpec extends AnyFlatSpec with Matchers:
 
   it should "représenter un virement interne par une erreur de validation" in:
     TransactionValidator.validate(valid.copy(receiver = "ATH")) shouldBe List(
-      ValidationError("receiver", "doit être différente de la banque source")
+      FieldValidationError("receiver", "doit être différente de la banque source")
     )
 
   "TransactionValidator.partition" should "conserver la première occurrence et rejeter les doublons suivants" in:
@@ -64,7 +64,7 @@ final class TransactionValidatorSpec extends AnyFlatSpec with Matchers:
       "Banque inconnue : ZZZ"
     ErrorReporter.formatError(DuplicateTransaction) shouldBe
       "Transaction dupliquée"
-    ErrorReporter.formatError(ValidationError("receiver", "doit différer")) shouldBe
+    ErrorReporter.formatError(FieldValidationError("receiver", "doit différer")) shouldBe
       "Validation receiver : doit différer"
 
   "ErrorReporter.formatErrors" should "rendre une ligne par erreur" in:

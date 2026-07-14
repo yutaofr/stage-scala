@@ -8,8 +8,9 @@ object ErrorReporter:
       case InvalidAmount(amount) => s"Montant invalide : $amount DH"
       case UnknownBank(code)     => s"Banque inconnue : $code"
       case DuplicateTransaction => "Transaction dupliquée"
-      case ValidationError(field, message) =>
+      case FieldValidationError(field, message) =>
         s"Validation $field : $message"
+      case other => clearing.v11.DetailedErrorReporter.detailedReport(other)
 
   def formatErrors(errors: List[ClearingError]): String =
     errors.map(formatError).mkString("\n")

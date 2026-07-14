@@ -1,5 +1,7 @@
 package clearing.model
 
+import scala.util.Try
+
 case class Bank(code: String, name: String)
 
 enum TransactionStatus:
@@ -18,28 +20,83 @@ object TransactionType:
       case "CHQ" => Some(TransactionType.Check)
       case _     => None
 
+enum Currency:
+  case MAD, EUR, USD
+
+object Currency:
+  def fromString(raw: String): Option[Currency] =
+    raw.trim.toUpperCase match
+      case "MAD" => Some(Currency.MAD)
+      case "EUR" => Some(Currency.EUR)
+      case "USD" => Some(Currency.USD)
+      case _     => None
+
+case class Iban private (value: String)
+
+object Iban:
+  def apply(raw: String): Option[Iban] =
+    val normalized = raw.trim.toUpperCase
+    Option.when(normalized.length == 24 && normalized.startsWith("MA"))(
+      new Iban(normalized)
+    )
+
+  def unapply(raw: String): Option[(String, String, String)] =
+    apply(raw).map(iban =>
+      (
+        iban.value.take(2),
+        iban.value.slice(4, 9),
+        iban.value.drop(9)
+      )
+    )
+
 case class Transaction(
   id: Int,
   sender: String,
   receiver: String,
   amount: BigDecimal,
   transactionType: TransactionType,
-  status: TransactionStatus = TransactionStatus.Pending
+  status: TransactionStatus = TransactionStatus.Pending,
+  sourceIban: String = Transaction.DefaultSourceIban,
+  destinationIban: String = Transaction.DefaultDestinationIban,
+  currency: Currency = Currency.MAD
 ):
   def isHighValue: Boolean = amount > BigDecimal("50000")
 
+object Transaction:
+  val DefaultSourceIban: String = "MA64ATH00000000000000000"
+  val DefaultDestinationIban: String = "MA64CIH00000000000000000"
+
+  def fromCsv(line: String): Option[Transaction] =
+    line.split(",", -1).map(_.trim) match
+      case Array(
+            idRaw,
+            sender,
+            receiver,
+            sourceIban,
+            destinationIban,
+            amountRaw,
+            typeRaw,
+            currencyRaw
+          ) =>
+        for
+          id <- Try(idRaw.toInt).toOption
+          amount <- Try(BigDecimal(amountRaw)).toOption
+          transactionType <- TransactionType.fromCode(typeRaw)
+          currency <- Currency.fromString(currencyRaw)
+        yield Transaction(
+          id = id,
+          sender = sender.toUpperCase,
+          receiver = receiver.toUpperCase,
+          amount = amount,
+          transactionType = transactionType,
+          status = TransactionStatus.Pending,
+          sourceIban = sourceIban.toUpperCase,
+          destinationIban = destinationIban.toUpperCase,
+          currency = currency
+        )
+      case _ => None
+
 case class Account(iban: String, bank: Bank, balance: BigDecimal)
-
-sealed trait ClearingError
-
-case class InvalidAmount(amount: BigDecimal) extends ClearingError
-
-case class UnknownBank(code: String) extends ClearingError
-
-case object DuplicateTransaction extends ClearingError
-
-case class ValidationError(field: String, message: String)
-    extends ClearingError
 
 case class InvalidTransaction(
   transaction: Transaction,
