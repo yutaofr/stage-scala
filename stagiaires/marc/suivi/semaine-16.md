@@ -89,7 +89,7 @@ Le CLI unifié fournit `producer`, `qualify`, `consumer` et `report`.
 - [x] La suite S1–S16 passe sous Java 21 : 551 tests, 95 suites, 0 échec.
 - [x] La suite S1–S16 passe sous Java 17 Docker : 551 tests, 95 suites,
   0 échec.
-- [ ] La revue mentor ne conserve aucun point critique ou important.
+- [x] La revue mentor ne conserve aucun point critique ou important.
 
 ## Journal TDD
 
@@ -117,8 +117,21 @@ Le CLI unifié fournit `producer`, `qualify`, `consumer` et `report`.
 
 ## Validation mentor
 
-**Décision : qualification technique terminée, revue senior en cours.**
+**Décision : semaine validée le 14 juillet 2026.**
 
-Les gates Java 21, Java 17, Cassandra live, coupure/reprise, replay et
-confidentialité sont verts. La semaine ne sera marquée validée qu'après la
-contre-vérification senior et la fermeture de tout point critique ou important.
+Les gates Java 21 et Java 17 passent avec 551 tests dans 95 suites, sans échec.
+Le gate Cassandra live passe avec 37 tests dans 11 suites, sans test désactivé.
+La coupure/reprise, le replay, le benchmark, le dashboard, les dix minutes de
+mesures et la confidentialité possèdent tous une preuve reproductible.
+
+La première revue a relevé un point important : deux offsets invalides portant
+les mêmes octets partageaient une identité dérivée du payload. La clé durable
+utilise maintenant topic, partition et offset; le fingerprint reste la clé de
+contenu. La seconde revue a relevé un autre point important : une quatrième
+requête dashboard pouvait démarrer entre la libération du guard et la fin du
+troisième refresh. Un test à intervalle d'une nanoseconde a reproduit quatre
+appels avant que l'ordre soit corrigé.
+
+La revue finale conclut à 0 point critique, 0 point important et 0 point
+mineur. Le livrable v3.1 est accepté; S17 v3.2, consacrée aux logs, métriques,
+traces, Grafana et alertes, devient la prochaine semaine autorisée.
