@@ -40,4 +40,3 @@ services:
     entrypoint:
       - /bin/sh
       - /scripts/create-topics.sh
-

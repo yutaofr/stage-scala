@@ -336,10 +336,11 @@ non-régression, mais ne font pas partie du contrat v1.3.
   header transaction, `acks=all`, idempotence et callbacks attendus.
 - `BatchCoordinator` : traitement séquentiel par partition, arrêt au premier
   échec et calcul exact de l'offset suivant.
-- `InMemoryDeduplicationRegistry` : déduplication pédagogique, appliquée après
-  l'accusé de publication et explicitement perdue au redémarrage.
+- `InMemoryDeduplicationRegistry` : couple ID/fingerprint marqué après l'accusé,
+  conflit de payload vers la DLQ et état explicitement perdu au redémarrage.
 - `KafkaDecisionPublisher`, `KafkaOffsetCommitter` et `KafkaConsumerLoop` :
-  output/DLQ avant `commitSync`, auto-commit désactivé et arrêt propre.
+  output/DLQ avant `commitSync`, `seek` du premier échec, auto-commit désactivé
+  et arrêt propre.
 - `docker-compose-kafka.yml` : Apache Kafka 4.3.0 KRaft, listeners hôte et
   conteneur, healthcheck broker et trois topics de trois partitions.
 
@@ -352,8 +353,9 @@ clearing-input -> RecordEnvelope -> EventCodec -> TypedRailwayEngine v2.3
   -> ack -> cache mémoire -> commit(partition, offset + 1)
 ```
 
-La clé est la banque émettrice. La DLQ contient un fingerprint SHA-256 plutôt
-que le payload original. Un crash après publication et avant commit peut
+La clé de sortie vient du sender validé; la clé DLQ vient de l'ID ou du
+fingerprint, jamais de la clé d'entrée non fiable. La DLQ contient un
+fingerprint SHA-256 plutôt que le payload original. Un crash après publication et avant commit peut
 rejouer le record; le v3.0 garantit at-least-once, pas exactly-once externe.
 
 ## Chemin historique v2.3
@@ -489,6 +491,8 @@ du flux ; elle ne garantit donc pas un temps inférieur.
 - Le cluster possède un seul broker, sans réplication réelle, TLS ni SASL.
 - Le cache de déduplication est local au processus et perdu au redémarrage.
 - Un crash entre l'ack de sortie et le commit peut republier le résultat.
+- Un même ID avec un payload différent devient un conflit DLQ; il n'est jamais
+  ignoré comme replay.
 - Les événements JSON ne disposent pas encore d'un registry de schémas.
 - Le monitoring Prometheus/Grafana arrive après la persistance Cassandra.
 

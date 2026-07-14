@@ -54,6 +54,17 @@ final class IntegrationV30Spec extends AnyFlatSpec with Matchers:
           case None        => Some(amount)
 
     positions.values.sum shouldBe BigDecimal(0)
+    val expectedPositions = inputs
+      .filterNot(event => event.sender == event.receiver)
+      .foldLeft(Map.empty[String, BigDecimal]): (current, event) =>
+        val debited = current.updatedWith(event.sender):
+          case Some(value) => Some(value - event.amount)
+          case None        => Some(-event.amount)
+        debited.updatedWith(event.receiver):
+          case Some(value) => Some(value + event.amount)
+          case None        => Some(event.amount)
+
+    positions shouldBe expectedPositions
 
   it should "ne publier aucun IBAN brut dans output ou DLQ" in:
     val inputs = TransactionGenerator.generateMixed(100, 42L, 10)

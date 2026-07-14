@@ -34,7 +34,8 @@ object KafkaProducerSettings:
 object KafkaConsumerSettings:
   def properties(
     bootstrapServers: String,
-    groupId: String
+    groupId: String,
+    maxPollRecords: Option[Int] = None
   ): Properties =
     val values = new Properties()
     values.setProperty(
@@ -53,4 +54,9 @@ object KafkaConsumerSettings:
       classOf[StringDeserializer].getName
     )
     values.setProperty(ConsumerConfig.CLIENT_ID_CONFIG, "marc-v30-consumer")
+    maxPollRecords.foreach: maximum =>
+      values.setProperty(
+        ConsumerConfig.MAX_POLL_RECORDS_CONFIG,
+        maximum.toString
+      )
     values

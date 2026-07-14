@@ -38,4 +38,3 @@ Le total DLQ est passé de 100 à 101 et l'offset du groupe est revenu à 605 av
 lag 0. Le replay a donc produit un doublon observable. Cette preuve exclut toute
 revendication d'exactly-once externe. La semaine 16 devra remplacer le cache
 par un état Cassandra durable.
-

@@ -39,6 +39,10 @@ fait passer la DLQ de 100 à 101. Ce comportement est conforme à at-least-once,
 mais il interdit de parler d'exactly-once. Cassandra portera l'état durable en
 S16.
 
+La revue a aussi révélé qu'un registre limité à l'ID confondrait deux runs du
+producer. Le registre compare désormais ID et fingerprint : même couple signifie
+replay, même ID avec un autre payload signifie conflit DLQ.
+
 ## Kafka comparé au fichier et à HTTP
 
 Un fichier fournit un lot simple et reproductible, mais peu de coordination

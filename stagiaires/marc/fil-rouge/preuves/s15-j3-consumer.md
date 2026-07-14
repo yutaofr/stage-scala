@@ -34,3 +34,8 @@ Ces valeurs prouvent que le consumer committe l'offset suivant pour chaque
 partition. Les tests unitaires vérifient séparément que publication, accusé,
 marquage et commit sont exécutés dans cet ordre.
 
+La correction de revue ajoute une preuve `MockConsumer` sur deux polls. Le
+premier poll avance jusqu'à 3 mais échoue à l'offset 1; après commit du seul
+offset 0, le consumer fait `seek(1)`. Le second poll traite 1 puis 2 et committe
+3. Cette preuve protège contre l'hypothèse incorrecte selon laquelle « ne pas
+committer » rembobinerait automatiquement la position mémoire.

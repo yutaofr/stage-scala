@@ -47,4 +47,3 @@ final class EventCodecSpec extends AnyFlatSpec with Matchers:
     rendered should include("a" * 64)
     rendered should not include event.sourceIban
     rendered should not include event.destinationIban
-

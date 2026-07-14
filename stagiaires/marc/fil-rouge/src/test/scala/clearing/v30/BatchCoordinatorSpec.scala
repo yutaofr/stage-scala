@@ -103,10 +103,12 @@ final class BatchCoordinatorSpec extends AnyFlatSpec with Matchers:
     )
     report.published shouldBe 2
     report.failedPartitions shouldBe Set(InputPartition(0))
+    report.retryOffsets shouldBe Map(InputPartition(0) -> 1L)
 
   it should "ne pas republier un doublon marqué mais faire progresser son offset" in:
     val registry = InMemoryDeduplicationRegistry()
-    registry.markProcessed(7)
+    val duplicate = record(2, 12L, 7)
+    registry.markProcessed(7, PayloadFingerprint.sha256(duplicate.value))
     var publishCount = 0
     val coordinator = BatchCoordinator(
       _ => decision(7),
@@ -116,8 +118,35 @@ final class BatchCoordinatorSpec extends AnyFlatSpec with Matchers:
       registry
     )
 
-    val report = coordinator.process(List(record(2, 12L, 7)))
+    val report = coordinator.process(List(duplicate))
 
     publishCount shouldBe 0
     report.committableOffsets shouldBe Map(InputPartition(2) -> 13L)
     report.duplicates shouldBe 1
+
+  it should "router le même ID avec un autre payload comme conflit DLQ" in:
+    val registry = InMemoryDeduplicationRegistry()
+    val decisions = collection.mutable.ListBuffer.empty[ProcessingDecision]
+    val coordinator = BatchCoordinator(
+      _ => decision(7),
+      DecisionPublisher: (_, value) =>
+        decisions += value
+        Right(()),
+      registry
+    )
+    val original = record(0, 0L, 7)
+    val conflict = record(0, 1L, 7).copy(value = "payload-modifié")
+
+    coordinator.process(List(original, conflict)).published shouldBe 2
+    decisions.toList match
+      case List(
+            ProcessingDecision.Validated(_),
+            ProcessingDecision.Rejected(rejection)
+          ) =>
+        rejection.code shouldBe "EVENT_ID_CONFLICT"
+        rejection.transactionId shouldBe Some(7)
+      case other => fail(s"décisions inattendues : $other")
+
+    val replay = coordinator.process(List(conflict))
+    replay.duplicates shouldBe 1
+    decisions should have size 2

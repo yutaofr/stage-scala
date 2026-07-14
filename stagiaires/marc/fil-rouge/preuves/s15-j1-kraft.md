@@ -1,6 +1,6 @@
 # Preuve S15 J1 — Kafka KRaft
 
-Date d'exécution : 14 juillet 2026  
+Date d'exécution : 14 juillet 2026
 Environnement : macOS, Docker Compose, `apache/kafka:4.3.0`
 
 ## Validation statique

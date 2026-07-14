@@ -62,6 +62,12 @@ registre de déduplication, puis autorise le commit de `dernier offset traité +
 rejeté fonctionnellement est un record traité : il est envoyé en DLQ puis son
 offset peut être committé.
 
+Comme `poll` avance la position mémoire avant le traitement, un échec expose
+explicitement son premier offset non traité. Après le commit des succès
+antérieurs, l'adaptateur exécute `seek` vers cet offset avant le poll suivant.
+L'absence de commit seule ne suffit pas à provoquer ce replay dans le même
+processus.
+
 Un `BatchCoordinator` testable contient cette règle indépendamment des classes
 Kafka. Les adaptateurs `KafkaDecisionPublisher`, `KafkaOffsetCommitter` et
 `KafkaConsumerLoop` portent les effets. Cette séparation permet de prouver les
@@ -69,12 +75,17 @@ cas de crash sans mocker les classes finales du client Kafka.
 
 ## Sémantique at-least-once
 
-Le registre en mémoire est volontairement pédagogique. Un ID n'est enregistré
-qu'après l'accusé de l'événement de sortie. Il évite une répétition observée
+Le registre en mémoire est volontairement pédagogique. Le couple ID et
+fingerprint du payload n'est enregistré qu'après l'accusé de l'événement de
+sortie. Il évite une répétition observée
 tant que le processus reste vivant, mais il est perdu au redémarrage. Un crash
 après la publication et avant le commit peut donc republier le même résultat.
 Le v3.0 revendique uniquement une livraison at-least-once, jamais un
 exactly-once externe.
+
+Un ID connu avec le même fingerprint est un replay. Le même ID avec un payload
+différent n'est jamais ignoré : il produit `EVENT_ID_CONFLICT` dans la DLQ,
+puis son propre couple ID/fingerprint est marqué après l'accusé.
 
 Le contrat préparatoire S16 sera `Received -> Projected -> Completed` dans un
 stockage durable. Il remplacera le registre mémoire sans changer

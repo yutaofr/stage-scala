@@ -43,7 +43,8 @@ object ClearingAppV30:
         case Some(maxRecords) =>
           val loop = KafkaConsumerLoop.live(
             consumerCommand.bootstrapServers,
-            consumerCommand.groupId
+            consumerCommand.groupId,
+            maxPollRecords = Some(1)
           )
           try
             V30Reporter.print(

@@ -41,7 +41,8 @@ hashes IBAN. La DLQ remplace le payload original par son fingerprint SHA-256.
 `BatchCoordinator` traite chaque partition dans l'ordre. Un échec de
 publication bloque seulement la suite de cette partition. Un succès autorise
 le marquage puis rend `offset + 1` committable. `ConsumerBatchRunner` appelle le
-committer après ces étapes.
+committer après ces étapes. Après un échec, il fait aussi `seek` vers le premier
+offset non traité avant le poll suivant.
 
 Docker Compose sépare `localhost:9092` et `kafka:29092`. Le service init crée
 `clearing-input`, `clearing-output` et `clearing-dlq`; le healthcheck interroge
@@ -62,7 +63,9 @@ le broker API.
 - [x] Output ou DLQ est acquitté avant le marquage et le commit.
 - [x] Les offsets committés valent `dernier traité + 1` par partition.
 - [x] Un échec de publication ne marque pas l'ID et ne dépasse pas le record.
+- [x] Un `MockConsumer` sur deux polls prouve le `seek` avant reprise.
 - [x] Un doublon marqué n'est pas republié dans le même processus.
+- [x] Le même ID avec un autre fingerprint produit un conflit DLQ.
 - [x] Le redémarrage perd volontairement le cache et peut republier.
 - [x] La mutation `mark avant publish` fait échouer deux tests.
 - [x] Un replay Kafka réel produit un doublon observable.
@@ -70,9 +73,9 @@ le broker API.
 - [x] Le consumer classe 900 succès et 100 rejets, sans partition en échec.
 - [x] Le groupe termine avec lag 0 sur les trois partitions.
 - [x] Le netting des 900 succès a une somme globale nulle.
-- [x] Output et DLQ contiennent zéro IBAN brut.
-- [ ] La suite S1–S15 passe sous Java 21.
-- [ ] La suite S1–S15 passe sous Java 17 Docker.
+- [x] Key, headers et value de output/DLQ contiennent zéro IBAN brut.
+- [x] La suite S1–S15 passe sous Java 21.
+- [x] La suite S1–S15 passe sous Java 17 Docker.
 - [ ] La revue mentor ne conserve aucun point critique ou important.
 
 ## Journal TDD
@@ -101,6 +104,12 @@ le broker API.
 
 **Décision : qualification en cours.**
 
-Les preuves fonctionnelles et Docker sont complètes. La décision finale attend
-la suite complète sous Java 21, la non-régression Java 17 Docker et la revue
-senior.
+La suite complète passe sous Java 21 et Java 17 Docker : 515 tests, 84 suites,
+0 échec dans chaque environnement. Le gate Kafka propre confirme 1 000 entrées,
+900 sorties, 100 DLQ, lag nul et zéro IBAN brut dans clé, headers ou valeur.
+
+La première revue senior a trouvé un point critique et deux points importants :
+absence de `seek` après une publication échouée, fuite possible par la clé
+Kafka héritée de l'entrée et collision de déduplication entre deux payloads de
+même ID. Les correctifs sont implémentés et couverts par tests. La décision
+finale attend la contre-revue senior.

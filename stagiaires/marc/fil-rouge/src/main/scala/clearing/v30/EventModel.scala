@@ -61,4 +61,3 @@ enum ProcessingDecision:
 
 enum EventDecodingError:
   case InvalidJson
-

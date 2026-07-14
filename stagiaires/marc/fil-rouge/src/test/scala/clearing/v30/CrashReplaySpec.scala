@@ -71,8 +71,14 @@ final class CrashReplaySpec extends AnyFlatSpec with Matchers:
   it should "republier si le processus tombe entre l'ack et le marquage" in:
     final class CrashBetweenAckAndMark extends RuntimeException
     val crashingRegistry = new DeduplicationRegistry:
-      def contains(transactionId: Int): Boolean = false
-      def markProcessed(transactionId: Int): Unit =
+      def status(
+        transactionId: Int,
+        payloadFingerprint: String
+      ): DeduplicationStatus = DeduplicationStatus.New
+      def markProcessed(
+        transactionId: Int,
+        payloadFingerprint: String
+      ): Unit =
         throw new CrashBetweenAckAndMark
     var publications = 0
     def publisher = DecisionPublisher: (_, _) =>

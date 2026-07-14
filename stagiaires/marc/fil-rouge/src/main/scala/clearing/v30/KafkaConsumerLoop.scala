@@ -38,12 +38,15 @@ final class KafkaDecisionPublisher(
   producer: Producer[String, String]
 ) extends DecisionPublisher:
   def publish(
-    key: Option[String],
+    _key: Option[String],
     decision: ProcessingDecision
   ): Either[PublishingFailure, Unit] =
-    val outputKey = key.orElse(decision.transactionId.map(_.toString)).getOrElse(
-      "unknown"
-    )
+    val outputKey = decision match
+      case ProcessingDecision.Validated(event) => event.sender
+      case ProcessingDecision.Rejected(event) =>
+        event.transactionId
+          .map(_.toString)
+          .getOrElse(s"dlq-${event.payloadFingerprint.take(16)}")
     val record = new ProducerRecord[String, String](
       decision.outputTopic,
       outputKey,
@@ -72,14 +75,26 @@ final class KafkaOffsetCommitter(
         new OffsetAndMetadata(nextOffset)
     consumer.commitSync(kafkaOffsets.asJava)
 
+final class KafkaPartitionRewinder(
+  consumer: Consumer[String, String]
+) extends PartitionRewinder:
+  def rewind(offsets: Map[InputPartition, Long]): Unit =
+    offsets.foreach: (partition, offset) =>
+      consumer.seek(
+        new TopicPartition(KafkaSettings.InputTopic, partition.value),
+        offset
+      )
+
 final class ConsumerBatchRunner(
   coordinator: BatchCoordinator,
-  committer: OffsetCommitter
+  committer: OffsetCommitter,
+  rewinder: PartitionRewinder
 ):
   def run(records: List[RecordEnvelope]): BatchReport =
     val report = coordinator.process(records)
     if report.committableOffsets.nonEmpty then
       committer.commit(report.committableOffsets)
+    if report.retryOffsets.nonEmpty then rewinder.rewind(report.retryOffsets)
     report
 
 final class KafkaConsumerLoop(
@@ -103,17 +118,22 @@ final class KafkaConsumerLoop(
   def wakeup(): Unit = consumer.wakeup()
 
   override def close(): Unit =
-    consumer.close()
-    outputProducer.foreach(_.close())
+    try consumer.close()
+    finally outputProducer.foreach(_.close())
 
 object KafkaConsumerLoop:
   def live(
     bootstrapServers: String,
     groupId: String,
-    registry: DeduplicationRegistry = InMemoryDeduplicationRegistry()
+    registry: DeduplicationRegistry = InMemoryDeduplicationRegistry(),
+    maxPollRecords: Option[Int] = None
   ): KafkaConsumerLoop =
     val consumer = new KafkaConsumer[String, String](
-      KafkaConsumerSettings.properties(bootstrapServers, groupId)
+      KafkaConsumerSettings.properties(
+        bootstrapServers,
+        groupId,
+        maxPollRecords
+      )
     )
     consumer.subscribe(List(KafkaSettings.InputTopic).asJava)
     val producerProperties = KafkaProducerSettings.properties(bootstrapServers)
@@ -130,7 +150,8 @@ object KafkaConsumerLoop:
     )
     val runner = ConsumerBatchRunner(
       coordinator,
-      KafkaOffsetCommitter(consumer)
+      KafkaOffsetCommitter(consumer),
+      KafkaPartitionRewinder(consumer)
     )
     KafkaConsumerLoop(consumer, runner, Some(outputProducer))
 
@@ -190,7 +211,8 @@ object ConsumerApp:
             next.committableOffsets,
           published = current.published + next.published,
           duplicates = current.duplicates + next.duplicates,
-          failedPartitions = current.failedPartitions ++ next.failedPartitions
+          failedPartitions = current.failedPartitions ++ next.failedPartitions,
+          retryOffsets = current.retryOffsets ++ next.retryOffsets
         )
         poll(
           combined,
@@ -250,7 +272,8 @@ object ConsumerCli:
         case Some(maxRecords) =>
           val loop = KafkaConsumerLoop.live(
             command.bootstrapServers,
-            command.groupId
+            command.groupId,
+            maxPollRecords = Some(1)
           )
           try
             val report = ConsumerApp.runBounded(loop, maxRecords)

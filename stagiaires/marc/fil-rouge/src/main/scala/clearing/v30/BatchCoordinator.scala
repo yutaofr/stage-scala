@@ -30,37 +30,86 @@ final class BatchCoordinator(
       case ((report, true), _) => (report, true)
       case ((report, false), envelope) =>
         val decision = processor(envelope)
+        val fingerprint = PayloadFingerprint.sha256(envelope.value)
         decision.transactionId match
-          case Some(id) if registry.contains(id) =>
-            (
-              report.copy(
-                committableOffsets = report.committableOffsets.updated(
+          case Some(id) =>
+            registry.status(id, fingerprint) match
+              case DeduplicationStatus.Duplicate =>
+                completeDuplicate(report, partition, envelope)
+              case DeduplicationStatus.New =>
+                publish(
+                  report,
                   partition,
-                  envelope.offset + 1L
-                ),
-                duplicates = report.duplicates + 1
-              ),
-              false
-            )
-          case transactionId =>
-            publisher.publish(envelope.key, decision) match
-              case Right(_) =>
-                transactionId.foreach(registry.markProcessed)
-                (
-                  report.copy(
-                    committableOffsets = report.committableOffsets.updated(
-                      partition,
-                      envelope.offset + 1L
-                    ),
-                    published = report.published + 1
-                  ),
-                  false
+                  envelope,
+                  decision,
+                  Some(id -> fingerprint)
                 )
-              case Left(_) =>
-                (
-                  report.copy(
-                    failedPartitions = report.failedPartitions + partition
-                  ),
-                  true
+              case DeduplicationStatus.Conflict =>
+                val conflict = ProcessingDecision.Rejected(
+                  RejectedEvent(
+                    transactionId = Some(id),
+                    code = "EVENT_ID_CONFLICT",
+                    message =
+                      "identifiant réutilisé avec un payload différent",
+                    payloadFingerprint = fingerprint,
+                    occurredAt = envelope.occurredAt
+                  )
                 )
+                publish(
+                  report,
+                  partition,
+                  envelope,
+                  conflict,
+                  Some(id -> fingerprint)
+                )
+          case None =>
+            publish(report, partition, envelope, decision, None)
     ._1
+
+  private def completeDuplicate(
+    report: BatchReport,
+    partition: InputPartition,
+    envelope: RecordEnvelope
+  ): (BatchReport, Boolean) =
+    (
+      report.copy(
+        committableOffsets = report.committableOffsets.updated(
+          partition,
+          envelope.offset + 1L
+        ),
+        duplicates = report.duplicates + 1
+      ),
+      false
+    )
+
+  private def publish(
+    report: BatchReport,
+    partition: InputPartition,
+    envelope: RecordEnvelope,
+    decision: ProcessingDecision,
+    identity: Option[(Int, String)]
+  ): (BatchReport, Boolean) =
+    publisher.publish(envelope.key, decision) match
+      case Right(_) =>
+        identity.foreach(registry.markProcessed)
+        (
+          report.copy(
+            committableOffsets = report.committableOffsets.updated(
+              partition,
+              envelope.offset + 1L
+            ),
+            published = report.published + 1
+          ),
+          false
+        )
+      case Left(_) =>
+        (
+          report.copy(
+            failedPartitions = report.failedPartitions + partition,
+            retryOffsets = report.retryOffsets.updated(
+              partition,
+              envelope.offset
+            )
+          ),
+          true
+        )

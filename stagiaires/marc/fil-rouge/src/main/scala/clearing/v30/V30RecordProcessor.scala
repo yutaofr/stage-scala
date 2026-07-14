@@ -97,7 +97,7 @@ final class V30RecordProcessor(
   private def decimal(value: BigDecimal): String =
     value.setScale(2).bigDecimal.toPlainString
 
-private object PayloadFingerprint:
+object PayloadFingerprint:
   def sha256(raw: String): String =
     val digest = MessageDigest.getInstance("SHA-256")
     digest

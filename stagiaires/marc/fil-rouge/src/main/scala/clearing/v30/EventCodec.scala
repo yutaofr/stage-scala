@@ -50,4 +50,3 @@ object EventCodec:
         )
 
     json.noSpaces
-
