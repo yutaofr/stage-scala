@@ -60,3 +60,6 @@ final class ErrorHierarchySpec extends AnyFlatSpec with Matchers:
     DetailedErrorReporter.detailedReport(
       Iso20022Rejection(Iso20022Code.AC06, transactionId = 12)
     ) shouldBe "Erreur métier [AC06] : transaction 12 — compte bloqué"
+    DetailedErrorReporter.detailedReport(
+      ParsingError(8, ParsingFailure.InvalidAmount)
+    ) shouldBe "Erreur de parsing [ligne 8] : montant illisible"

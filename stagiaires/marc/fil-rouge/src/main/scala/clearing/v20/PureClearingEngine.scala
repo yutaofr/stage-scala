@@ -244,6 +244,7 @@ object PureClearingEngine:
     case DuplicateTransaction         => "TRANSACTION_DUPLIQUEE"
     case SuspiciousTransaction(_, _)  => "TRANSACTION_SUSPECTE"
     case Iso20022Rejection(code, _)   => s"ISO20022:${code.toString}"
+    case ParsingError(_, failure)     => failure.code
 
   private[v20] def validationErrorCode(
     error: PureValidationError

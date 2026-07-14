@@ -26,6 +26,8 @@ object DetailedErrorReporter:
             s"Erreur de validation [${validation.field}] : ${validation.message}"
           case business: BusinessError =>
             s"Erreur métier [${business.internalCode}] : ${business.businessMessage}"
+          case ParsingError(lineNumber, failure) =>
+            s"Erreur de parsing [ligne $lineNumber] : ${failure.message}"
       case system: SystemError =>
         system match
           case FileReadFailure(path, reason) =>

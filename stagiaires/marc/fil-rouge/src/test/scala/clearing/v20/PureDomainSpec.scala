@@ -99,6 +99,9 @@ final class PureDomainSpec extends AnyFlatSpec with Matchers:
       PureClearingEngine.errorCode(SuspiciousTransaction(17, "secret")),
       PureClearingEngine.errorCode(
         Iso20022Rejection(Iso20022Code.AC01, 17)
+      ),
+      PureClearingEngine.errorCode(
+        ParsingError(8, ParsingFailure.InvalidAmount)
       )
     ) shouldBe List(
       "MONTANT_INVALIDE",
@@ -108,7 +111,8 @@ final class PureDomainSpec extends AnyFlatSpec with Matchers:
       "CSV_MALFORME",
       "TRANSACTION_DUPLIQUEE",
       "TRANSACTION_SUSPECTE",
-      "ISO20022:AC01"
+      "ISO20022:AC01",
+      "PARSE_AMOUNT"
     )
 
   "PureClearingEngine.validationErrorCode" should "rendre chaque erreur pure" in:

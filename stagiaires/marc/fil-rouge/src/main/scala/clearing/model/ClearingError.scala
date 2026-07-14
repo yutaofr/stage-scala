@@ -8,6 +8,32 @@ sealed trait LineError extends ClearingError
 
 sealed trait SystemError extends ClearingError
 
+enum ParsingFailure:
+  case ColumnCount(actual: Int)
+  case InvalidId
+  case InvalidAmount
+  case InvalidTransactionType
+  case InvalidCurrency
+
+  def code: String = this match
+    case ParsingFailure.ColumnCount(_)         => "PARSE_COLUMNS"
+    case ParsingFailure.InvalidId              => "PARSE_ID"
+    case ParsingFailure.InvalidAmount          => "PARSE_AMOUNT"
+    case ParsingFailure.InvalidTransactionType => "PARSE_TYPE"
+    case ParsingFailure.InvalidCurrency        => "PARSE_CURRENCY"
+
+  def message: String = this match
+    case ParsingFailure.ColumnCount(actual) =>
+      s"8 colonnes attendues, $actual reçues"
+    case ParsingFailure.InvalidId     => "identifiant illisible"
+    case ParsingFailure.InvalidAmount => "montant illisible"
+    case ParsingFailure.InvalidTransactionType =>
+      "type de transaction inconnu"
+    case ParsingFailure.InvalidCurrency => "devise inconnue"
+
+case class ParsingError(lineNumber: Int, failure: ParsingFailure)
+    extends LineError
+
 sealed trait ValidationError extends LineError:
   def field: String
   def message: String
