@@ -76,3 +76,5 @@ case class V22Config(
   feeRates: Map[BankCode, BigDecimal],
   labelsByTransactionId: Map[Int, String]
 )
+
+type HashBoundary = Iban => Either[V22Error, String]
