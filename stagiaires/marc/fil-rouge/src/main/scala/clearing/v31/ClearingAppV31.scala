@@ -44,15 +44,18 @@ object ReportCli:
 
 enum V31Command:
   case Produce(command: ProducerCommand)
+  case Qualify(command: QualificationCommand)
   case Consume(command: V31ConsumerCommand)
   case Report(command: ReportCommand)
 
 object V31Cli:
-  val Usage = "Usage : run producer|consumer|report [options]"
+  val Usage = "Usage : run producer|qualify|consumer|report [options]"
 
   def parse(args: List[String]): Either[String, V31Command] = args match
     case "producer" :: tail =>
       ProducerCli.parse(tail).map(V31Command.Produce.apply)
+    case "qualify" :: tail =>
+      QualificationCli.parse(tail).map(V31Command.Qualify.apply)
     case "consumer" :: tail =>
       V31ConsumerCli.parse(tail).map(V31Command.Consume.apply)
     case "report" :: tail =>
@@ -110,6 +113,19 @@ object ClearingAppV31:
   def run(command: V31Command): Unit = command match
     case V31Command.Produce(producerCommand) =>
       V30Reporter.print(V31Renderer.producer(ProducerApp.run(producerCommand)))
+    case V31Command.Qualify(qualificationCommand) =>
+      val producer = V31QualificationProducer.live(
+        qualificationCommand.bootstrapServers
+      )
+      try
+        V30Reporter.print(
+          V31Renderer.producer(
+            producer.send(
+              V31QualificationScenario.records(qualificationCommand.seed)
+            )
+          )
+        )
+      finally producer.close()
     case V31Command.Consume(consumerCommand) =>
       consumerCommand.maxRecords match
         case None =>
