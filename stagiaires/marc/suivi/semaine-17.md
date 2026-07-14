@@ -9,6 +9,33 @@
 - Provisionner un dashboard Grafana sans configuration manuelle.
 - Définir deux SLO et observer une alerte pending, firing puis resolved.
 
+## Notions à maîtriser
+
+- complémentarité des logs, métriques et traces ; corrélation par contexte ;
+- logs JSON, redaction des données sensibles et contexte MDC ;
+- counter, gauge, histogramme, cardinalité des labels, SLI et SLO ;
+- trace, span, propagation W3C et export OTLP ;
+- PromQL, dashboard provisionné, seuil d'alerte, error budget et burn rate.
+
+## Exercices couverts
+
+1. Produire des logs JSON corrélés contenant `txId`, partition et offset sans
+   exposer d'IBAN brut.
+2. Instrumenter le traitement avec un compteur, un histogramme et un gauge de
+   lag Kafka ; vérifier les métriques exposées.
+3. Créer les spans de traitement, propager le contexte W3C dans Kafka et suivre
+   l'opération dans Jaeger.
+4. Provisionner un dashboard Grafana présentant débit, p99, taux d'erreur et
+   lag Kafka.
+5. Définir deux SLO, déclencher une alerte et vérifier son cycle pending,
+   firing, puis resolved.
+
+## Premier livrable — Jour 1
+
+Un extrait de logs JSON corrélés, accompagné d'un test démontrant la présence
+de `txId`, partition et offset, ainsi que l'absence d'IBAN brut. Ce livrable
+est inclus dans le paquet `clearing.v32` et dans les preuves J1 de la semaine.
+
 ## Livrables
 
 - paquet `clearing.v32` et main `runClearingAppV32`;
@@ -17,7 +44,7 @@
 - `slo-v32.md`, règles Prometheus, Alertmanager et webhook;
 - preuves J1 à J5, rétrospective et gate `verify-v32-runtime.sh`.
 
-## Validation
+## Critères de validation et résultats
 
 État : validée le 14/07/2026.
 

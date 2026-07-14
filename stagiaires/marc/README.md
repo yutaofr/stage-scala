@@ -18,6 +18,8 @@ ni soutenance de mémoire.
 - Présenter chaque vendredi un scénario nominal et un scénario d'échec.
 - Ne passer à la semaine suivante qu'après validation du mentor.
 - Pour S18 à S20, raisonner sur `v3.2` sans créer de version `v3.3` ou `v4`.
+- Cats ne fait l'objet d'aucune semaine autonome et reste exclu des exercices
+  de S10 et S12.
 
 ## État
 
