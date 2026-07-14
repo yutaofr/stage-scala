@@ -1,6 +1,6 @@
 ThisBuild / scalaVersion := "3.3.8"
 ThisBuild / organization := "ma.ath.stagiaires"
-ThisBuild / version := "2.2.0-SNAPSHOT"
+ThisBuild / version := "2.3.0-SNAPSHOT"
 
 val pureCoreFiles =
   "PureDomain|DataCleaner|CurriedRules|PureNettingCalculator|PureClearingEngine|PureClearingRenderer"
@@ -18,7 +18,7 @@ lazy val root = project
     ),
     Test / fork := true,
     Compile / run / fork := true,
-    Compile / mainClass := Some("clearing.v22.runClearingAppV22"),
+    Compile / mainClass := Some("clearing.v23.runClearingAppV23"),
     coverageExcludedFiles :=
       s"^(?!.*[\\\\/]clearing[\\\\/]v20[\\\\/]($pureCoreFiles)$$).*$$",
     coverageFailOnMinimum := true,
