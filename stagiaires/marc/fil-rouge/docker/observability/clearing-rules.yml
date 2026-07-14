@@ -1,0 +1,40 @@
+groups:
+  - name: clearing-engine-v32
+    rules:
+      - alert: EngineDown
+        expr: up{job="clearing-engine"} == 0
+        for: 30s
+        labels:
+          severity: critical
+        annotations:
+          summary: Clearing Engine target is down
+          description: Prometheus has failed to scrape the Clearing Engine for 30 seconds. Check the process and metrics port.
+
+      - alert: ClearingHighFailureRate
+        expr: |
+          (
+            sum(rate(clearing_transactions_processed_total{status="failure"}[5m]))
+            /
+            clamp_min(sum(rate(clearing_transactions_processed_total[5m])), 1e-9)
+          ) > 0.005
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: Clearing Engine failure rate exceeds the availability budget
+          description: The five-minute failure ratio has exceeded 0.5 percent for two minutes. Inspect Cassandra, Kafka publication, and correlated traces.
+
+      - alert: ClearingProcessingLatencyHigh
+        expr: |
+          histogram_quantile(
+            0.99,
+            sum by (le) (
+              rate(clearing_processing_duration_seconds_bucket[5m])
+            )
+          ) > 0.5
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: Clearing Engine p99 latency exceeds 500 ms
+          description: Processing p99 has exceeded 500 ms for two minutes. Compare Kafka lag, JVM memory, Cassandra health, and Jaeger spans.

@@ -112,12 +112,16 @@ services:
     image: prom/prometheus:v3.12.0
     command:
       - --config.file=/etc/prometheus/prometheus.yml
+    depends_on:
+      alertmanager:
+        condition: service_healthy
     ports:
       - "9090:9090"
     extra_hosts:
       - host.docker.internal:host-gateway
     volumes:
       - ./observability/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./observability/clearing-rules.yml:/etc/prometheus/clearing-rules.yml:ro
     healthcheck:
       test:
         - CMD-SHELL
@@ -127,6 +131,47 @@ services:
       retries: 30
       start_period: 5s
 
+  alertmanager:
+    image: prom/alertmanager:v0.32.1
+    command:
+      - --config.file=/etc/alertmanager/alertmanager.yml
+    depends_on:
+      webhook:
+        condition: service_healthy
+    ports:
+      - "9093:9093"
+    volumes:
+      - ./observability/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - wget -q -O /dev/null http://localhost:9093/-/healthy
+      interval: 5s
+      timeout: 3s
+      retries: 30
+      start_period: 5s
+
+  webhook:
+    image: python:3.13.5-alpine3.22
+    command:
+      - python
+      - /app/app.py
+    ports:
+      - "8081:8081"
+    volumes:
+      - webhook-data:/data
+      - ./observability/webhook/app.py:/app/app.py:ro
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - import urllib.request; urllib.request.urlopen('http://localhost:8081/health')
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 3s
+
   grafana:
     image: grafana/grafana:13.0.2
     depends_on:
@@ -135,8 +180,8 @@ services:
     ports:
       - "3000:3000"
     environment:
-      GF_SECURITY_ADMIN_USER: admin
-      GF_SECURITY_ADMIN_PASSWORD: admin
+      GF_AUTH_ANONYMOUS_ENABLED: "true"
+      GF_AUTH_ANONYMOUS_ORG_ROLE: Viewer
       GF_USERS_ALLOW_SIGN_UP: "false"
     volumes:
       - grafana-data:/var/lib/grafana
@@ -154,3 +199,4 @@ services:
 volumes:
   cassandra-data:
   grafana-data:
+  webhook-data:

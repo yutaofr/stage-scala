@@ -41,6 +41,10 @@ final class V32ComposeContractSpec extends AnyFlatSpec with Matchers:
     prometheus should include("host.docker.internal:8080")
     prometheus should include("alerting:")
 
+  it should "avoid embedding dashboard credentials" in:
+    compose should not include "GF_SECURITY_ADMIN_PASSWORD"
+    compose should not include "GF_SECURITY_ADMIN_USER"
+
   private def projectRoot(): Path =
     Iterator
       .iterate(Paths.get("").toAbsolutePath)(_.getParent)
