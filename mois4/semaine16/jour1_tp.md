@@ -19,7 +19,7 @@
 2. Lance `docker compose -f docker/docker-compose-full.yml run --rm cassandra-init`.
 3. Ouvre un terminal interactif :
    ```bash
-   docker exec -it cassandra-node cqlsh
+   docker exec -it test-stage_cassandra_1 cqlsh
    ```
 
 **Validation :** le keyspace et les quatre tables du kit apparaissent dans `DESCRIBE KEYSPACE`.
