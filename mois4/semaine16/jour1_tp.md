@@ -15,7 +15,7 @@
 > [!IMPORTANT]
 > **Starter Kit Infrastructure :** Déployer Cassandra de zéro est complexe. Pour te concentrer sur la modélisation des données, utilise l'infrastructure pré-configurée.
 
-1. Démarre Cassandra avec `docker compose -f docker/docker-compose-full.yml up -d --wait cassandra`.
+1. Démarre Cassandra avec `docker compose -f docker/docker-compose-full.yml up -d cassandra`.
 2. Lance `docker compose -f docker/docker-compose-full.yml run --rm cassandra-init`.
 3. Ouvre un terminal interactif :
    ```bash
