@@ -1,0 +1,138 @@
+{
+  "annotations": {"list": []},
+  "editable": false,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 1,
+  "id": null,
+  "links": [],
+  "panels": [
+    {
+      "datasource": {"type": "prometheus", "uid": "prometheus-clearing"},
+      "description": "Records processed per second over the selected status set. No traffic renders zero when Prometheus has recent series.",
+      "fieldConfig": {"defaults": {"unit": "ops"}, "overrides": []},
+      "gridPos": {"h": 8, "w": 8, "x": 0, "y": 0},
+      "id": 1,
+      "options": {"legend": {"displayMode": "list", "placement": "bottom"}},
+      "targets": [
+        {
+          "datasource": {"type": "prometheus", "uid": "prometheus-clearing"},
+          "editorMode": "code",
+          "expr": "sum(rate(clearing_transactions_processed_total{status=~\"$status\"}[$__rate_interval])) or vector(0)",
+          "legendFormat": "records/s",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "Throughput",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {"type": "prometheus", "uid": "prometheus-clearing"},
+      "description": "Failed records divided by all processed records. A zero denominator renders zero.",
+      "fieldConfig": {"defaults": {"min": 0, "max": 1, "unit": "percentunit"}, "overrides": []},
+      "gridPos": {"h": 8, "w": 8, "x": 8, "y": 0},
+      "id": 2,
+      "options": {"legend": {"displayMode": "list", "placement": "bottom"}},
+      "targets": [
+        {
+          "datasource": {"type": "prometheus", "uid": "prometheus-clearing"},
+          "editorMode": "code",
+          "expr": "(sum(rate(clearing_transactions_processed_total{status=\"failure\"}[$__rate_interval])) / clamp_min(sum(rate(clearing_transactions_processed_total[$__rate_interval])), 1e-9)) or vector(0)",
+          "legendFormat": "failure ratio",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "Error rate",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {"type": "prometheus", "uid": "prometheus-clearing"},
+      "description": "99th percentile processing duration. No data means no recent histogram observations.",
+      "fieldConfig": {"defaults": {"min": 0, "unit": "s"}, "overrides": []},
+      "gridPos": {"h": 8, "w": 8, "x": 16, "y": 0},
+      "id": 3,
+      "options": {"legend": {"displayMode": "list", "placement": "bottom"}},
+      "targets": [
+        {
+          "datasource": {"type": "prometheus", "uid": "prometheus-clearing"},
+          "editorMode": "code",
+          "expr": "histogram_quantile(0.99, sum by (le) (rate(clearing_processing_duration_seconds_bucket{status=~\"$status\"}[$__rate_interval])))",
+          "legendFormat": "p99",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "Processing p99",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {"type": "prometheus", "uid": "prometheus-clearing"},
+      "description": "Current sum of end offset minus consumer position. No assigned partition renders zero.",
+      "fieldConfig": {"defaults": {"min": 0, "unit": "short"}, "overrides": []},
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 8},
+      "id": 4,
+      "options": {"legend": {"displayMode": "table", "placement": "bottom"}},
+      "targets": [
+        {
+          "datasource": {"type": "prometheus", "uid": "prometheus-clearing"},
+          "editorMode": "code",
+          "expr": "sum(clearing_kafka_lag_records) or vector(0)",
+          "legendFormat": "lag records",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "Kafka lag",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {"type": "prometheus", "uid": "prometheus-clearing"},
+      "description": "JVM memory currently used by area. No data means the engine target is unavailable.",
+      "fieldConfig": {"defaults": {"min": 0, "unit": "bytes"}, "overrides": []},
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 8},
+      "id": 5,
+      "options": {"legend": {"displayMode": "table", "placement": "bottom"}},
+      "targets": [
+        {
+          "datasource": {"type": "prometheus", "uid": "prometheus-clearing"},
+          "editorMode": "code",
+          "expr": "sum by (area) (jvm_memory_used_bytes)",
+          "legendFormat": "{{area}}",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "JVM memory",
+      "type": "timeseries"
+    }
+  ],
+  "refresh": "5s",
+  "schemaVersion": 42,
+  "tags": ["clearing", "v3.2"],
+  "templating": {
+    "list": [
+      {
+        "allValue": ".*",
+        "current": {"selected": true, "text": "All", "value": "$__all"},
+        "datasource": {"type": "prometheus", "uid": "prometheus-clearing"},
+        "definition": "label_values(clearing_transactions_processed_total, status)",
+        "includeAll": true,
+        "label": "Status",
+        "multi": true,
+        "name": "status",
+        "options": [],
+        "query": "label_values(clearing_transactions_processed_total, status)",
+        "refresh": 1,
+        "type": "query"
+      }
+    ]
+  },
+  "time": {"from": "now-15m", "to": "now"},
+  "timepicker": {},
+  "timezone": "browser",
+  "title": "Clearing Engine v3.2",
+  "uid": "clearing-engine-v32",
+  "version": 1,
+  "weekStart": "monday"
+}
